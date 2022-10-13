@@ -10,9 +10,9 @@
 #include <fcntl.h>
 
 
-char * trimstr(char * str);
+void trimstr(char * str);
 char ** splitcommand(char * buffer);
-char ** read_user_input();
+char * read_user_input();
 
 
 #endif

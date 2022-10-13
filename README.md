@@ -1,2 +1,1 @@
-# f4
-A repo for my undergrad thesis
+# tésis de licenciatura

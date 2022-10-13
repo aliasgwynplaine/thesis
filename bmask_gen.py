@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from calendar import c
+from re import M
 import sys
 
 int_sz = 64
@@ -10,6 +12,10 @@ def gen_bmask(nvars, v) :
     mask    = (1<<64) - 1
     step    = 64 // nvars
     submask = (1<<step) - 1
+    mstr    = "\n/* masks list for %d vars*/\n" % nvars
+    mstr   += "const u64 MASK_LIST_%dV[] = {\n    " % nvars
+    c       = 0         # counter for mstr
+    m       = 3         # modulo for mstr
     print(f"\n/* {nvars} variables */")
 
     if v :
@@ -28,9 +34,17 @@ def gen_bmask(nvars, v) :
 
         if i + 1 == nvars :
             bmask = bmask|((1<<64%nvars) - 1)<<(i+1)*step
+            mstr += 'BMASK_{}V_{} '.format(nvars, i)
+        else :
+            mstr += 'BMASK_{}V_{}, '.format(nvars, i)
         
         print("#define BMASK_{}V_{} 0x{:016x}".format(nvars, i, bmask))
+        c = (c + 1) % 3
+        if c == 0 : mstr += '\n    '
     
+    mstr += '\n};'
+    print(mstr)
+
     if v :
         print("Dec:")
         for i in range(nvars) :
@@ -54,6 +68,6 @@ if __name__ == '__main__' :
 
     nvars   = int(sys.argv[1])
     
-    for i in {1,2,3,4,5,6,7,8} :
-        gen_bmask(i, v)
+    for i in range(nvars) :
+        gen_bmask(i + 1, v)
     
