@@ -7,6 +7,10 @@
 
 #define SWAPINT(A, B) (A)^=(B);(B)^=(A);(A)^=(B);
 
+#ifndef FREE
+#define FREE(PTR) do { free(PTR); (PTR) = NULL; } while(0);
+#endif
+
 typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;

@@ -39,7 +39,7 @@ char ** splitcommand(char * buffer) {
 char * readuserinput() {
     char * buffer = malloc(sizeof(char) * MAX_STDINPUT_LENGTH);
     fgets(buffer, MAX_STDINPUT_LENGTH, stdin);
-    if (feof(stdin)) { printf("eof!\n"); free(buffer); exit(0); }
+    if (feof(stdin)) { printf("eof!\n"); FREE(buffer); exit(0); }
 
     return buffer;
 }
@@ -70,24 +70,79 @@ int cli(char * prelude_str) {
 
         if (strcmp(cmds[0], "exit") == 0) {
             printf("goodbye!\n");
-            free(line);
-            free(cmds);
-            free(prelude);
-            return 0;
+            FREE(line);
+            FREE(cmds);
+            FREE(prelude);
+            break;
+        }
+
+        if (strcmp(cmds[0], "ecmp") == 0) {
+            u64 x, y;
+            u8 n;
+            printf("exponent test\n");
+            printf("enter x: ");
+            scanf("%ld", &x);
+            printf("enter y: ");
+            scanf("%ld", &y);
+            printf("enter n: ");
+            scanf("%hhd", &n);
+            printf("x: ");
+            u64 * e = unpackexp(x, n);
+            for (int i = 0; i < n; i++) {
+                printf("%ld ", *(e + i));
+            }
+            printf("\ny: ");
+            u64 * e2 = unpackexp(y, n);
+            for (int i = 0; i < n; i++) {
+                printf("%ld ", *(e2 + i));
+            }
+            printf("\n");
+            int c = cmpexplex(x, y, n);
+            if (c == 0) {
+                printf("x = y\n");
+            } else if (c < 0) printf("x < y\n");
+            else printf("x > y\n");
+            printf("x + y: ");
+            for (int i = 0; i < n; i++) {
+                printf("%ld ", *(e+i) + *(e2 + i));
+            }
+            printf("\nx + y = %ld\n", x+y);
+            u64 * e3 = unpackexp(x+y, n);
+            printf("x + y: ");
+            for (int i = 0; i < n; i++) {
+                printf("%ld ", *(e3+ i));
+            }
+            printf("\n");
+
+            FREE(e);
+            FREE(e2);
+            FREE(e3);
         }
 
         if (strcmp(cmds[0], "run") == 0) {
             debug("running exp test...");
-            u64 a   = 1125925676908555;
+            u64 a   = 844489355100167;
+            u64 b   = 844454995361799;
             u8 n    = 4;
             u64 * e = unpackexp(a, n);
             printf("%ld : ", a);
             for (int i = 0; i < n; i++) {
                 printf("%ld ", *(e + i));
             }
+            e = unpackexp(b, n);
+            printf("%ld : ", b);
+            for (int i = 0; i < n; i++) {
+                printf("%ld ", *(e + i));
+            }
+
+            if (cmpexplex(a, b, n)) {
+                printf("a > b\n");
+            } else printf("a < b\n");
+
             printf("\n");
-            free(e);
+            FREE(e);
             debug("done!");
+            exit(1);
             debug("running pol test...");
             pol_t * pol = malloc(sizeof(pol_t));
             
@@ -102,7 +157,7 @@ int cli(char * prelude_str) {
             pol = addterm2pol(pol, -2., 20);
             pol = addterm2pol(pol, -.3, 21);
             pol = addterm2pol(pol, 201, -1);
-            print_pol(pol);
+            printpol(pol);
             debug("done!");
             pol_t * pol2 = NULL;
             pol2 = polnvars(8);
@@ -113,18 +168,18 @@ int cli(char * prelude_str) {
             pol2 = addterm2pol(pol2, 31.2, -2);
             pol2 = addterm2pol(pol2, 3.41, 11198612397642394);
 
-            print_pol(pol2);
+            printpol(pol2);
             //pol2 = addterm2pol(pol2, 123, 9873);
             //pol2 = addterm2pol(pol2, .002, 31);
-            //print_pol(pol2);
+            //printpol(pol2);
             debug("creating empty pol and trying to print it.");
-            pol_t * epol = NULL;
-            print_pol(epol);
-            epol = addterm2pol(epol, 39.2, 200);
-            print_pol(epol);
+            // pol_t * epol = NULL;
+            // printpol(epol);
+            // epol = addterm2pol(epol, 39.2, 200);
+            // printpol(epol);
             debug("freeing the pols...");
-            free_pol_t(pol);
-            free_pol_t(pol2);
+            freepol_t(pol);
+            freepol_t(pol2);
             debug("done!");
             exit(0);
         }
@@ -135,19 +190,20 @@ int cli(char * prelude_str) {
 
         */
         //int status;
-        int rc = fork();
-        if (rc == 0) { //proceso hijo
-            int pos = 0;
-            execvp(cmds[0], cmds);
-        }
-        else {// proceso padre
-            wait(NULL);
-            printf("%s> ", prelude);
-        }
+        // int rc = fork();
+        // if (rc == 0) { //proceso hijo
+        //     int pos = 0;
+        //     execvp(cmds[0], cmds);
+        // }
+        // else {// proceso padre
+        //     wait(NULL);
+        //     printf("%s> ", prelude);
+        // }
 
-        free(line);
-        free(cmds);
+        FREE(line);
+        FREE(cmds);
     }
+    return 0;
 }
 
 int main (int argc, char * argv[]) {

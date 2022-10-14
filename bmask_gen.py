@@ -13,7 +13,7 @@ def gen_bmask(nvars, v) :
     step    = 64 // nvars
     submask = (1<<step) - 1
     mstr    = "\n/* masks list for %d vars*/\n" % nvars
-    mstr   += "const u64 MASK_LIST_%dV[] = {\n    " % nvars
+    mstr   += "static const u64 MASK_LIST_%dV[] = {\n    " % nvars
     c       = 0         # counter for mstr
     m       = 3         # modulo for mstr
     print(f"\n/* {nvars} variables */")
@@ -38,7 +38,7 @@ def gen_bmask(nvars, v) :
         else :
             mstr += 'BMASK_{}V_{}, '.format(nvars, i)
         
-        print("#define BMASK_{}V_{} 0x{:016x}".format(nvars, i, bmask))
+        print("#define BMASK_{}V_{} 0x{:016x}".format(nvars, nvars - i - 1, bmask))
         c = (c + 1) % 3
         if c == 0 : mstr += '\n    '
     

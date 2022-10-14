@@ -12,20 +12,49 @@ Using masks
 
 pol_t * polnvars(u8 n) {
     pol_t * pol = malloc(sizeof(pol_t));
-    pol->nvar = n;
+    pol->nvar   = n;
 
     return pol; // needs to call free outside fux.
 }
 
 
-int cmpexplex(u64 a, u64 b) {
+int cmpexplex(u64 a, u64 b, u8 nvar) {
+    if (a == b) return 0;
+    if (a < b)  return -1;
+    if (a > b)  return 1;
+    /* next is so that the compiler does not cry */
+    return 0;
+    /*if (a == b) return 0;
+    
+    u64 * adegs = unpackexp(a, nvar);
+    u64 * bdegs = unpackexp(b, nvar);
+    int r = 0;
+    int i = 0;
 
-    return;
+    while (i < nvar) {
+        if (*(adegs+i) != *(bdegs+i)) {
+            goto nq;
+        }
+        i++;
+    }
+
+    goto exit;
+
+    nq:
+
+    if (*(adegs+i) > *(bdegs+i)) return 1;
+    if (*(adegs+i) < *(bdegs+i)) return -1;
+
+    exit:
+    FREE(adegs);
+    FREE(bdegs);
+    return r;*/
 }
 
 
 void addexp(u64 * a, u64 * b, u64 * c) {
-    return;
+    *c = *a + *b; // be carefull
+    /* todo: handle "local" overflow */
 }
 
 /**
@@ -42,64 +71,56 @@ u64 * unpackexp(u64 e, u8 nvar) {
         exit(1);
     }
     u64 * exp  = malloc(nvar * sizeof(u64 *));
-    u16 step   = 64 / nvar; // this could lead to fltpnt exception
+    u16 step   = 64 / nvar; 
     if (exp == NULL) {
         dbgerr("No memory!");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
-    debug("going to switch...");
     switch (nvar) {
     case 1:
         *exp = e;
         break;
     case 2: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_2V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_2V + i))>>((nvar-i-1)*step);
         }
         break;
     case 3: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_3V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_3V + i))>>((nvar-i-1)*step);
         }
         break;
     case 4: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_4V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_4V + i))>>((nvar-i-1)*step);
         }
         break;
     case 5: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_5V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_5V + i))>>((nvar-i-1)*step);
         }
         break;
     case 6: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_6V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_6V + i))>>((nvar-i-1)*step);
         }
         break;
     case 7: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_7V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_7V + i))>>((nvar-i-1)*step);
         }
         break;
     case 8: 
         for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_8V + i))>>(i*step);
-            debug("exp[%d] : %ld", i, *(exp + i));     
+            *(exp + i) = (e & *(MASK_LIST_8V + i))>>((nvar-i-1)*step);
         }
         break;
     default:
         dbgerr("Not implemented. nvars : %d", nvar);
-        exit(1);
+        exit(EXIT_FAILURE);
         break;
     }
-    debug("returning...");
+    
     return exp;
 }
 
@@ -109,13 +130,13 @@ u64 * unpackexp(u64 e, u8 nvar) {
  * 
  * @param pol head of the ll
  */
-void free_pol_t(pol_t * pol) {
+void freepol_t(pol_t * pol) {
     pol_t * curr;
     
     while (pol) {
         curr = pol;
         pol = pol->nxt;
-        free(curr);
+        FREE(curr);
     }
     debug("mem is free!");
 }
@@ -165,7 +186,7 @@ pol_t * addterm2pol(pol_t * pol, float coef, u64 exp) {
  * @param pol polynomial
  */
 
-void print_pol(pol_t * pol) {
+void printpol(pol_t * pol) {
     debug("checking if pol is null");
     if (pol == NULL) {
         printf("pol is  empty!\n");
@@ -186,7 +207,7 @@ void print_pol(pol_t * pol) {
         }
         printf("%ld)", *(e + curr->nvar - 1));
         curr = curr->nxt;
-        free(e);
+        FREE(e);
     }
     printf("\n");
 }
