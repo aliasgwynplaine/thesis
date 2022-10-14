@@ -4,34 +4,46 @@
 #include "debug.h"
 
 typedef struct pol_t pol_t;
+typedef struct lpol_t lpol_t;
+
+#define COEFTYPE float
 
 struct pol_t {
-    float   coef; // could be an AP num
-    u64     exp;  // packed exponent
-    u8      nvar; // won't be needed
-    pol_t * nxt;
+    COEFTYPE coef; // could be an AP num
+    u64      exp;  // packed exponent
+};
+
+struct lpol_t {   // pol type for llist
+    COEFTYPE coef;
+    u64      exp;
+    lpol_t * nxt;
 };
 
 /* from brandt's. no implemented yet */
 
 struct aapol_t { // heap-like structure
-    u8 sz;
-    u8 nvar;
+    u8      nvar;
+    u16      sz;
+    u16     cap;     // current capacity
     pol_t * terms;
 };
 
 struct llpol_t {
-    u8 sz;
+    u16 sz;
     u8 nvar;
-    pol_t * head;
+    lpol_t * head;
 };
 
 typedef struct aapol_t aapol_t; // alternated array
 typedef struct llpol_t llpol_t; // linked list
 
-pol_t * str2pol(char *);
-pol_t * polnvars(u8 n);
-pol_t * addterm2pol(pol_t * pol, float coef, u64 exp);
+pol_t * str2pol(char *); // TODO
+llpol_t * llpolnvars(u8 n);
+llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
+
+aapol_t * aapolnvars(u8 n);
+aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
+
 
 /* polynomial operations */
 
@@ -40,10 +52,15 @@ pol_t * mulpol(pol_t * p, pol_t * q);
 
 /* matrix2pol & pol2matrix transformations*/
 
-void freepol_t(pol_t *);
+/* memory handling */
+void freelpol_t(lpol_t *);
 void freeaapol_t(aapol_t *);
 void freellpol_t(llpol_t *);
+
+/* pretty printing */
 void printpol(pol_t * pol);
+void printllpol_t(llpol_t * llpol);
+void printaapol_t(aapol_t * aapol);
 
 /* define polynomial operations here */
 
@@ -53,7 +70,7 @@ void printpol(pol_t * pol);
 
 int cmpexplex(u64, u64, u8);
 int cmpexprevlex(u64, u64, u8);
-void addexp(u64 *, u64 *, u64 *);
+void expadd(u64 *, u64 *, u64 *);
 u64 * unpackexp(u64, u8);
 
 

@@ -6,16 +6,190 @@ x0,x1,x2
 Using masks
 */
 
+/**
+ * @brief creates an alternate array like pol in n
+ * vars. It's necesary to call freeaapol_t at
+ * the end. 
+ * 
+ * @param n number of variables
+ * @return aapol_t* pointer with head pointing
+ * to NULL, nvars equals n and sz equals to 0
+ */
+aapol_t * aapolnvars(u8 n) {
+    aapol_t * aapol = malloc(sizeof(aapol_t));
+    TESTPTR(aapol);
+    aapol->nvar  = n;
+    aapol->sz    = 0;
+    aapol->cap   = 1;
+    aapol->terms = NULL;
 
-
-
-
-pol_t * polnvars(u8 n) {
-    pol_t * pol = malloc(sizeof(pol_t));
-    pol->nvar   = n;
-
-    return pol; // needs to call free outside fux.
+    return aapol;
 }
+
+aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
+
+    /* todo: IMPLEMENT AS HEAP */
+    if (coef == 0) {
+        return aapol;
+    }
+
+    if (!aapol->terms) {
+        aapol->terms = malloc(2*sizeof(pol_t));
+        TESTPTR(aapol);
+        aapol->cap   = 2;
+    }
+
+
+    if (aapol->sz + 1 >= aapol->cap) {
+        // need to realloc
+        // todo: make a smarter use of space.
+        debug("trying to alloc %d chunks", aapol->cap<<1);
+        aapol->terms = realloc(aapol->terms, (aapol->cap<<1) * sizeof(pol_t));
+        TESTPTR(aapol->terms);
+        aapol->cap = aapol->cap<<1;
+    }
+
+    debug("creating a new term...");
+    (aapol->terms + aapol->sz)->coef = coef;
+    (aapol->terms + aapol->sz)->exp  = exp;
+    aapol->sz++;
+
+    return aapol;
+}
+
+
+/**
+ * @brief creates a linked list like pol in n
+ * vars. It's necesary to call freellpol_t at
+ * the end. 
+ * 
+ * @param n number of variables
+ * @return llpol_t* pointer with head pointing
+ * to NULL, nvars equals n and sz equals to 0
+ */
+llpol_t * llpolnvars(u8 n) {
+    llpol_t * llpol = malloc(sizeof(llpol_t));
+    TESTPTR(llpol);
+    llpol->head = NULL;
+    llpol->nvar = n;
+    llpol->sz   = 0;
+
+    return llpol;
+}
+
+/**
+ * @brief add term to polinomial at the begining
+ * of the linked list.
+ * free_pol_t must be called.
+ * 
+ * @param pol pointer to pol_t that is a ll
+ * @param coef coefficient of the new term
+ * @param exp exponent of the new term
+ * @return pointer to the new
+ * term of polynomial
+ */
+
+llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
+    if (!llpol) {
+        dbgerr("pol is null");
+        exit(EXIT_FAILURE);
+    }
+    debug("creating newterm...");
+    lpol_t * newterm = malloc(sizeof(lpol_t));
+    TESTPTR(newterm);
+
+    newterm->coef = coef;
+    newterm->exp  = exp;
+    newterm->nxt  = llpol->head;
+    llpol->head = newterm;
+
+    return llpol;
+}
+
+
+/**
+ * @brief prints a pol_t *
+ * 
+ * @param pol polynomial
+ */
+
+void printllpol_t(llpol_t * llpol) {
+    debug("checking if pol is null");
+    if (llpol == NULL) {
+        printf("pol is  empty!\n");
+        return;
+    }
+    lpol_t * curr;
+    u64 * e;
+    //int sz = 0;
+    curr = llpol->head;
+
+    while (curr) {
+        e = unpackexp(curr->exp, llpol->nvar);
+        if (curr->coef >= 0) printf("+ ");
+        printf("%f*x^(", curr->coef);
+
+        for (int i = 0; i < llpol->nvar - 1; i++) {
+            printf("%ld, ", *(e + i));
+        }
+        printf("%ld)", *(e + llpol->nvar - 1));
+        curr = curr->nxt;
+        FREE(e);
+    }
+    printf("\n");
+}
+
+void printaapol_t(aapol_t * aapol) {
+    debug("checking if pol is null");
+    if (aapol == NULL) {
+        printf("pol is  empty!\n");
+        return;
+    }
+    pol_t * terms;
+    u64 * e;
+    terms = aapol->terms;
+
+    for (int i = 0; i < aapol->sz; i++) {
+        e = unpackexp(terms[i].exp, aapol->nvar);
+        if (terms[i].coef >= 0) printf("+ ");
+        printf("%f*x^(", terms[i].coef);
+
+        for (int i = 0; i < aapol->nvar - 1; i++) {
+            printf("%ld, ", *(e + i));
+        }
+        printf("%ld) ", *(e + aapol->nvar - 1));
+        FREE(e);
+    }
+    printf("\n");
+}
+
+/**
+ * @brief traverse the ll and
+ * free all the terms of polynomial
+ * 
+ * @param pol head of the ll
+ */
+void freelpol_t(lpol_t * pol) {
+    lpol_t * curr;
+    
+    while (pol) {
+        curr = pol;
+        pol = pol->nxt;
+        FREE(curr);
+    }
+}
+
+void freellpol_t(llpol_t * llpol) {
+    freelpol_t(llpol->head);
+    FREE(llpol);
+}
+
+
+void freeaapol_t(aapol_t * aapol) {
+    FREE(aapol->terms);
+    FREE(aapol);
+}
+
 
 
 int cmpexplex(u64 a, u64 b, u8 nvar) {
@@ -52,7 +226,7 @@ int cmpexplex(u64 a, u64 b, u8 nvar) {
 }
 
 
-void addexp(u64 * a, u64 * b, u64 * c) {
+void expadd(u64 * a, u64 * b, u64 * c) {
     *c = *a + *b; // be carefull
     /* todo: handle "local" overflow */
 }
@@ -71,6 +245,7 @@ u64 * unpackexp(u64 e, u8 nvar) {
         exit(1);
     }
     u64 * exp  = malloc(nvar * sizeof(u64 *));
+    TESTPTR(exp);
     u16 step   = 64 / nvar; 
     if (exp == NULL) {
         dbgerr("No memory!");
@@ -122,92 +297,4 @@ u64 * unpackexp(u64 e, u8 nvar) {
     }
     
     return exp;
-}
-
-/**
- * @brief traverse the ll and
- * free all the terms of polynomial
- * 
- * @param pol head of the ll
- */
-void freepol_t(pol_t * pol) {
-    pol_t * curr;
-    
-    while (pol) {
-        curr = pol;
-        pol = pol->nxt;
-        FREE(curr);
-    }
-    debug("mem is free!");
-}
-
-/**
- * @brief add term to polinomial at the begining
- * of the linked list.
- * free_pol_t must be called.
- * 
- * @param pol pointer to pol_t that is a ll
- * @param coef coefficient of the new term
- * @param exp exponent of the new term
- * @return pointer to the new
- * term of polynomial
- */
-pol_t * addterm2pol(pol_t * pol, float coef, u64 exp) {
-    if (!pol) {
-        debug("pol is null... calling malloc.");
-        pol = malloc(sizeof(pol_t));
-        if (pol == NULL) {
-            dbgerr("No memory!");
-
-        }
-        pol->coef = coef;
-        pol->exp  = exp;
-        pol->nxt  = NULL;
-        return pol;
-    }
-    debug("creating newterm...");
-    pol_t * newterm = malloc(sizeof(pol_t));
-    if (newterm == NULL) {
-        dbgerr("No memory!");
-    }
-    newterm->coef = coef;
-    newterm->exp  = exp;
-    newterm->nvar = pol->nvar;
-    newterm->nxt  = pol;
-    pol = newterm;
-
-    return pol;
-}
-
-
-/**
- * @brief prints a pol_t *
- * 
- * @param pol polynomial
- */
-
-void printpol(pol_t * pol) {
-    debug("checking if pol is null");
-    if (pol == NULL) {
-        printf("pol is  empty!\n");
-        return;
-    }
-    pol_t * curr;
-    u64 * e;
-    //int sz = 0;
-    curr = pol;
-
-    while (curr) {
-        e = unpackexp(curr->exp, curr->nvar);
-        if (curr->coef >= 0) printf("+ ");
-        printf("%f*x^(", curr->coef);
-
-        for (int i = 0; i < curr->nvar - 1; i++) {
-            printf("%ld, ", *(e + i));
-        }
-        printf("%ld)", *(e + curr->nvar - 1));
-        curr = curr->nxt;
-        FREE(e);
-    }
-    printf("\n");
 }

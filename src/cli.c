@@ -51,6 +51,11 @@ int cli(char * prelude_str) {
     printf("%s> ", prelude);
     char * line;
     char ** cmds;
+    u64 * e;
+    u64 * e2;
+    u64 * e3;
+    llpol_t * llpol;
+    aapol_t * aapol;
 
     while (1) {
         line = readuserinput();
@@ -76,7 +81,7 @@ int cli(char * prelude_str) {
             break;
         }
 
-        if (strcmp(cmds[0], "ecmp") == 0) {
+        if (strcmp(cmds[0], "exp") == 0) {
             u64 x, y;
             u8 n;
             printf("exponent test\n");
@@ -87,12 +92,12 @@ int cli(char * prelude_str) {
             printf("enter n: ");
             scanf("%hhd", &n);
             printf("x: ");
-            u64 * e = unpackexp(x, n);
+            e = unpackexp(x, n);
             for (int i = 0; i < n; i++) {
                 printf("%ld ", *(e + i));
             }
             printf("\ny: ");
-            u64 * e2 = unpackexp(y, n);
+            e2 = unpackexp(y, n);
             for (int i = 0; i < n; i++) {
                 printf("%ld ", *(e2 + i));
             }
@@ -107,7 +112,7 @@ int cli(char * prelude_str) {
                 printf("%ld ", *(e+i) + *(e2 + i));
             }
             printf("\nx + y = %ld\n", x+y);
-            u64 * e3 = unpackexp(x+y, n);
+            e3 = unpackexp(x+y, n);
             printf("x + y: ");
             for (int i = 0; i < n; i++) {
                 printf("%ld ", *(e3+ i));
@@ -119,69 +124,39 @@ int cli(char * prelude_str) {
             FREE(e3);
         }
 
-        if (strcmp(cmds[0], "run") == 0) {
-            debug("running exp test...");
-            u64 a   = 844489355100167;
-            u64 b   = 844454995361799;
-            u8 n    = 4;
-            u64 * e = unpackexp(a, n);
-            printf("%ld : ", a);
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e + i));
-            }
-            e = unpackexp(b, n);
-            printf("%ld : ", b);
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e + i));
-            }
-
-            if (cmpexplex(a, b, n)) {
-                printf("a > b\n");
-            } else printf("a < b\n");
-
-            printf("\n");
-            FREE(e);
-            debug("done!");
-            exit(1);
+        if (strcmp(cmds[0], "llpol") == 0) {
             debug("running pol test...");
-            pol_t * pol = malloc(sizeof(pol_t));
+            u8 n = 4;
+            llpol = llpolnvars(n);
+            llpol = addterm2llpol(llpol, 0.31415, 2023451344);
+            llpol = addterm2llpol(llpol, 1234124, 74834566);
+            llpol = addterm2llpol(llpol, 981.134, 4576355545);
+            llpol = addterm2llpol(llpol, 0.00011, 645674567);
+            llpol = addterm2llpol(llpol, 0.645, 12023451344);
+            llpol = addterm2llpol(llpol, 1234125334, 714834566);
+            llpol = addterm2llpol(llpol, 981.1534534, 14576355545);
+            llpol = addterm2llpol(llpol, 0.00345011, 1645674567);
+            printllpol_t(llpol);
+            freellpol_t(llpol);
             
-            if (!pol) return 1;
+        }
 
-            pol->coef = 1;
-            pol->exp = 32;
-            pol->nvar = 4;
-            pol->nxt = NULL;
-            debug("adding terms to pol...");
-            pol = addterm2pol(pol, 2.3, 10);
-            pol = addterm2pol(pol, -2., 20);
-            pol = addterm2pol(pol, -.3, 21);
-            pol = addterm2pol(pol, 201, -1);
-            printpol(pol);
-            debug("done!");
-            pol_t * pol2 = NULL;
-            pol2 = polnvars(8);
+        if (strcmp(cmds[0], "aapol") == 0) {
+            debug("running pol test...");
+            u8 n = 4;
+            aapol = aapolnvars(n);
+            debug("adding terms...");
+            aapol = addterm2aapol(aapol, 0.31415, 2023451344);
+            aapol = addterm2aapol(aapol, 1234124, 74834566);
+            aapol = addterm2aapol(aapol, 981.134, 4576355545);
+            aapol = addterm2aapol(aapol, 0.00011, 645674567);
+            aapol = addterm2aapol(aapol, 0.645, 12023451344);
+            aapol = addterm2aapol(aapol, 1234125334, 714834566);
+            aapol = addterm2aapol(aapol, 981.1534534, 14576355545);
+            aapol = addterm2aapol(aapol, 0.00345011, 1645674567);
+            printaapol_t(aapol);
+            freeaapol_t(aapol);
             
-            if (!pol2) return 1;
-            
-            pol2 = addterm2pol(pol2, 1, -1);
-            pol2 = addterm2pol(pol2, 31.2, -2);
-            pol2 = addterm2pol(pol2, 3.41, 11198612397642394);
-
-            printpol(pol2);
-            //pol2 = addterm2pol(pol2, 123, 9873);
-            //pol2 = addterm2pol(pol2, .002, 31);
-            //printpol(pol2);
-            debug("creating empty pol and trying to print it.");
-            // pol_t * epol = NULL;
-            // printpol(epol);
-            // epol = addterm2pol(epol, 39.2, 200);
-            // printpol(epol);
-            debug("freeing the pols...");
-            freepol_t(pol);
-            freepol_t(pol2);
-            debug("done!");
-            exit(0);
         }
 
         /*
