@@ -37,11 +37,14 @@ struct llpol_t {
 typedef struct aapol_t aapol_t; // alternated array
 typedef struct llpol_t llpol_t; // linked list
 
-pol_t * str2pol(char *); // TODO
+pol_t *   str2pol(char *); // TODO
 llpol_t * llpolnvars(u8 n);
 llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
 
 aapol_t * aapolnvars(u8 n);
+void      minheapify(pol_t * terms, int i, int sz);
+void      buildminheap(pol_t * terms, int hsz);
+void      sortaapol_t(aapol_t * aapol);
 aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
 
 

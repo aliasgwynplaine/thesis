@@ -26,6 +26,88 @@ aapol_t * aapolnvars(u8 n) {
     return aapol;
 }
 
+
+#define PARENT(I) I>>1 // ??
+#define LEFT(I)   (I<<1) + 1
+#define RIGHT(I)  (I<<1) + 2
+
+void minheapify(pol_t * terms, int i, int hsz) {
+    int l = LEFT(i);
+    int r = RIGHT(i);
+    int largest = i;
+
+    // debug("[%d]: comparing left... %d", i, l);
+    if (l <= hsz) { 
+        if(terms[l].exp < terms[i].exp)
+            largest = l;
+        else {
+            if (terms[l].exp == terms[i].exp) {
+                terms[i].coef += terms[l].coef;
+                terms[l].coef = 0;
+                terms[l].exp  = 0;
+            }
+
+            largest = i;
+        }
+    }
+
+    // debug("[%d] comparing right... %d", i, r);
+    if (r <= hsz) {
+        if (terms[r].exp < terms[largest].exp)
+            largest = r;
+        else if (terms[r].exp == terms[i].exp) {
+            terms[i].coef += terms[r].coef;
+            terms[r].coef = 0;
+            terms[r].exp  = 0;
+        }
+    }
+    if (largest != i) {
+        pol_t aux      = terms[i];
+        terms[i]       = terms[largest];
+        terms[largest] = aux;
+        //debug("[%d]: moving forward (%d)", i, largest);
+        minheapify(terms, largest, hsz);
+    }
+}
+
+void buildminheap(pol_t * terms, int hsz) {
+    debug("building heap... %d", hsz);
+    for (int i = hsz / 2; i >= 0; i--) {
+        debug("[%d]: minheapifying", i);
+        minheapify(terms, i, hsz);
+    }
+}
+
+void sortaapol_t(aapol_t * aapol) {
+    debug("preparing pol...");
+    pol_t aux;
+    int hsz = aapol->sz - 1;
+    buildminheap(aapol->terms, hsz);
+    debug("heap is ready...");
+
+    for (int i = aapol->sz - 1; i >= 1; i--) {
+        aux             = aapol->terms[i];
+        aapol->terms[i] = aapol->terms[0];
+        aapol->terms[0] = aux;
+        hsz -= 1;
+        // debug("[%d]: sorting...", i);
+        minheapify(aapol->terms, 0, hsz);
+    }
+
+    // todo, get read of zeros remaining...
+}
+
+/**
+ * @brief adds a term to the aapol.
+ * Note that is not necesary to store the 
+ * returning value because is in fact the
+ * same as aapol
+ * @param aapol pointer to aapol
+ * @param coef  coefficient of the new term
+ * @param exp   exponent of the new term
+ * @return aapol_t* pointer to the aapol with
+ * the new term
+ */
 aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
 
     /* todo: IMPLEMENT AS HEAP */
