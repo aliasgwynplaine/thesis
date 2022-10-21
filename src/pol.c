@@ -1,4 +1,6 @@
 #include "pol.h"
+#define _GNU_SOURCE
+#include <search.h>
 
 /*
 how do i control the vars???
@@ -15,7 +17,8 @@ Using masks
  * @return aapol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-aapol_t * aapolnvars(u8 n) {
+aapol_t * aapolmalloc(u8 n) {
+    if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     aapol_t * aapol = malloc(sizeof(aapol_t));
     TESTPTR(aapol);
     aapol->nvar  = n;
@@ -27,53 +30,54 @@ aapol_t * aapolnvars(u8 n) {
 }
 
 
-#define PARENT(I) I>>1 // ??
+#define PARENT(I)  I>>1
 #define LEFT(I)   (I<<1) + 1
 #define RIGHT(I)  (I<<1) + 2
+
 
 void minheapify(pol_t * terms, int i, int hsz) {
     int l = LEFT(i);
     int r = RIGHT(i);
-    int largest = i;
+    int smallest = i;
 
     // debug("[%d]: comparing left... %d", i, l);
     if (l <= hsz) { 
         if(terms[l].exp < terms[i].exp)
-            largest = l;
+            smallest = l;
         else {
             if (terms[l].exp == terms[i].exp) {
-                terms[i].coef += terms[l].coef;
-                terms[l].coef = 0;
-                terms[l].exp  = 0;
+                terms[l].coef += terms[i].coef;
+                terms[i].coef = 0;
+                terms[i].exp  = 0;
             }
 
-            largest = i;
+            //smallest = i;
         }
     }
 
     // debug("[%d] comparing right... %d", i, r);
     if (r <= hsz) {
-        if (terms[r].exp < terms[largest].exp)
-            largest = r;
-        else if (terms[r].exp == terms[i].exp) {
-            terms[i].coef += terms[r].coef;
-            terms[r].coef = 0;
-            terms[r].exp  = 0;
+        if (terms[r].exp < terms[smallest].exp)
+            smallest = r;
+        else if (terms[r].exp == terms[smallest].exp) {
+            terms[r].coef += terms[smallest].coef;
+            terms[smallest].coef = 0;
+            terms[smallest].exp  = 0;
         }
     }
-    if (largest != i) {
-        pol_t aux      = terms[i];
-        terms[i]       = terms[largest];
-        terms[largest] = aux;
-        //debug("[%d]: moving forward (%d)", i, largest);
-        minheapify(terms, largest, hsz);
+    if (smallest != i) {
+        pol_t aux       = terms[i];
+        terms[i]        = terms[smallest];
+        terms[smallest] = aux;
+        //debug("[%d]: moving forward (%d)", i, smallest);
+        minheapify(terms, smallest, hsz);
     }
 }
 
 void buildminheap(pol_t * terms, int hsz) {
     debug("building heap... %d", hsz);
     for (int i = hsz / 2; i >= 0; i--) {
-        debug("[%d]: minheapifying", i);
+        //debug("[%d]: minheapifying", i);
         minheapify(terms, i, hsz);
     }
 }
@@ -81,26 +85,29 @@ void buildminheap(pol_t * terms, int hsz) {
 void sortaapol_t(aapol_t * aapol) {
     debug("preparing pol...");
     pol_t aux;
-    int hsz = aapol->sz - 1;
+    int sz  = aapol->sz;
+    int hsz = sz - 1;
     buildminheap(aapol->terms, hsz);
-    debug("heap is ready...");
 
-    for (int i = aapol->sz - 1; i >= 1; i--) {
+    for (int i = sz - 1; i >= 1; i--) {
+        // printf("[%d]: aapol - ", i);
+        // printaapol_t(aapol);
         aux             = aapol->terms[i];
         aapol->terms[i] = aapol->terms[0];
         aapol->terms[0] = aux;
-        hsz -= 1;
+        hsz            -= 1;
         // debug("[%d]: sorting...", i);
         minheapify(aapol->terms, 0, hsz);
     }
 
-    // todo, get read of zeros remaining...
+    while (aapol->terms[aapol->sz - 1].coef == 0)
+        aapol->sz--;
 }
 
 /**
  * @brief adds a term to the aapol.
  * Note that is not necesary to store the 
- * returning value because is in fact the
+ * returning value because is, in fact, the
  * same as aapol
  * @param aapol pointer to aapol
  * @param coef  coefficient of the new term
@@ -109,8 +116,6 @@ void sortaapol_t(aapol_t * aapol) {
  * the new term
  */
 aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
-
-    /* todo: IMPLEMENT AS HEAP */
     if (coef == 0) {
         return aapol;
     }
@@ -118,7 +123,7 @@ aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     if (!aapol->terms) {
         aapol->terms = malloc(2*sizeof(pol_t));
         TESTPTR(aapol);
-        aapol->cap   = 2;
+        aapol->cap = 2;
     }
 
 
@@ -134,11 +139,86 @@ aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     debug("creating a new term...");
     (aapol->terms + aapol->sz)->coef = coef;
     (aapol->terms + aapol->sz)->exp  = exp;
-    aapol->sz++;
+    int i  = aapol->sz++;
+    int pi = PARENT(i);
+
+    while (i > 0 && aapol->terms[pi].exp > aapol->terms[i].exp) {
+        pol_t aux        = aapol->terms[i];
+        aapol->terms[i]  = aapol->terms[pi];
+        aapol->terms[pi] = aux;
+        i  = PARENT(i);
+        pi = PARENT(i);
+        
+        // if (aapol->terms[i].exp == aapol->terms[pi].exp) {
+        //     aapol->terms[pi].coef += aapol->terms[i].coef;
+        //     aapol->terms[i].coef  = 0;
+        //     aapol->terms[i].exp   = 0;
+        // }
+    }
+
+    // sortaapol_t(aapol);
 
     return aapol;
 }
 
+int cmp(const void * a, const void * b) {
+    if (*(int *) a < *(int *) b) 
+        return -1;
+    
+    if (*(int *) a > *(int *) b) 
+        return 1;
+    
+    return 0;
+}
+
+void action(const void *np, VISIT which, int d) {
+    //debug("taking action");
+    switch (which) {
+    case postorder:
+        printf("%ld ", **(u64 **)np);
+        break;
+    case leaf:
+        printf("%ld ", **(u64 **)np);
+        break;
+    default :
+        break;
+    }
+}
+
+
+/**
+ * @brief transforms a list of aapol_t 
+ * to matrix for groebner basis calculation 
+ * @param aapol 
+ * @param sz 
+ */
+void aapol2matrix(aapol_t * aapol, int sz) {
+    void * root = NULL;
+    void * tval;
+    u64 * ptr;
+    COEFTYPE ** b = NULL;
+    int j = 0;
+    for (int j = 0; j < sz; j++) {
+        for (int i = 0; i < (aapol+j)->sz; i++) {
+            ptr = malloc(sizeof(u64));
+            TESTPTR(ptr);
+            *ptr = (aapol+j)->terms[i].exp;
+            tval = tsearch((void *) ptr, &root, cmp);
+
+            if (tval == NULL) {
+                SAYNEXITWERROR("Error on tsearch.");
+            } else if ((*(u64 **)tval) != ptr) {
+                FREE(ptr);
+            }
+        }
+    }
+
+    twalk(root, action);
+    printf("\n");
+    tdestroy(root, free);
+    
+    //return b;
+}
 
 /**
  * @brief creates a linked list like pol in n
@@ -149,7 +229,8 @@ aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
  * @return llpol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-llpol_t * llpolnvars(u8 n) {
+llpol_t * llpolmalloc(u8 n) {
+    if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     llpol_t * llpol = malloc(sizeof(llpol_t));
     TESTPTR(llpol);
     llpol->head = NULL;
@@ -196,7 +277,7 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
  */
 
 void printllpol_t(llpol_t * llpol) {
-    debug("checking if pol is null");
+    //debug("checking if pol is null");
     if (llpol == NULL) {
         printf("pol is  empty!\n");
         return;
@@ -209,6 +290,10 @@ void printllpol_t(llpol_t * llpol) {
     while (curr) {
         e = unpackexp(curr->exp, llpol->nvar);
         if (curr->coef >= 0) printf("+ ");
+        if (curr->exp == 0) {
+            printf("%f", curr->coef);
+            continue;
+        }
         printf("%f*x^(", curr->coef);
 
         for (int i = 0; i < llpol->nvar - 1; i++) {
@@ -222,7 +307,7 @@ void printllpol_t(llpol_t * llpol) {
 }
 
 void printaapol_t(aapol_t * aapol) {
-    debug("checking if pol is null");
+    //debug("checking if pol is null");
     if (aapol == NULL) {
         printf("pol is  empty!\n");
         return;
@@ -232,9 +317,15 @@ void printaapol_t(aapol_t * aapol) {
     terms = aapol->terms;
 
     for (int i = 0; i < aapol->sz; i++) {
-        e = unpackexp(terms[i].exp, aapol->nvar);
         if (terms[i].coef >= 0) printf("+ ");
-        printf("%f*x^(", terms[i].coef);
+        
+        if (terms[i].exp == 0) {
+            printf("%f", terms[i].coef);
+            continue;
+        }
+        
+        e = unpackexp(terms[i].exp, aapol->nvar);
+        printf("%0.1f*x^(", terms[i].coef);
 
         for (int i = 0; i < aapol->nvar - 1; i++) {
             printf("%ld, ", *(e + i));
@@ -324,15 +415,12 @@ void expadd(u64 * a, u64 * b, u64 * c) {
 u64 * unpackexp(u64 e, u8 nvar) {
     if (nvar <= 0) {
         dbgerr("nvar is no positive!");
-        exit(1);
+        exit(EXIT_FAILURE);
     }
     u64 * exp  = malloc(nvar * sizeof(u64 *));
     TESTPTR(exp);
     u16 step   = 64 / nvar; 
-    if (exp == NULL) {
-        dbgerr("No memory!");
-        exit(EXIT_FAILURE);
-    }
+
     switch (nvar) {
     case 1:
         *exp = e;
@@ -377,6 +465,20 @@ u64 * unpackexp(u64 e, u8 nvar) {
         exit(EXIT_FAILURE);
         break;
     }
+    
+    return exp;
+}
+
+u64 packexp(u64 * e, u8 nvar) {
+    if (nvar <= 0) {
+        dbgerr("nvar is no positive!");
+        exit(EXIT_FAILURE);
+    }
+    u64 exp  = 0;
+    u16 step = 64 / nvar; 
+
+    for (int i = 0; i < nvar; i++)
+        exp += *(e+i)<<((nvar-i-1)*step);
     
     return exp;
 }

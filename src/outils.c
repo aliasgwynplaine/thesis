@@ -1,5 +1,23 @@
 #include "outils.h"
 
+/**
+ * @brief binary node struct.
+ * Definition and functions from 
+ * Corwen
+ * 
+ */
+struct bnode_t {
+    int      sz;
+    bnode_t * l;
+    bnode_t * r;
+};
+
+/**
+ * @brief prints a list of strings
+ * as chars
+ * 
+ * @param lstr 
+ */
 void print_lstr(char ** lstr)  {
     if (!lstr) {printf("NULLL");return;}
     printf("not null\n");
@@ -15,6 +33,13 @@ void print_lstr(char ** lstr)  {
     printf("\n");
 }
 
+
+/**
+ * @brief prints a list of strings
+ * as bytes
+ * 
+ * @param lstr 
+ */
 void print_lstrb(char ** lstr)  {
     if (!lstr) {return;}
 

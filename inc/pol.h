@@ -3,14 +3,18 @@
 #include "outils.h"
 #include "debug.h"
 
+#ifndef COEFTYPE
+#define COEFTYPE float
+#endif
+
+#define MAX_NUM_O_VARS 8
+
 typedef struct pol_t pol_t;
 typedef struct lpol_t lpol_t;
 
-#define COEFTYPE float
-
 struct pol_t {
     COEFTYPE coef; // could be an AP num
-    u64      exp;  // packed exponent
+    u64       exp;  // packed exponent
 };
 
 struct lpol_t {   // pol type for llist
@@ -20,10 +24,12 @@ struct lpol_t {   // pol type for llist
 };
 
 /* from brandt's. no implemented yet */
+typedef struct aapol_t aapol_t; // alternated array
+typedef struct llpol_t llpol_t; // linked list
 
 struct aapol_t { // heap-like structure
     u8      nvar;
-    u16      sz;
+    u16     sz;
     u16     cap;     // current capacity
     pol_t * terms;
 };
@@ -34,14 +40,11 @@ struct llpol_t {
     lpol_t * head;
 };
 
-typedef struct aapol_t aapol_t; // alternated array
-typedef struct llpol_t llpol_t; // linked list
 
-pol_t *   str2pol(char *); // TODO
-llpol_t * llpolnvars(u8 n);
+pol_t   * str2pol(char *); // todo
 llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
 
-aapol_t * aapolnvars(u8 n);
+
 void      minheapify(pol_t * terms, int i, int sz);
 void      buildminheap(pol_t * terms, int hsz);
 void      sortaapol_t(aapol_t * aapol);
@@ -55,10 +58,14 @@ pol_t * mulpol(pol_t * p, pol_t * q);
 
 /* matrix2pol & pol2matrix transformations*/
 
+void aapol2matrix(aapol_t * aapol, int sz);
+
 /* memory handling */
-void freelpol_t(lpol_t *);
-void freeaapol_t(aapol_t *);
-void freellpol_t(llpol_t *);
+llpol_t * llpolmalloc(u8 n);
+aapol_t * aapolmalloc(u8 n);
+void      freelpol_t(lpol_t *);
+void      freeaapol_t(aapol_t *);
+void      freellpol_t(llpol_t *);
 
 /* pretty printing */
 void printpol(pol_t * pol);
@@ -71,10 +78,11 @@ void printaapol_t(aapol_t * aapol);
 
 /* bit masks and bit extraction*/
 
-int cmpexplex(u64, u64, u8);
-int cmpexprevlex(u64, u64, u8);
-void expadd(u64 *, u64 *, u64 *);
+int   cmpexplex(u64, u64, u8);
+int   cmpexprevlex(u64, u64, u8);
+void  expadd(u64 *, u64 *, u64 *);
 u64 * unpackexp(u64, u8);
+u64   packexp(u64 *, u8);
 
 
 /* exponent's binary masks */
