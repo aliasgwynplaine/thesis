@@ -190,16 +190,16 @@ int cli(char * prelude_str) {
             aapol1 = aapolmalloc(1);
             aapol2 = aapolmalloc(1);
             aapol3 = aapolmalloc(1);
-            addterm2aapol(aapol1, 1, 3);
+            addterm2aapol(aapol1, 1, 34);
             addterm2aapol(aapol1, 1, 5);
             addterm2aapol(aapol1, 1, 2);
-            addterm2aapol(aapol1, 1, 3);
+            addterm2aapol(aapol1, 1, 313);
             addterm2aapol(aapol2, 1, 0);
             addterm2aapol(aapol2, 1, 1);
             addterm2aapol(aapol2, 1, 3);
-            addterm2aapol(aapol3, 1, 2);
+            addterm2aapol(aapol3, 1, 654);
             addterm2aapol(aapol3, 1, 1);
-            addterm2aapol(aapol3, 1, 5);
+            addterm2aapol(aapol3, 1, 536);
             addterm2aapol(aapol3, 7, 0);
             debug("pol is created.");
             sortaapol_t(aapol1);
@@ -219,6 +219,29 @@ int cli(char * prelude_str) {
             // freeaapol_t(aapol3);
             freeaapol_t(laapol);
             debug("done.");
+        }
+
+        if (strcmp("bst", cmds[0]) == 0) {
+            setoint_t * s = setoint_create();
+            int d = 1;
+            
+            while (d > 0) {
+                printf("insert data: ");
+                scanf("%d", &d);
+                setoint_insert(s, d);
+            }
+            
+            debug("Dumping set of ints...");
+            u64 * dump = setoint_dump(s);
+            printf("Now, here it is: \n");
+            
+            for (int i = 0; i < s->sz; i++) {
+                printf("%ld ", *(dump + i));
+            }
+            
+            FREE(dump);
+            setoint_free(s);
+            printf("\nDone!\n");
         }
 
         /*

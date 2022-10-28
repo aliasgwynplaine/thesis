@@ -161,62 +161,64 @@ aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     return aapol;
 }
 
-int cmp(const void * a, const void * b) {
-    if (*(int *) a < *(int *) b) 
-        return -1;
-    
-    if (*(int *) a > *(int *) b) 
-        return 1;
-    
-    return 0;
-}
 
-void action(const void *np, VISIT which, int d) {
-    //debug("taking action");
-    switch (which) {
-    case postorder:
-        printf("%ld ", **(u64 **)np);
-        break;
-    case leaf:
-        printf("%ld ", **(u64 **)np);
-        break;
-    default :
-        break;
-    }
+COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
+    return 0;
 }
 
 
 /**
  * @brief transforms a list of aapol_t 
  * to matrix for groebner basis calculation 
- * @param aapol 
- * @param sz 
+ * @param aapol list of aapols
+ * @param sz size of list
  */
 void aapol2matrix(aapol_t * aapol, int sz) {
-    void * root = NULL;
-    void * tval;
-    u64 * ptr;
-    COEFTYPE ** b = NULL;
-    int j = 0;
+    setoint_t * s = setoint_create();
+
     for (int j = 0; j < sz; j++) {
         for (int i = 0; i < (aapol+j)->sz; i++) {
-            ptr = malloc(sizeof(u64));
-            TESTPTR(ptr);
-            *ptr = (aapol+j)->terms[i].exp;
-            tval = tsearch((void *) ptr, &root, cmp);
-
-            if (tval == NULL) {
-                SAYNEXITWERROR("Error on tsearch.");
-            } else if ((*(u64 **)tval) != ptr) {
-                FREE(ptr);
-            }
+            setoint_insert(s, (aapol+j)->terms[i].exp);
         }
     }
 
-    twalk(root, action);
+    u64 * exps = setoint_dump(s);
+    debug("\n");
+    for (int i = 0; i < s->sz; i++) {
+        printf("%.3ld ", *(exps + i));
+    }
     printf("\n");
-    tdestroy(root, free);
-    
+
+    /* 
+       todo: considera usar una tabla hash
+       que almacene los exponentes y los asocie
+       a índices.
+    */
+    aapol_t * aux;
+    int k;
+    int i;
+
+    for (int j = 0; j < sz; j++) {
+        k = 0;
+        aux = (aapol+j);
+        i = 0;
+        while (i < aux->sz) {
+            if (aux->terms[i].exp < *(exps+k)) {
+                printf(" -  ");
+            }
+            else if (aux->terms[i].exp == *(exps+k)) {
+                /* construct matrix here */
+                /*
+                    insert matcoef in pos (i,k)
+                */
+                printf("%0.1f ", aux->terms[i].coef);
+                i++;
+            } else { break; }
+            k++;
+        }
+        printf("eol\n");
+    }
+    debug("Done!\n");
     //return b;
 }
 
