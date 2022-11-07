@@ -13,19 +13,20 @@ typedef struct pol_t pol_t;
 typedef struct lpol_t lpol_t;
 
 struct pol_t {
-    COEFTYPE coef; // could be an AP num
+    COEFTYPE  coef; // could be an AP num
     u64       exp;  // packed exponent
 };
 
 struct lpol_t {   // pol type for llist
     COEFTYPE coef;
     u64      exp;
-    lpol_t * nxt;
+    lpol_t * l;
+    lpol_t * r;
 };
 
 /* from brandt's. no implemented yet */
 typedef struct aapol_t aapol_t; // alternated array
-typedef struct llpol_t llpol_t; // linked list
+typedef struct llpol_t llpol_t; // tree-like pol struct
 
 struct aapol_t { // heap-like structure
     u8      nvar;
@@ -35,9 +36,9 @@ struct aapol_t { // heap-like structure
 };
 
 struct llpol_t {
-    u16 sz;
-    u8 nvar;
-    lpol_t * head;
+    u16      sz;
+    u8       nvar;
+    lpol_t * root;
 };
 
 
@@ -47,7 +48,7 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
 
 void      minheapify(pol_t * terms, int i, int sz);
 void      buildminheap(pol_t * terms, int hsz);
-void      sortaapol_t(aapol_t * aapol);
+void      sortaapol(aapol_t * aapol);
 aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
 
 
@@ -61,16 +62,17 @@ pol_t * mulpol(pol_t * p, pol_t * q);
 void aapol2matrix(aapol_t * aapol, int sz);
 
 /* memory handling */
+lpol_t  * lpolmalloc(size_t sz);
 llpol_t * llpolmalloc(u8 n);
 aapol_t * aapolmalloc(u8 n);
-void      freelpol_t(lpol_t *);
-void      freeaapol_t(aapol_t *);
-void      freellpol_t(llpol_t *);
+void      freelpol(lpol_t *);
+void      freeaapol(aapol_t *);
+void      freellpol(llpol_t *);
 
 /* pretty printing */
 void printpol(pol_t * pol);
-void printllpol_t(llpol_t * llpol);
-void printaapol_t(aapol_t * aapol);
+void printllpol(llpol_t * llpol);
+void printaapol(aapol_t * aapol);
 
 /* define polynomial operations here */
 

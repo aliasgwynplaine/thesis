@@ -150,8 +150,8 @@ int cli(char * prelude_str) {
             llpol = addterm2llpol(llpol, 1234125334, 714834566);
             llpol = addterm2llpol(llpol, 981.1534534, 14576355545);
             llpol = addterm2llpol(llpol, 0.00345011, 1645674567);
-            printllpol_t(llpol);
-            freellpol_t(llpol);
+            printllpol(llpol);
+            freellpol(llpol);
             
         }
 
@@ -174,14 +174,15 @@ int cli(char * prelude_str) {
             addterm2aapol(aapol, 1, 7);
             addterm2aapol(aapol, 1, 7);
             addterm2aapol(aapol, 7, 0);
-            printaapol_t(aapol);
+            printaapol(aapol);
             debug("ordering aapol...");
-            sortaapol_t(aapol);
-            printaapol_t(aapol);
+            sortaapol(aapol);
+            debug("pol->sz: %d", aapol->sz);
+            printaapol(aapol);
             printf("Second sort...\n");
-            sortaapol_t(aapol);
-            printaapol_t(aapol);
-            freeaapol_t(aapol);
+            sortaapol(aapol);
+            printaapol(aapol);
+            freeaapol(aapol);
             
         }
 
@@ -202,22 +203,22 @@ int cli(char * prelude_str) {
             addterm2aapol(aapol3, 1, 536);
             addterm2aapol(aapol3, 7, 0);
             debug("pol is created.");
-            sortaapol_t(aapol1);
-            sortaapol_t(aapol2);
-            sortaapol_t(aapol3);
-            printaapol_t(aapol1);
-            printaapol_t(aapol2);
-            printaapol_t(aapol3);
+            sortaapol(aapol1);
+            sortaapol(aapol2);
+            sortaapol(aapol3);
+            printaapol(aapol1);
+            printaapol(aapol2);
+            printaapol(aapol3);
             laapol = malloc(3 * sizeof(aapol_t));
             laapol[0] = *aapol1;
             laapol[1] = *aapol2;
             laapol[2] = *aapol3;
             aapol2matrix(laapol, 3);
             debug("convertion done. freeing pols");
-            // freeaapol_t(aapol1);
-            // freeaapol_t(aapol2);
-            // freeaapol_t(aapol3);
-            freeaapol_t(laapol);
+            // freeaapol(aapol1);
+            // freeaapol(aapol2);
+            // freeaapol(aapol3);
+            freeaapol(laapol);
             debug("done.");
         }
 

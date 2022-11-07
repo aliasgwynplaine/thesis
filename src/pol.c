@@ -82,26 +82,59 @@ void buildminheap(pol_t * terms, int hsz) {
     }
 }
 
-void sortaapol_t(aapol_t * aapol) {
-    debug("preparing pol...");
-    pol_t aux;
-    int sz  = aapol->sz;
-    int hsz = sz - 1;
-    buildminheap(aapol->terms, hsz);
 
-    for (int i = sz - 1; i >= 1; i--) {
-        // printf("[%d]: aapol - ", i);
-        // printaapol_t(aapol);
-        aux             = aapol->terms[i];
-        aapol->terms[i] = aapol->terms[0];
-        aapol->terms[0] = aux;
-        hsz            -= 1;
-        // debug("[%d]: sorting...", i);
-        minheapify(aapol->terms, 0, hsz);
+void mergeaapol(aapol_t * a, int p, int q, int r) {
+    int n_1, n_2, i, j, c;
+    pol_t * l_;
+    pol_t * r_;
+    n_1 = q - p + 1;
+    n_2 = r - q;
+    l_ = malloc((n_1 + 1) * sizeof(pol_t));
+    TESTPTR(l_);
+    r_ = malloc((n_2 + 1) * sizeof(pol_t));
+    TESTPTR(r_);
+
+    for (i = 0; i < n_1; i++) l_[i] = a->terms[i + p];
+
+    for (i = 0; i < n_2; i++) r_[i] = a->terms[i + q + 1];
+
+    l_[n_1].exp = -1; r_[n_2].exp = -1;
+    i = 0; j = 0;
+
+    for (int k = p; k <= r; k++) {
+        if (i != n_1 || j != n_2) {
+            c = l_[i].exp - r_[j].exp;
+
+            if (c > 0) a->terms[k] = l_[i++];
+            else if (c < 0) a->terms[k] = r_[j++];
+            else if (c == 0) {
+                a->terms[k].coef = l_[i++].coef + r_[j].coef;
+                a->terms[k].exp  = r_[j++].exp;
+            }
+        } else { 
+            a->terms[k].coef = 0;
+            a->terms[k].exp = 0;
+        }
     }
 
-    while (aapol->terms[aapol->sz - 1].coef == 0)
-        aapol->sz--;
+    FREE(l_);
+    FREE(r_);
+}
+
+void mergesortaapol(aapol_t * aapol, int p, int r) {
+    if (p < r) {
+        int q = (p + r) / 2;
+        mergesortaapol(aapol, p, q);
+        mergesortaapol(aapol, q + 1, r);
+        mergeaapol(aapol, p, q, r);
+    }
+
+}
+
+void sortaapol(aapol_t * aapol) {
+    debug("preparing pol...");
+    mergesortaapol(aapol, 0, aapol->sz - 1);
+    /* todo: get rid off the remaining 0's */
 }
 
 /**
@@ -142,7 +175,7 @@ aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     int i  = aapol->sz++;
     int pi = PARENT(i);
 
-    while (i > 0 && aapol->terms[pi].exp > aapol->terms[i].exp) {
+    while (i > 0 && aapol->terms[pi].exp < aapol->terms[i].exp) {
         pol_t aux        = aapol->terms[i];
         aapol->terms[i]  = aapol->terms[pi];
         aapol->terms[pi] = aux;
@@ -222,8 +255,18 @@ void aapol2matrix(aapol_t * aapol, int sz) {
     //return b;
 }
 
+lpol_t * lpolmalloc(size_t sz) {
+    lpol_t * lpol = malloc(sz);
+    lpol->coef = 0;
+    lpol->exp  = 0;
+    lpol->l    = NULL;
+    lpol->r    = NULL;
+
+    return lpol;
+}
+
 /**
- * @brief creates a linked list like pol in n
+ * @brief creates a tree like pol struct in n
  * vars. It's necesary to call freellpol_t at
  * the end. 
  * 
@@ -235,7 +278,7 @@ llpol_t * llpolmalloc(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     llpol_t * llpol = malloc(sizeof(llpol_t));
     TESTPTR(llpol);
-    llpol->head = NULL;
+    llpol->root = NULL;
     llpol->nvar = n;
     llpol->sz   = 0;
 
@@ -260,15 +303,51 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
         exit(EXIT_FAILURE);
     }
     debug("creating newterm...");
-    lpol_t * newterm = malloc(sizeof(lpol_t));
+    lpol_t * curr    = llpol->root;
+    lpol_t * aux     = NULL;
+    lpol_t * newterm = lpolmalloc(sizeof(lpol_t));
     TESTPTR(newterm);
-
     newterm->coef = coef;
     newterm->exp  = exp;
-    newterm->nxt  = llpol->head;
-    llpol->head = newterm;
+
+    while (curr != NULL) {
+        aux = curr;
+
+        if (exp < curr->exp) curr = curr->l;
+        else curr = curr->r;
+    }
+
+    if (aux == NULL) llpol->root = newterm;
+    else if (exp < aux->exp) aux->l = newterm;
+    else aux->r = newterm;
 
     return llpol;
+}
+
+void printlpol(lpol_t * lpol, u8 nvar) {
+    u64 * e = unpackexp(lpol->exp, nvar);
+    if (lpol->coef >= 0) printf("+ ");
+    if (lpol->exp == 0) {
+        printf("%f", lpol->coef);
+    } else {
+        printf("%f*x^(", lpol->coef);
+
+        for (int i = 0; i < nvar - 1; i++) {
+            printf("%ld, ", *(e + i));
+        }
+
+        printf("%ld)", *(e + nvar - 1));
+
+    }
+}
+
+void inorderprintllpol(lpol_t * root, u8 nvar) {
+    if (root == NULL) return;
+    
+    inorderprintllpol(root->r, nvar);
+    printlpol(root, nvar);
+    inorderprintllpol(root->l, nvar);
+    
 }
 
 
@@ -278,37 +357,18 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
  * @param pol polynomial
  */
 
-void printllpol_t(llpol_t * llpol) {
+void printllpol(llpol_t * llpol) {
     //debug("checking if pol is null");
     if (llpol == NULL) {
         printf("pol is  empty!\n");
         return;
     }
-    lpol_t * curr;
-    u64 * e;
-    //int sz = 0;
-    curr = llpol->head;
 
-    while (curr) {
-        e = unpackexp(curr->exp, llpol->nvar);
-        if (curr->coef >= 0) printf("+ ");
-        if (curr->exp == 0) {
-            printf("%f", curr->coef);
-            continue;
-        }
-        printf("%f*x^(", curr->coef);
-
-        for (int i = 0; i < llpol->nvar - 1; i++) {
-            printf("%ld, ", *(e + i));
-        }
-        printf("%ld)", *(e + llpol->nvar - 1));
-        curr = curr->nxt;
-        FREE(e);
-    }
+    inorderprintllpol(llpol->root, llpol->nvar);
     printf("\n");
 }
 
-void printaapol_t(aapol_t * aapol) {
+void printaapol(aapol_t * aapol) {
     //debug("checking if pol is null");
     if (aapol == NULL) {
         printf("pol is  empty!\n");
@@ -344,23 +404,19 @@ void printaapol_t(aapol_t * aapol) {
  * 
  * @param pol head of the ll
  */
-void freelpol_t(lpol_t * pol) {
-    lpol_t * curr;
-    
-    while (pol) {
-        curr = pol;
-        pol = pol->nxt;
-        FREE(curr);
-    }
+void freelpol(lpol_t * pol) {
+    if (pol->r != NULL) freelpol(pol->r);
+    if (pol->l != NULL) freelpol(pol->l);
+    FREE(pol);
 }
 
-void freellpol_t(llpol_t * llpol) {
-    freelpol_t(llpol->head);
+void freellpol(llpol_t * llpol) {
+    freelpol(llpol->root);
     FREE(llpol);
 }
 
 
-void freeaapol_t(aapol_t * aapol) {
+void freeaapol(aapol_t * aapol) {
     FREE(aapol->terms);
     FREE(aapol);
 }
