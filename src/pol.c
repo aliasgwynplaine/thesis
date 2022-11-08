@@ -1,4 +1,5 @@
 #include "pol.h"
+#include "matrix.h"
 
 /*
 how do i control the vars???
@@ -15,7 +16,7 @@ Using masks
  * @return aapol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-aapol_t * aapolmalloc(u8 n) {
+aapol_t * aapol_malloc(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     aapol_t * aapol = malloc(sizeof(aapol_t));
     TESTPTR(aapol);
@@ -38,7 +39,6 @@ void minheapify(pol_t * terms, int i, int hsz) {
     int r = RIGHT(i);
     int smallest = i;
 
-    // debug("[%d]: comparing left... %d", i, l);
     if (l <= hsz) { 
         if(terms[l].exp < terms[i].exp)
             smallest = l;
@@ -48,12 +48,9 @@ void minheapify(pol_t * terms, int i, int hsz) {
                 terms[i].coef = 0;
                 terms[i].exp  = 0;
             }
-
-            //smallest = i;
         }
     }
 
-    // debug("[%d] comparing right... %d", i, r);
     if (r <= hsz) {
         if (terms[r].exp < terms[smallest].exp)
             smallest = r;
@@ -67,22 +64,20 @@ void minheapify(pol_t * terms, int i, int hsz) {
         pol_t aux       = terms[i];
         terms[i]        = terms[smallest];
         terms[smallest] = aux;
-        //debug("[%d]: moving forward (%d)", i, smallest);
         minheapify(terms, smallest, hsz);
     }
 }
 
 void buildminheap(pol_t * terms, int hsz) {
     debug("building heap... %d", hsz);
-    for (int i = hsz / 2; i >= 0; i--) {
-        //debug("[%d]: minheapifying", i);
+    for (int i = hsz / 2; i >= 0; i--)
         minheapify(terms, i, hsz);
-    }
+
 }
 
 
 void mergeaapol(aapol_t * a, int p, int q, int r) {
-    int n_1, n_2, i, j, c;
+    int n_1, n_2, i, j, k, c, m;
     pol_t * l_;
     pol_t * r_;
     n_1 = q - p + 1;
@@ -97,9 +92,9 @@ void mergeaapol(aapol_t * a, int p, int q, int r) {
     for (i = 0; i < n_2; i++) r_[i] = a->terms[i + q + 1];
 
     l_[n_1].exp = -1; r_[n_2].exp = -1;
-    i = 0; j = 0;
+    i = 0; j = 0; k = p;
 
-    for (int k = p; k <= r; k++) {
+    while (k <= r) {
         if (i != n_1 || j != n_2) {
             c = l_[i].exp - r_[j].exp;
 
@@ -108,11 +103,14 @@ void mergeaapol(aapol_t * a, int p, int q, int r) {
             else if (c == 0) {
                 a->terms[k].coef = l_[i++].coef + r_[j].coef;
                 a->terms[k].exp  = r_[j++].exp;
+                if (a->terms[k].coef == 0) {continue;}
             }
         } else { 
             a->terms[k].coef = 0;
             a->terms[k].exp = 0;
         }
+
+        k++;
     }
 
     FREE(l_);
@@ -129,16 +127,20 @@ void mergesortaapol(aapol_t * aapol, int p, int r) {
 
 }
 
-void sortaapol(aapol_t * aapol) {
+void aapol_sort(aapol_t * aapol) {
     debug("preparing pol...");
+    int i;
     mergesortaapol(aapol, 0, aapol->sz - 1);
-    /* todo: get rid off the remaining 0's */
+    /* todo: a smarter way to get rid off the remaining 0's */
+    i = aapol->sz - 1;
+    while (aapol->terms[i].coef == 0) i--;
+    aapol->sz = i + 1;
 }
 
 /**
  * @brief adds a term to the aapol.
  * Note that is not necesary to store the 
- * returning value because is, in fact, the
+ * returning value because it is, in fact, the
  * same as aapol
  * @param aapol pointer to aapol
  * @param coef  coefficient of the new term
@@ -197,40 +199,66 @@ COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
     return 0;
 }
 
-smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz) {
+smatrix_t * aapol2smatrix(aapol_t * aapol, int sz) {
     setoint_t * s = setoint_create();
+    int nnz = 0;
 
     for (int j = 0; j < sz; j++) {
         for (int i = 0; i < (aapol+j)->sz; i++) {
             setoint_insert(s, (aapol+j)->terms[i].exp);
+            nnz++;
         }
     }
 
     u64 * exps = setoint_dump(s);
+    int * idx  = calloc(sz, sizeof(int));
+    debug("m: %d", sz);
+    debug("n: %d", s->sz);
+    debug("nnz : %d", nnz);
+    smatrix_t * smat = smatrix_malloc(sz, s->sz, nnz);
     aapol_t * aux;
-    int * idx = calloc(sz, sizeof(int));
-    
+
+    int k = 0;
+
+    /* not smart */
     for (int i = 0; i < s->sz; i++) {
-        for (int k = 0; k < sz; k++) printf("%d ", idx[k]);
-        printf("%.3ld ", *(exps + i));
-
-
         for (int j = 0; j < sz; j++) {
             aux = (aapol+j);
             if (idx[j] < aux->sz) {
-                if (*(exps + i) == aux->terms[idx[j]].exp)
-                    printf("%0.1f ", aux->terms[idx[j]++].coef);
-                else
-                    printf(" -  ");
-            }
+                if (*(exps + i) == aux->terms[idx[j]].exp) {
+                    smat->p[i + 1]++;
+                    smat->i[smat->nnz++] = j;
+                    smat->x[k++] = aux->terms[idx[j]++].coef;
+                }
+            }    
         }
-        printf("\n");
+        smat->p[i + 1] += smat->p[i];
     }
+
+    printf("p: ");
+    for (int i = 0; i <= s->sz; i++) {
+        printf("%d ", smat->p[i]);
+    }
+
+    printf("\ni: ");
+
+    for (int i = 0; i < smat->nnz; i++) {
+        printf("%d ", smat->i[i]);
+    }
+    
+    printf("\nx: ");
+    for (int i = 0; i < smat->nnz; i++) {
+        printf("%0.1f ", smat->x[i]);
+    }
+    printf("\n");
 
     FREE(idx);
     FREE(exps);
+    setoint_free(s);
     printf("\n");
     debug("Done!\n");
+
+    return smat;
 }
 
 
@@ -240,7 +268,7 @@ smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz) {
  * @param aapol list of aapols
  * @param sz size of list
  */
-smatrix_t * aapol2smatrix(aapol_t * aapol, int sz) {
+smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz) {
     setoint_t * s = setoint_create();
 
     for (int j = 0; j < sz; j++) {
@@ -286,7 +314,7 @@ smatrix_t * aapol2smatrix(aapol_t * aapol, int sz) {
     //return b;
 }
 
-lpol_t * lpolmalloc(size_t sz) {
+lpol_t * lpol_malloc(size_t sz) {
     lpol_t * lpol = malloc(sz);
     lpol->coef = 0;
     lpol->exp  = 0;
@@ -305,7 +333,7 @@ lpol_t * lpolmalloc(size_t sz) {
  * @return llpol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-llpol_t * llpolmalloc(u8 n) {
+llpol_t * llpol_malloc(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     llpol_t * llpol = malloc(sizeof(llpol_t));
     TESTPTR(llpol);
@@ -333,7 +361,9 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
         dbgerr("pol is null");
         exit(EXIT_FAILURE);
     }
-    debug("creating newterm...");
+    
+    if (coef == 0) return llpol;
+
     lpol_t * curr    = llpol->root;
     lpol_t * aux     = NULL;
     lpol_t * newterm;
@@ -345,7 +375,7 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
         else curr = curr->r;
     }
 
-    newterm = lpolmalloc(sizeof(lpol_t));
+    newterm = lpol_malloc(sizeof(lpol_t));
     TESTPTR(newterm);
     newterm->coef = coef;
     newterm->exp  = exp;
@@ -442,26 +472,26 @@ void printaapol(aapol_t * aapol) {
  * 
  * @param pol head of the ll
  */
-void freelpol(lpol_t * pol) {
-    if (pol->l != NULL) freelpol(pol->l);
-    if (pol->r != NULL) freelpol(pol->r);
+void lpol_free(lpol_t * pol) {
+    if (pol->l != NULL) lpol_free(pol->l);
+    if (pol->r != NULL) lpol_free(pol->r);
     FREE(pol);
 }
 
-void freellpol(llpol_t * llpol) {
-    freelpol(llpol->root);
+void llpol_free(llpol_t * llpol) {
+    lpol_free(llpol->root);
     FREE(llpol);
 }
 
 
-void freeaapol(aapol_t * aapol) {
+void aapol_free(aapol_t * aapol) {
     FREE(aapol->terms);
     FREE(aapol);
 }
 
 
 
-int cmpexplex(u64 a, u64 b, u8 nvar) {
+int expcmp_lex(u64 a, u64 b, u8 nvar) {
     if (a == b) return 0;
     if (a < b)  return -1;
     if (a > b)  return 1;

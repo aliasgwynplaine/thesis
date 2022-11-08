@@ -17,8 +17,16 @@
     } while (0)
 
 #define SWAPINT(A, B) (A)^=(B);(B)^=(A);(A)^=(B)
-#define MAX(a,b)      (((a) > (b)) ? (a) : (b))
-#define MIN(a,b)      (((a) < (b)) ? (a) : (b))
+
+#ifndef __max
+#define __max(a,b)    (((a) > (b)) ? (a) : (b))
+
+#endif
+
+#ifndef __min
+#define __min(a,b)    (((a) < (b)) ? (a) : (b))
+
+#endif
 
 #ifndef TESTPTR
 #define TESTPTR(PTR)                     \

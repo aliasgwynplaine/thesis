@@ -21,7 +21,7 @@ struct lpol_t {   // pol type for llist
     lpol_t * r;
 };
 
-/* from brandt's. no implemented yet */
+/* from brandt's. */
 typedef struct aapol_t aapol_t; // alternated array
 typedef struct llpol_t llpol_t; // tree-like pol struct
 
@@ -45,7 +45,7 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
 
 void      minheapify(pol_t * terms, int i, int sz);
 void      buildminheap(pol_t * terms, int hsz);
-void      sortaapol(aapol_t * aapol);
+void      aapol_sort(aapol_t * aapol);
 aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
 
 
@@ -61,12 +61,12 @@ smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz);
 
 
 /* memory handling */
-lpol_t  * lpolmalloc(size_t sz);
-llpol_t * llpolmalloc(u8 n);
-aapol_t * aapolmalloc(u8 n);
-void      freelpol(lpol_t *);
-void      freeaapol(aapol_t *);
-void      freellpol(llpol_t *);
+lpol_t  * lpol_malloc(size_t sz);
+llpol_t * llpol_malloc(u8 n);
+aapol_t * aapol_malloc(u8 n);
+void      lpol_free(lpol_t *);
+void      aapol_free(aapol_t *);
+void      llpol_free(llpol_t *);
 
 /* pretty printing */
 void printpol(pol_t * pol);
@@ -79,7 +79,7 @@ void printaapol(aapol_t * aapol);
 
 /* bit masks and bit extraction*/
 
-int   cmpexplex(u64, u64, u8);
+int   expcmp_lex(u64, u64, u8);
 int   cmpexprevlex(u64, u64, u8);
 void  expadd(u64 *, u64 *, u64 *);
 u64 * unpackexp(u64, u8);

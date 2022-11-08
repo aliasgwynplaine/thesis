@@ -2,7 +2,7 @@
 #include "outils.h"
 #include "debug.h"
 #include "pol.h"
-/* here you should import your pollib */
+#include "matrix.h"
 
 #define MAX_STDINPUT_LENGTH 1024
 #define MAX_ARG_NUM 64
@@ -107,7 +107,7 @@ int cli(char * prelude_str) {
                 printf("%ld ", *(e2 + i));
             }
             printf("\n");
-            int c = cmpexplex(x, y, n);
+            int c = expcmp_lex(x, y, n);
             if (c == 0) {
                 printf("x = y\n");
             } else if (c < 0) printf("x < y\n");
@@ -140,28 +140,28 @@ int cli(char * prelude_str) {
         if (strcmp(cmds[0], "llpol") == 0) {
             debug("running pol test...");
             u8 n = 4;
-            llpol = llpolmalloc(n);
-            llpol = addterm2llpol(llpol, 0.31415, 2023451344);
-            llpol = addterm2llpol(llpol, 1234124, 74834566);
-            llpol = addterm2llpol(llpol, 981.134, 4576355545);
-            llpol = addterm2llpol(llpol, 0.00011, 645674567);
-            llpol = addterm2llpol(llpol, 0.645, 12023451344);
-            llpol = addterm2llpol(llpol, 1234125334, 714834566);
-            llpol = addterm2llpol(llpol, 981.1534534, 14576355545);
-            llpol = addterm2llpol(llpol, 0.00345011, 1645674567);
+            llpol = llpol_malloc(n);
+            llpol = addterm2llpol(llpol, 1, 3);
+            llpol = addterm2llpol(llpol, 1, 3);
+            llpol = addterm2llpol(llpol, 1, 1);
+            llpol = addterm2llpol(llpol, 1, 2);
+            llpol = addterm2llpol(llpol, 1, 3);
+            llpol = addterm2llpol(llpol, 1, 7);
+            llpol = addterm2llpol(llpol, 1, 7);
+            llpol = addterm2llpol(llpol, 1, 7);
             printllpol(llpol);
-            freellpol(llpol);
+            llpol_free(llpol);
             
         }
 
         if (strcmp(cmds[0], "aapol") == 0) {
             debug("running pol test...");
             u8 n = 1;
-            aapol = aapolmalloc(n);
+            aapol = aapol_malloc(n);
             debug("adding terms...");
             addterm2aapol(aapol, 1, 3);
             addterm2aapol(aapol, 1, 3);
-            addterm2aapol(aapol, 1, 1);
+            addterm2aapol(aapol, -1, 1);
             addterm2aapol(aapol, 1, 2);
             addterm2aapol(aapol, 1, 3);
             addterm2aapol(aapol, 1, 7);
@@ -170,41 +170,41 @@ int cli(char * prelude_str) {
             addterm2aapol(aapol, 1, 7);
             addterm2aapol(aapol, 1, 2);
             addterm2aapol(aapol, 1, 1);
-            addterm2aapol(aapol, 1, 7);
-            addterm2aapol(aapol, 1, 7);
+            addterm2aapol(aapol, -1, 7);
+            addterm2aapol(aapol, -1, 7);
             addterm2aapol(aapol, 7, 0);
             printaapol(aapol);
             debug("ordering aapol...");
-            sortaapol(aapol);
+            aapol_sort(aapol);
             debug("pol->sz: %d", aapol->sz);
             printaapol(aapol);
             printf("Second sort...\n");
-            sortaapol(aapol);
+            aapol_sort(aapol);
             printaapol(aapol);
-            freeaapol(aapol);
+            aapol_free(aapol);
             
         }
 
         if (strcmp(cmds[0], "pol2mat") == 0) {
             debug("running polynomial to matrix transformation");
-            aapol1 = aapolmalloc(1);
-            aapol2 = aapolmalloc(1);
-            aapol3 = aapolmalloc(1);
-            addterm2aapol(aapol1, 1, 34);
+            aapol1 = aapol_malloc(1);
+            aapol2 = aapol_malloc(1);
+            aapol3 = aapol_malloc(1);
             addterm2aapol(aapol1, 1, 5);
+            addterm2aapol(aapol1, 1, 3);
+            addterm2aapol(aapol1, 1, 3);
             addterm2aapol(aapol1, 1, 2);
-            addterm2aapol(aapol1, 1, 313);
             addterm2aapol(aapol2, 1, 0);
             addterm2aapol(aapol2, 1, 1);
             addterm2aapol(aapol2, 1, 3);
-            addterm2aapol(aapol3, 1, 654);
+            addterm2aapol(aapol3, 1, 5);
+            addterm2aapol(aapol3, 1, 2);
             addterm2aapol(aapol3, 1, 1);
-            addterm2aapol(aapol3, 1, 536);
             addterm2aapol(aapol3, 7, 0);
             debug("pol is created.");
-            sortaapol(aapol1);
-            sortaapol(aapol2);
-            sortaapol(aapol3);
+            aapol_sort(aapol1);
+            aapol_sort(aapol2);
+            aapol_sort(aapol3);
             printaapol(aapol1);
             printaapol(aapol2);
             printaapol(aapol3);
@@ -212,13 +212,13 @@ int cli(char * prelude_str) {
             laapol[0] = *aapol1;
             laapol[1] = *aapol2;
             laapol[2] = *aapol3;
-            aapol2smatrix_(laapol, 3);
+            smatrix_t * smat = aapol2smatrix(laapol, 3);
             debug("convertion done. freeing pols");
-            // freeaapol(aapol1);
-            // freeaapol(aapol2);
-            // freeaapol(aapol3);
-            
-            freeaapol(laapol);
+            aapol_free(aapol1);
+            aapol_free(aapol2);
+            aapol_free(aapol3);
+            free(laapol);
+            smatrix_free(smat);
             debug("done.");
         }
 

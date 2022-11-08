@@ -16,13 +16,13 @@ typedef struct fgmatrix_t fgmatrix_t; // faugere matrix
  * 
  */
 struct smatrix_t {
-    int    nzmax;     /* max num o entries */
+    int   nnzmax;     /* max num o entries */
     int        m;     /* row sz   */
     int        n;     /* col sz   */
     int      * i;     /* row idex */
     int      * p;     /* columns  */
     COEFTYPE * x;     /* values   */
-    int       nz;     /* num o entries in triplet. -1 if colcomp */
+    int      nnz;     /* num o entries in triplet. -1 if colcomp */
 };
 
 
@@ -30,14 +30,14 @@ struct smatrix_t {
     memory handling
 */
 
-smatrix_t * smatrixmalloc(size_t sz);
+smatrix_t * smatrix_malloc(int m, int n, int nnzmax);
 smatrix_t * smatrixrealloc(smatrix_t * smat, size_t sz);
-void        freesmatrix(smatrix_t * smat);
+void        smatrix_free(smatrix_t * smat);
 
 /*
     insert & delete
 */
 
-int smatrixentry(smatrix_t * smat, int i, int j, COEFTYPE x);
+int smatri_xentry(smatrix_t * smat, int i, int j, COEFTYPE x);
 
 #endif
