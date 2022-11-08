@@ -6,6 +6,10 @@
 #include <inttypes.h>
 #include "debug.h"
 
+#ifndef COEFTYPE
+#define COEFTYPE float
+#endif
+
 #define SAYNEXITWERROR(MSG) \
     do {                    \
         dbgerr(MSG);        \

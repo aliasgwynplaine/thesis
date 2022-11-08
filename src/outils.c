@@ -1,7 +1,6 @@
 #include "outils.h"
 
 
-
 bnode_t * bnode_create()  {
     bnode_t * node = malloc(sizeof(bnode_t));
     node->d        = NULL;

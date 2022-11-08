@@ -14,12 +14,7 @@ void trimstr(char * str) {
 
 char ** splitcommand(char * buffer) {
     char ** splitted = malloc(sizeof(char *) * MAX_ARG_NUM);
-
-    if (splitted == NULL) { 
-        fprintf(stderr, "No memory!!\n");
-        /* todo: how do i handle this??? */
-        exit(EXIT_FAILURE);
-    }
+    TESTPTR(splitted);
     
     char * part = strtok(buffer, " \n");
     int pos     = 0;
@@ -67,14 +62,19 @@ int cli(char * prelude_str) {
 
         if (cmds[0] == NULL) {
             printf("%s> ", prelude);
+            FREE(line);
+            FREE(cmds);
             continue;
         }
         
         if (strcmp(cmds[0], "set") == 0) {
             printf("setting prelude variable\n");
+            if (strlen(cmds[1]) >= 32) {
+                debug("prelude is too long!!! let's cut!");
+                cmds[1][31] = '\0';
+            }
             strcpy(prelude, cmds[1]);
             printf("%s> ", prelude);
-            continue;
         }
 
         if (strcmp(cmds[0], "exit") == 0) {
@@ -82,7 +82,7 @@ int cli(char * prelude_str) {
             FREE(line);
             FREE(cmds);
             FREE(prelude);
-            break;
+            return 0;
         }
 
         if (strcmp(cmds[0], "exp") == 0) {
@@ -132,7 +132,6 @@ int cli(char * prelude_str) {
             u64 a = packexp(e, n);
             printf("x: %ld\n", a);
             
-
             FREE(e);
             FREE(e2);
             FREE(e3);
@@ -213,11 +212,12 @@ int cli(char * prelude_str) {
             laapol[0] = *aapol1;
             laapol[1] = *aapol2;
             laapol[2] = *aapol3;
-            aapol2matrix(laapol, 3);
+            aapol2smatrix_(laapol, 3);
             debug("convertion done. freeing pols");
             // freeaapol(aapol1);
             // freeaapol(aapol2);
             // freeaapol(aapol3);
+            
             freeaapol(laapol);
             debug("done.");
         }
@@ -250,20 +250,11 @@ int cli(char * prelude_str) {
         set the variables here
 
         */
-        //int status;
-        // int rc = fork();
-        // if (rc == 0) { //proceso hijo
-        //     int pos = 0;
-        //     execvp(cmds[0], cmds);
-        // }
-        // else {// proceso padre
-        //     wait(NULL);
-        //     printf("%s> ", prelude);
-        // }
-
+        
         FREE(line);
         FREE(cmds);
     }
+
     return 0;
 }
 

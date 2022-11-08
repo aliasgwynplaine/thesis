@@ -1,6 +1,4 @@
 #include "pol.h"
-#define _GNU_SOURCE
-#include <search.h>
 
 /*
 how do i control the vars???
@@ -199,6 +197,42 @@ COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
     return 0;
 }
 
+smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz) {
+    setoint_t * s = setoint_create();
+
+    for (int j = 0; j < sz; j++) {
+        for (int i = 0; i < (aapol+j)->sz; i++) {
+            setoint_insert(s, (aapol+j)->terms[i].exp);
+        }
+    }
+
+    u64 * exps = setoint_dump(s);
+    aapol_t * aux;
+    int * idx = calloc(sz, sizeof(int));
+    
+    for (int i = 0; i < s->sz; i++) {
+        for (int k = 0; k < sz; k++) printf("%d ", idx[k]);
+        printf("%.3ld ", *(exps + i));
+
+
+        for (int j = 0; j < sz; j++) {
+            aux = (aapol+j);
+            if (idx[j] < aux->sz) {
+                if (*(exps + i) == aux->terms[idx[j]].exp)
+                    printf("%0.1f ", aux->terms[idx[j]++].coef);
+                else
+                    printf(" -  ");
+            }
+        }
+        printf("\n");
+    }
+
+    FREE(idx);
+    FREE(exps);
+    printf("\n");
+    debug("Done!\n");
+}
+
 
 /**
  * @brief transforms a list of aapol_t 
@@ -206,7 +240,7 @@ COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
  * @param aapol list of aapols
  * @param sz size of list
  */
-void aapol2matrix(aapol_t * aapol, int sz) {
+smatrix_t * aapol2smatrix(aapol_t * aapol, int sz) {
     setoint_t * s = setoint_create();
 
     for (int j = 0; j < sz; j++) {
@@ -217,16 +251,13 @@ void aapol2matrix(aapol_t * aapol, int sz) {
 
     u64 * exps = setoint_dump(s);
     debug("\n");
+
+    
     for (int i = 0; i < s->sz; i++) {
         printf("%.3ld ", *(exps + i));
     }
-    printf("\n");
 
-    /* 
-       todo: considera usar una tabla hash
-       que almacene los exponentes y los asocie
-       a índices.
-    */
+    printf("\n");
     aapol_t * aux;
     int k;
     int i;
@@ -305,10 +336,7 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     debug("creating newterm...");
     lpol_t * curr    = llpol->root;
     lpol_t * aux     = NULL;
-    lpol_t * newterm = lpolmalloc(sizeof(lpol_t));
-    TESTPTR(newterm);
-    newterm->coef = coef;
-    newterm->exp  = exp;
+    lpol_t * newterm;
 
     while (curr != NULL) {
         aux = curr;
@@ -317,9 +345,18 @@ llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
         else curr = curr->r;
     }
 
+    newterm = lpolmalloc(sizeof(lpol_t));
+    TESTPTR(newterm);
+    newterm->coef = coef;
+    newterm->exp  = exp;
+
     if (aux == NULL) llpol->root = newterm;
     else if (exp < aux->exp) aux->l = newterm;
-    else aux->r = newterm;
+    else if (exp > aux->exp) aux->r = newterm;
+    else {
+        aux->coef += coef;
+        FREE(newterm);
+    }
 
     return llpol;
 }
@@ -339,6 +376,7 @@ void printlpol(lpol_t * lpol, u8 nvar) {
         printf("%ld)", *(e + nvar - 1));
 
     }
+    FREE(e);
 }
 
 void inorderprintllpol(lpol_t * root, u8 nvar) {
@@ -405,8 +443,8 @@ void printaapol(aapol_t * aapol) {
  * @param pol head of the ll
  */
 void freelpol(lpol_t * pol) {
-    if (pol->r != NULL) freelpol(pol->r);
     if (pol->l != NULL) freelpol(pol->l);
+    if (pol->r != NULL) freelpol(pol->r);
     FREE(pol);
 }
 
@@ -429,31 +467,6 @@ int cmpexplex(u64 a, u64 b, u8 nvar) {
     if (a > b)  return 1;
     /* next is so that the compiler does not cry */
     return 0;
-    /*if (a == b) return 0;
-    
-    u64 * adegs = unpackexp(a, nvar);
-    u64 * bdegs = unpackexp(b, nvar);
-    int r = 0;
-    int i = 0;
-
-    while (i < nvar) {
-        if (*(adegs+i) != *(bdegs+i)) {
-            goto nq;
-        }
-        i++;
-    }
-
-    goto exit;
-
-    nq:
-
-    if (*(adegs+i) > *(bdegs+i)) return 1;
-    if (*(adegs+i) < *(bdegs+i)) return -1;
-
-    exit:
-    FREE(adegs);
-    FREE(bdegs);
-    return r;*/
 }
 
 

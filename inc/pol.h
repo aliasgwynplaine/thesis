@@ -2,10 +2,7 @@
 #define _POL_H
 #include "outils.h"
 #include "debug.h"
-
-#ifndef COEFTYPE
-#define COEFTYPE float
-#endif
+#include "matrix.h"
 
 #define MAX_NUM_O_VARS 8
 
@@ -59,7 +56,9 @@ pol_t * mulpol(pol_t * p, pol_t * q);
 
 /* matrix2pol & pol2matrix transformations*/
 
-void aapol2matrix(aapol_t * aapol, int sz);
+smatrix_t * aapol2smatrix(aapol_t * aapol, int sz);
+smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz);
+
 
 /* memory handling */
 lpol_t  * lpolmalloc(size_t sz);
