@@ -1,5 +1,4 @@
 #include "pol.h"
-#include "matrix.h"
 
 /*
 how do i control the vars???
@@ -27,11 +26,6 @@ aapol_t * aapol_malloc(u8 n) {
 
     return aapol;
 }
-
-
-#define PARENT(I)  I>>1
-#define LEFT(I)   (I<<1) + 1
-#define RIGHT(I)  (I<<1) + 2
 
 
 void minheapify(pol_t * terms, int i, int hsz) {
@@ -67,6 +61,7 @@ void minheapify(pol_t * terms, int i, int hsz) {
         minheapify(terms, smallest, hsz);
     }
 }
+
 
 void buildminheap(pol_t * terms, int hsz) {
     debug("building heap... %d", hsz);
@@ -148,7 +143,7 @@ void aapol_sort(aapol_t * aapol) {
  * @return aapol_t* pointer to the aapol with
  * the new term
  */
-aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
+aapol_t * addterm_aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     if (coef == 0) {
         return aapol;
     }
@@ -199,120 +194,7 @@ COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
     return 0;
 }
 
-smatrix_t * aapol2smatrix(aapol_t * aapol, int sz) {
-    setoint_t * s = setoint_create();
-    int nnz = 0;
 
-    for (int j = 0; j < sz; j++) {
-        for (int i = 0; i < (aapol+j)->sz; i++) {
-            setoint_insert(s, (aapol+j)->terms[i].exp);
-            nnz++;
-        }
-    }
-
-    u64 * exps = setoint_dump(s);
-    int * idx  = calloc(sz, sizeof(int));
-    debug("m: %d", sz);
-    debug("n: %d", s->sz);
-    debug("nnz : %d", nnz);
-    smatrix_t * smat = smatrix_malloc(sz, s->sz, nnz);
-    aapol_t * aux;
-
-    int k = 0;
-
-    /* not smart */
-    for (int i = 0; i < s->sz; i++) {
-        for (int j = 0; j < sz; j++) {
-            aux = (aapol+j);
-            if (idx[j] < aux->sz) {
-                if (*(exps + i) == aux->terms[idx[j]].exp) {
-                    smat->p[i + 1]++;
-                    smat->i[smat->nnz++] = j;
-                    smat->x[k++] = aux->terms[idx[j]++].coef;
-                }
-            }    
-        }
-        smat->p[i + 1] += smat->p[i];
-    }
-
-    printf("p: ");
-    for (int i = 0; i <= s->sz; i++) {
-        printf("%d ", smat->p[i]);
-    }
-
-    printf("\ni: ");
-
-    for (int i = 0; i < smat->nnz; i++) {
-        printf("%d ", smat->i[i]);
-    }
-    
-    printf("\nx: ");
-    for (int i = 0; i < smat->nnz; i++) {
-        printf("%0.1f ", smat->x[i]);
-    }
-    printf("\n");
-
-    FREE(idx);
-    FREE(exps);
-    setoint_free(s);
-    printf("\n");
-    debug("Done!\n");
-
-    return smat;
-}
-
-
-/**
- * @brief transforms a list of aapol_t 
- * to matrix for groebner basis calculation 
- * @param aapol list of aapols
- * @param sz size of list
- */
-smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz) {
-    setoint_t * s = setoint_create();
-
-    for (int j = 0; j < sz; j++) {
-        for (int i = 0; i < (aapol+j)->sz; i++) {
-            setoint_insert(s, (aapol+j)->terms[i].exp);
-        }
-    }
-
-    u64 * exps = setoint_dump(s);
-    debug("\n");
-
-    
-    for (int i = 0; i < s->sz; i++) {
-        printf("%.3ld ", *(exps + i));
-    }
-
-    printf("\n");
-    aapol_t * aux;
-    int k;
-    int i;
-
-    for (int j = 0; j < sz; j++) {
-        k = 0;
-        aux = (aapol+j);
-        i = 0;
-        while (i < aux->sz) {
-            if (aux->terms[i].exp < *(exps+k)) {
-                printf(" -  ");
-            }
-            else if (aux->terms[i].exp == *(exps+k)) {
-                /* construct matrix here */
-                /*
-                    insert matcoef in pos (i,k)
-                */
-                printf("%0.1f ", aux->terms[i].coef);
-                i++;
-            } else { break; }
-            k++;
-        }
-        printf("eol\n");
-    }
-    debug("Done!\n");
-    //return b;
-}
 
 lpol_t * lpol_malloc(size_t sz) {
     lpol_t * lpol = malloc(sz);
@@ -356,7 +238,7 @@ llpol_t * llpol_malloc(u8 n) {
  * term of polynomial
  */
 
-llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
+llpol_t * addterm_llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     if (!llpol) {
         dbgerr("pol is null");
         exit(EXIT_FAILURE);

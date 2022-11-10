@@ -1,13 +1,23 @@
 #ifndef _POL_H
 #define _POL_H
+
 #include "outils.h"
 #include "debug.h"
-#include "matrix.h"
 
 #define MAX_NUM_O_VARS 8
 
+#define PARENT(I)  I>>1
+#define LEFT(I)   (I<<1) + 1
+#define RIGHT(I)  (I<<1) + 2
+
+
 typedef struct pol_t pol_t;
 typedef struct lpol_t lpol_t;
+/* from brandt's. */
+typedef struct aapol_t aapol_t; // alternated array
+typedef struct llpol_t llpol_t; // tree-like pol struct
+
+#include "matrix.h"
 
 struct pol_t {
     COEFTYPE  coef; // could be an AP num
@@ -21,11 +31,7 @@ struct lpol_t {   // pol type for llist
     lpol_t * r;
 };
 
-/* from brandt's. */
-typedef struct aapol_t aapol_t; // alternated array
-typedef struct llpol_t llpol_t; // tree-like pol struct
-
-struct aapol_t { // heap-like structure
+struct aapol_t { 
     u8      nvar;
     u16     sz;
     u16     cap;     // current capacity
@@ -40,13 +46,13 @@ struct llpol_t {
 
 
 pol_t   * str2pol(char *); // todo
-llpol_t * addterm2llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
+llpol_t * addterm_llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
 
 
 void      minheapify(pol_t * terms, int i, int sz);
 void      buildminheap(pol_t * terms, int hsz);
 void      aapol_sort(aapol_t * aapol);
-aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
+aapol_t * addterm_aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
 
 
 /* polynomial operations */
@@ -54,10 +60,9 @@ aapol_t * addterm2aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
 pol_t * addpol(pol_t * p, double a, pol_t * q, double b); // a*p + b*q
 pol_t * mulpol(pol_t * p, pol_t * q);
 
-/* matrix2pol & pol2matrix transformations*/
 
-smatrix_t * aapol2smatrix(aapol_t * aapol, int sz);
-smatrix_t * aapol2smatrix_(aapol_t * aapol, int sz);
+aapol_t * smatrix2aapol(smatrix_t * smat, u64 * exps);
+aapol_t * mmatrix2aapol(mmatrix_t * mmat);
 
 
 /* memory handling */
