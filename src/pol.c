@@ -28,7 +28,7 @@ aapol_t * aapol_malloc(u8 n) {
 }
 
 
-void minheapify(pol_t * terms, int i, int hsz) {
+void minheapify(term_t * terms, int i, int hsz) {
     int l = LEFT(i);
     int r = RIGHT(i);
     int smallest = i;
@@ -55,7 +55,7 @@ void minheapify(pol_t * terms, int i, int hsz) {
         }
     }
     if (smallest != i) {
-        pol_t aux       = terms[i];
+        term_t aux       = terms[i];
         terms[i]        = terms[smallest];
         terms[smallest] = aux;
         minheapify(terms, smallest, hsz);
@@ -63,7 +63,7 @@ void minheapify(pol_t * terms, int i, int hsz) {
 }
 
 
-void buildminheap(pol_t * terms, int hsz) {
+void buildminheap(term_t * terms, int hsz) {
     debug("building heap... %d", hsz);
     for (int i = hsz / 2; i >= 0; i--)
         minheapify(terms, i, hsz);
@@ -73,13 +73,13 @@ void buildminheap(pol_t * terms, int hsz) {
 
 void mergeaapol(aapol_t * a, int p, int q, int r) {
     int n_1, n_2, i, j, k, c, m;
-    pol_t * l_;
-    pol_t * r_;
+    term_t * l_;
+    term_t * r_;
     n_1 = q - p + 1;
     n_2 = r - q;
-    l_ = malloc((n_1 + 1) * sizeof(pol_t));
+    l_ = malloc((n_1 + 1) * sizeof(term_t));
     TESTPTR(l_);
-    r_ = malloc((n_2 + 1) * sizeof(pol_t));
+    r_ = malloc((n_2 + 1) * sizeof(term_t));
     TESTPTR(r_);
 
     for (i = 0; i < n_1; i++) l_[i] = a->terms[i + p];
@@ -132,6 +132,57 @@ void aapol_sort(aapol_t * aapol) {
     aapol->sz = i + 1;
 }
 
+
+int llpol_quicksort_partition(llpol_t ** lollpol, int p, int r) {
+    int i, q, cmp;
+    llpol_t * x = lollpol[r];
+    llpol_t * aux;
+    i = p - 1;
+
+    for (int j = p; j < r; j++) {
+        //cmp = exp_cmp(lollpol[j]->root->exp, x->root->exp, x->nvar);
+        cmp = llpol_cmp(lollpol[j], x);
+        if (cmp <= 0) { // todo: implement other comparition methods
+            i++;
+            aux = lollpol[i];
+            lollpol[i] = lollpol[j];
+            lollpol[j] = aux;
+        }
+    }
+
+    aux = lollpol[i + 1];
+    lollpol[i + 1] = lollpol[r];
+    lollpol[r] = aux;
+
+    return i + 1;
+}
+
+void llpol_list_quicksort(llpol_t ** lollpol, int p, int r) {
+    if (p < r) {
+        int q = llpol_quicksort_partition(lollpol, p, r);
+        llpol_list_quicksort(lollpol, p, q - 1);
+        llpol_list_quicksort(lollpol, q + 1, r);
+    }
+}
+
+
+void aapol_list_sort(aapol_t ** loaapol, int sz) {
+}
+
+
+void llpol_list_sort(llpol_t ** lollpol, int sz) {
+    llpol_list_quicksort(lollpol, 0, sz - 1);
+}
+
+
+term_t * aapol_head(aapol_t * aapol) {
+    term_t * term = term_malloc(sizeof(term_t));
+    term->coef = aapol->terms[0].coef;
+    term->exp  = aapol->terms[0].exp;
+
+    return term;
+}
+
 /**
  * @brief adds a term to the aapol.
  * Note that is not necesary to store the 
@@ -143,13 +194,13 @@ void aapol_sort(aapol_t * aapol) {
  * @return aapol_t* pointer to the aapol with
  * the new term
  */
-aapol_t * addterm_aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
+aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     if (coef == 0) {
         return aapol;
     }
 
     if (!aapol->terms) {
-        aapol->terms = malloc(2*sizeof(pol_t));
+        aapol->terms = malloc(2*sizeof(term_t));
         TESTPTR(aapol);
         aapol->cap = 2;
     }
@@ -159,7 +210,7 @@ aapol_t * addterm_aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
         // need to realloc
         // todo: make a smarter use of space.
         debug("trying to alloc %d chunks", aapol->cap<<1);
-        aapol->terms = realloc(aapol->terms, (aapol->cap<<1) * sizeof(pol_t));
+        aapol->terms = realloc(aapol->terms, (aapol->cap<<1) * sizeof(term_t));
         TESTPTR(aapol->terms);
         aapol->cap = aapol->cap<<1;
     }
@@ -170,23 +221,92 @@ aapol_t * addterm_aapol(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     int i  = aapol->sz++;
     int pi = PARENT(i);
 
-    while (i > 0 && aapol->terms[pi].exp < aapol->terms[i].exp) {
-        pol_t aux        = aapol->terms[i];
-        aapol->terms[i]  = aapol->terms[pi];
-        aapol->terms[pi] = aux;
-        i  = PARENT(i);
-        pi = PARENT(i);
-        
-        // if (aapol->terms[i].exp == aapol->terms[pi].exp) {
-        //     aapol->terms[pi].coef += aapol->terms[i].coef;
-        //     aapol->terms[i].coef  = 0;
-        //     aapol->terms[i].exp   = 0;
-        // }
+    for (;;) {
+        if (pi >= 0) {
+            if (aapol->terms[i].exp == aapol->terms[pi].exp) {
+                aapol->terms[pi].coef += aapol->terms[i].coef;
+                aapol->terms[i].coef  = 0;
+                aapol->terms[i].exp   = 0;
+                i  = pi;
+                pi = PARENT(i);
+            } else if (aapol->terms[pi].exp < aapol->terms[i].exp) {
+                term_t aux        = aapol->terms[i];
+                aapol->terms[i]  = aapol->terms[pi];
+                aapol->terms[pi] = aux;
+                i  = pi;
+                pi = PARENT(i);
+            } else break;
+        } else break;
     }
 
-    // sortaapol_t(aapol);
-
     return aapol;
+}
+
+int aapol_cmp(aapol_t * a, aapol_t * b) {
+    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot compare polynomials of different number of variables.");
+
+    aapol_sort(a);
+    aapol_sort(b);
+
+    term_t * a_term_p = a->terms;
+    term_t * b_term_p = b->terms;
+    int a_idx = 0;
+    int b_idx = 0;
+    int cmp;
+
+    for (int i = 0, j = 0; i < a->sz, j < b->sz; i++, j++) {
+        cmp = exp_cmp(a->terms[i].exp, b->terms[j].exp, a->nvar);
+
+        if (cmp != 0) return cmp;
+        
+    }
+
+    return 0;
+}
+
+int llpol_term_cmp(lpol_t * a, lpol_t * b, u8 nvar) {
+
+}
+
+int llpol_cmp(llpol_t * a, llpol_t * b) {
+    if (a->nvar != b->nvar) return NULL;
+
+    lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
+    TESTPTR(stacka);
+    lpol_t ** stackb = malloc(sizeof(lpol_t *) * b->sz);
+    TESTPTR(stackb);
+    int ha = 0;
+    int hb = 0;
+    lpol_t * nodea = a->root;
+    lpol_t * nodeb = b->root;
+    int cmp;
+
+    while(1) {
+        while (nodea != NULL || nodeb != NULL) {
+            if (nodea != NULL) {
+                stacka[ha++] = nodea;
+                nodea = nodea->r;
+            }
+
+            if (nodeb != NULL) {
+                stackb[hb++] = nodeb;
+                nodeb = nodeb->r;
+            }
+        }
+
+        if (ha == 0 || hb == 0) break;
+
+        nodea = stacka[--ha];
+        nodeb = stackb[--hb];
+        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar);
+
+        if (cmp != 0) return cmp;
+        nodea = nodea->l;
+        nodeb = nodeb->l;
+    }
+    FREE(stackb);
+    FREE(stacka);
+    return ha - hb;
 }
 
 
@@ -194,6 +314,14 @@ COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
     return 0;
 }
 
+
+term_t * term_malloc(size_t sz) {
+    term_t * term = malloc(sz);
+    term->coef = 0;
+    term->exp  = 0;
+
+    return term;
+}
 
 
 lpol_t * lpol_malloc(size_t sz) {
@@ -226,19 +354,33 @@ llpol_t * llpol_malloc(u8 n) {
     return llpol;
 }
 
+
+term_t * llpol_head(llpol_t * llpol) {
+    term_t * term = term_malloc(sizeof(term_t));
+    lpol_t * x = llpol->root;
+
+    while (x->r != NULL) x = x->r;
+
+    term->coef = x->coef;
+    term->exp  = x->exp;
+
+    return term;
+}
+
+
 /**
  * @brief add term to polinomial at the begining
  * of the linked list.
  * free_pol_t must be called.
  * 
- * @param pol pointer to pol_t that is a ll
+ * @param pol pointer to term_t that is a ll
  * @param coef coefficient of the new term
  * @param exp exponent of the new term
  * @return pointer to the new
  * term of polynomial
  */
 
-llpol_t * addterm_llpol(llpol_t * llpol, COEFTYPE coef, u64 exp) {
+llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     if (!llpol) {
         dbgerr("pol is null");
         exit(EXIT_FAILURE);
@@ -302,7 +444,7 @@ void inorderprintllpol(lpol_t * root, u8 nvar) {
 
 
 /**
- * @brief prints a pol_t *
+ * @brief prints a term_t *
  * 
  * @param pol polynomial
  */
@@ -324,7 +466,7 @@ void printaapol(aapol_t * aapol) {
         printf("pol is  empty!\n");
         return;
     }
-    pol_t * terms;
+    term_t * terms;
     u64 * e;
     terms = aapol->terms;
 
@@ -372,13 +514,14 @@ void aapol_free(aapol_t * aapol) {
 }
 
 
+int exp_cmp(u64 a, u64 b, u8 nvar) {
+    // todo: handle different ways to compare
+    return exp_lex_cmp(a, b, nvar);
+}
 
-int expcmp_lex(u64 a, u64 b, u8 nvar) {
-    if (a == b) return 0;
-    if (a < b)  return -1;
-    if (a > b)  return 1;
-    /* next is so that the compiler does not cry */
-    return 0;
+
+int exp_lex_cmp(u64 a, u64 b, u8 nvar) {
+    return a - b;
 }
 
 
@@ -388,9 +531,9 @@ void expadd(u64 * a, u64 * b, u64 * c) {
 }
 
 /**
- * @brief unpacks the exponent stored in u64 var
+ * @brief unpacks the exponent stored in u64 var.
+ *        if nvar is 0, exits with status 1.
  *        returned pointer has to be freed.
- *        if nvar is 0, exits with status 1
  * @param e packed exponents
  * @param nvar number of variables on e
  * @return u64* that stores unpacked variables

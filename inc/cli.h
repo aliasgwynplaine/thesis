@@ -11,6 +11,12 @@
 #include "pol.h"
 #include "matrix.h"
 
+struct option {
+    const char * long_name;
+    char        short_name;
+    int        has_arg : 1;
+};
+
 
 void trimstr(char * str);
 char ** splitcommand(char * buffer);

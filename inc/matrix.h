@@ -5,8 +5,11 @@
 #include "tree.h"
 #include "memory.h"
 
+typedef struct mlvector_t       ml_t;   
 typedef struct mmatrix_t   mmatrix_t;  // macaulay matrix 
-typedef struct smatrix_t   smatrix_t;  // generic cc sparce matrix
+typedef struct smatrix_t   smatrix_t;  // generic sparce matrix
+typedef struct smatrix_t   smatrix_t;
+typedef struct smatrix_t   crmatrix_t;
 typedef struct fgmatrix_t  fgmatrix_t; // faugere matrix
 typedef struct stbmatrix_t stbmatrix_t;
 typedef struct srbmatirx_t srbmatrix_t;
@@ -14,6 +17,14 @@ typedef struct hrbmatrix_t hrbmatrix_t;
 
 
 #include "pol.h"
+
+struct mlvector_t {
+    int      * pos; /* position      */
+    COEFTYPE * val; /* values        */
+    int         sz; /* size          */
+    int        cap; /* capacity      */
+    u8           n; /* n-line vector */
+};
 
 
 /**
@@ -28,8 +39,8 @@ struct smatrix_t {
     int   nnzmax;     /* max num o entries */
     int        m;     /* row sz   */
     int        n;     /* col sz   */
-    int      * i;     /* row idex */
-    int      * p;     /* columns  */
+    int      * i;     /* row/col idex */
+    int      * p;     /* row/col pos */
     COEFTYPE * x;     /* values   */
     int      nnz;     /* num o entries in triplet. -1 if colcomp */
 };
@@ -43,12 +54,20 @@ struct mmatrix_t {
 
 
 struct fgmatrix_t {
-    stbmatrix_t * stbmat;
-    srbmatrix_t * srbmat;
-    hrbmatrix_t * hrbmat;
-    int              nnz;
+    stbmatrix_t * a;
+    srbmatrix_t * b;
+    hrbmatrix_t * c;
+    int         nnz;
 };
 
+
+struct stbmatrix_t {
+    COEFTYPE * val;
+    int      * pos;
+    int      *  nb;
+    float    *  sp;  // sparcity %
+    int         sz;
+};
 
 /*
     memory handling
@@ -60,7 +79,7 @@ void        mmatrix_free(mmatrix_t * mmat);
 
 smatrix_t * smatrix_malloc(int m, int n, int nnzmax);
 smatrix_t * smatrixrealloc(smatrix_t * smat, size_t sz);
-void        smatrix_free(smatrix_t * smat);
+void         smatrix_free(smatrix_t * smat);
 
 /*
     insert & delete

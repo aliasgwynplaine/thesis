@@ -6,12 +6,12 @@
 
 #define MAX_NUM_O_VARS 8
 
-#define PARENT(I)  I>>1
+#define PARENT(I) (I - 1)>>1
 #define LEFT(I)   (I<<1) + 1
 #define RIGHT(I)  (I<<1) + 2
 
 
-typedef struct pol_t pol_t;
+typedef struct term_t term_t;
 typedef struct lpol_t lpol_t;
 /* from brandt's. */
 typedef struct aapol_t aapol_t; // alternated array
@@ -19,7 +19,7 @@ typedef struct llpol_t llpol_t; // tree-like pol struct
 
 #include "matrix.h"
 
-struct pol_t {
+struct term_t {
     COEFTYPE  coef; // could be an AP num
     u64       exp;  // packed exponent
 };
@@ -35,7 +35,7 @@ struct aapol_t {
     u8      nvar;
     u16     sz;
     u16     cap;     // current capacity
-    pol_t * terms;
+    term_t * terms;
 };
 
 struct llpol_t {
@@ -45,47 +45,68 @@ struct llpol_t {
 };
 
 
-pol_t   * str2pol(char *); // todo
-llpol_t * addterm_llpol(llpol_t * llpol, COEFTYPE coef, u64 exp);
+/* memory handling */
+term_t  *  term_malloc(size_t sz);
+
+lpol_t  * lpol_malloc(size_t sz);
+void      lpol_free(lpol_t *);
+
+llpol_t * llpol_malloc(u8 n);
+void      llpol_free(llpol_t *);
+
+aapol_t * aapol_malloc(u8 n);
+void      aapol_free(aapol_t *);
 
 
-void      minheapify(pol_t * terms, int i, int sz);
-void      buildminheap(pol_t * terms, int hsz);
+
+/* sorting */
+void      minheapify(term_t * terms, int i, int sz);
+void      buildminheap(term_t * terms, int hsz);
 void      aapol_sort(aapol_t * aapol);
-aapol_t * addterm_aapol(aapol_t * aapol, COEFTYPE coef, u64 exp);
+void      aapol_list_sort(aapol_t ** loaapol, int sz);
+void      llpol_list_sort(llpol_t ** lollpol, int sz);
 
 
 /* polynomial operations */
 
-pol_t * addpol(pol_t * p, double a, pol_t * q, double b); // a*p + b*q
-pol_t * mulpol(pol_t * p, pol_t * q);
+term_t * addpol(term_t * p, double a, term_t * q, double b); // a*p + b*q
+term_t * mulpol(term_t * p, term_t * q);
 
 
 aapol_t * smatrix2aapol(smatrix_t * smat, u64 * exps);
 aapol_t * mmatrix2aapol(mmatrix_t * mmat);
 
+/* reading */
+term_t   * str2pol(char *); // todo
+llpol_t  * str2llpol(char *); // todo
+aapol_t  * str2aapol(char *); // todo
 
-/* memory handling */
-lpol_t  * lpol_malloc(size_t sz);
-llpol_t * llpol_malloc(u8 n);
-aapol_t * aapol_malloc(u8 n);
-void      lpol_free(lpol_t *);
-void      aapol_free(aapol_t *);
-void      llpol_free(llpol_t *);
 
 /* pretty printing */
-void printpol(pol_t * pol);
+void printpol(term_t * pol);
 void printllpol(llpol_t * llpol);
 void printaapol(aapol_t * aapol);
 
 /* define polynomial operations here */
+term_t   * llpol_head(llpol_t *);
+llpol_t  * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp);
+llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE beta); // todo
+void       llpol_inplace_add(llpol_t * a, llpol_t * b);// todo
+llpol_t  * llpol_multiply(llpol_t * a, llpol_t b); // todo 
+int        llpol_cmp(llpol_t * a, llpol_t * b); 
 
-
+term_t   * aapol_head(aapol_t *);
+aapol_t  * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp);
+aapol_t  * aapol_add(aapol_t * a, aapol_t * b); //todo
+void       aapol_inplace_add(aapol_t * a, aapol_t * b); //todo
+aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b); // todo
+int        aapol_cmp(aapol_t * a, aapol_t * b); 
 
 /* bit masks and bit extraction*/
 
-int   expcmp_lex(u64, u64, u8);
-int   cmpexprevlex(u64, u64, u8);
+int   exp_cmp(u64, u64, u8);
+int   exp_lex_cmp(u64, u64, u8);
+int   exp_revlex_cmp(u64, u64, u8); // todo
 void  expadd(u64 *, u64 *, u64 *);
 u64 * unpackexp(u64, u8);
 u64   packexp(u64 *, u8);

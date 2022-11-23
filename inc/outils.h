@@ -8,6 +8,7 @@
 
 #ifndef COEFTYPE
 #define COEFTYPE float
+
 #endif
 
 #define SAYNEXITWERROR(MSG) \
@@ -35,6 +36,7 @@
             SAYNEXITWERROR("No memory!");\
         }                                \
     } while (0)
+
 #endif
 
 #ifndef FREE
