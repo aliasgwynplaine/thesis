@@ -2,7 +2,7 @@ CC = gcc
 NVCC = nvcc
 SRCFILES = pol.c matrix.c tree.c cli.c outils.c
 
-OBJ = $(SRC:.c=.o)
+OBJ = $(SRCFILES:.c=.o)
 
 CFLAGS = -g -D_DEBUG
 LDFLAGS = -lm

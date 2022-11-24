@@ -90,17 +90,25 @@ void printaapol(aapol_t * aapol);
 /* define polynomial operations here */
 term_t   * llpol_head(llpol_t *);
 llpol_t  * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp);
-llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE beta); // todo
-void       llpol_inplace_add(llpol_t * a, llpol_t * b);// todo
+llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha); // todo
+void       llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha);// todo
+llpol_t  * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha);
+llpol_t  * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha);
 llpol_t  * llpol_multiply(llpol_t * a, llpol_t b); // todo 
-int        llpol_cmp(llpol_t * a, llpol_t * b); 
+int        llpol_monomial_cmp(llpol_t * a, llpol_t * b); 
+int        llpol_hard_cmp(llpol_t * a, llpol_t * b);
+llpol_t  * llpol_cpy(llpol_t * dst, llpol_t * src);
 
 term_t   * aapol_head(aapol_t *);
 aapol_t  * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp);
 aapol_t  * aapol_add(aapol_t * a, aapol_t * b); //todo
 void       aapol_inplace_add(aapol_t * a, aapol_t * b); //todo
+aapol_t  * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha);
+aapol_t  * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha);
 aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b); // todo
-int        aapol_cmp(aapol_t * a, aapol_t * b); 
+int        aapol_monomial_cmp(aapol_t * a, aapol_t * b);
+int        aapol_hard_cmp(aapol_t * a, aapol_t * b); 
+aapol_t  * aapol_cpy(aapol_t * dst, aapol_t * src);
 
 /* bit masks and bit extraction*/
 

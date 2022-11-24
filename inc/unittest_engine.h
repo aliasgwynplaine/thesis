@@ -6,18 +6,26 @@
 #ifdef assert
 #undef assert
 #endif
-#define assert(test, msg) do {                                           \
-    if (!(test)) {                                                       \
-        fprintf(stderr, "[!] %s %d: %s\n", __FUNCTION__, __LINE__, msg); \
-        return 1;                                                        \
-    }                                                                    \
+
+#define MAX_BUFF_SZ 512
+
+#define assert(test, msg) do {                                                       \
+    char * buff = malloc(sizeof(char) * MAX_BUFF_SZ);                                 \
+    if (!(test)) {                                                                   \
+        snprintf(buff, MAX_BUFF_SZ, "[!] %s %d: %s\n", __FUNCTION__, __LINE__, msg); \
+        return buff;                                                                 \
+    }                                                                                \
 } while (0)
 
-#define run_uniitest(test) do {  \
-    int t = test(); tests_run++; \
-    if (t == 1) {                \
-        failed_tests++;          \
-    }                            \
+#define run_uniitest(test) do {       \
+    printf("Running %-50s", #test);   \
+    char * msg = test(); tests_run++; \
+    if (msg) {                        \
+        failed_tests++;               \
+        printf("%s\n", "[fail]");     \
+        fprintf(stderr, "%s", msg);   \
+        free(msg);                    \
+    } else printf("%s\n", "[done]");  \
 } while(0)
 
 extern int tests_run;

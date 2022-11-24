@@ -141,7 +141,7 @@ int llpol_quicksort_partition(llpol_t ** lollpol, int p, int r) {
 
     for (int j = p; j < r; j++) {
         //cmp = exp_cmp(lollpol[j]->root->exp, x->root->exp, x->nvar);
-        cmp = llpol_cmp(lollpol[j], x);
+        cmp = llpol_monomial_cmp(lollpol[j], x);
         if (cmp <= 0) { // todo: implement other comparition methods
             i++;
             aux = lollpol[i];
@@ -242,7 +242,30 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     return aapol;
 }
 
-int aapol_cmp(aapol_t * a, aapol_t * b) {
+aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
+    aapol_t * res = aapol_malloc(a->nvar);
+    res->sz = a->sz;
+    res->cap = res->sz;
+    res->terms = malloc(sizeof(term_t) * res->sz);
+
+    for (int i = 0; i < a->sz; i++) {
+        res->terms[i].coef = alpha * a->terms[i].coef;
+        res->terms[i].exp  = a->terms[i].exp;
+    }
+
+    return res;
+}
+
+aapol_t * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha) {
+    for (int i = 0; i < a->sz; i++) {
+        a->terms[i].coef *= alpha;
+    }
+
+    return a;
+}
+
+
+int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot compare polynomials of different number of variables.");
 
     aapol_sort(a);
@@ -250,12 +273,11 @@ int aapol_cmp(aapol_t * a, aapol_t * b) {
 
     term_t * a_term_p = a->terms;
     term_t * b_term_p = b->terms;
-    int a_idx = 0;
-    int b_idx = 0;
+
     int cmp;
 
-    for (int i = 0, j = 0; i < a->sz, j < b->sz; i++, j++) {
-        cmp = exp_cmp(a->terms[i].exp, b->terms[j].exp, a->nvar);
+    for (int i = 0; i < a->sz; i++) {
+        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar);
 
         if (cmp != 0) return cmp;
         
@@ -264,12 +286,47 @@ int aapol_cmp(aapol_t * a, aapol_t * b) {
     return 0;
 }
 
-int llpol_term_cmp(lpol_t * a, lpol_t * b, u8 nvar) {
+/**
+ * @brief tests if polinomials are strictly equals.
+ * Mostly used to test other functions
+*/
+int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
+    if (a->nvar != b->nvar) return 1;
 
+    aapol_sort(a);
+    aapol_sort(b);
+
+    if (a->sz != b->sz) return 1; 
+
+    term_t * a_term_p = a->terms;
+    term_t * b_term_p = b->terms;
+
+    int cmp;
+
+    for (int i = 0; i < a->sz; i++) {
+        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar);
+
+        if (cmp != 0 || (a_term_p[i].coef != b_term_p[i].coef)) return 1;
+        
+    }
+
+    return 0;
 }
 
-int llpol_cmp(llpol_t * a, llpol_t * b) {
-    if (a->nvar != b->nvar) return NULL;
+aapol_t * aapol_cpy(aapol_t * dst, aapol_t * src) {
+    if (src == NULL) return NULL;
+
+    dst->sz = src->sz;
+    dst->cap = dst->sz;
+    dst->terms = malloc(sizeof(term_t) * dst->cap);
+    memcpy(dst->terms, src->terms, sizeof(term_t) * src->sz);
+    
+    return dst;
+}
+
+
+int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
+    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot cmp polynomials of different nvar");
 
     lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
     TESTPTR(stacka);
@@ -300,7 +357,59 @@ int llpol_cmp(llpol_t * a, llpol_t * b) {
         nodeb = stackb[--hb];
         cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar);
 
-        if (cmp != 0) return cmp;
+        if (cmp != 0) {
+            FREE(stackb);
+            FREE(stacka);
+            return cmp;
+        }
+
+        nodea = nodea->l;
+        nodeb = nodeb->l;
+    }
+    FREE(stackb);
+    FREE(stacka);
+    return ha - hb;
+}
+
+int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
+    if (a->nvar != b->nvar) return 1;
+    if (a->sz != b->sz) return 1;
+
+    lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
+    TESTPTR(stacka);
+    lpol_t ** stackb = malloc(sizeof(lpol_t *) * b->sz);
+    TESTPTR(stackb);
+    int ha = 0;
+    int hb = 0;
+    lpol_t * nodea = a->root;
+    lpol_t * nodeb = b->root;
+    int cmp;
+
+    while(1) {
+        while (nodea != NULL || nodeb != NULL) {
+            if (nodea != NULL) {
+                stacka[ha++] = nodea;
+                nodea = nodea->r;
+            }
+
+            if (nodeb != NULL) {
+                stackb[hb++] = nodeb;
+                nodeb = nodeb->r;
+            }
+        }
+
+        if (ha == 0 || hb == 0) break;
+
+        nodea = stacka[--ha];
+        nodeb = stackb[--hb];
+        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar);
+
+        if (cmp != 0 || (nodea->coef != nodeb->coef)) {
+            FREE(stackb);
+            FREE(stacka);
+            return 1;
+        }
+
         nodea = nodea->l;
         nodeb = nodeb->l;
     }
@@ -388,8 +497,8 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     
     if (coef == 0) return llpol;
 
-    lpol_t * curr    = llpol->root;
-    lpol_t * aux     = NULL;
+    lpol_t * curr = llpol->root;
+    lpol_t * aux  = NULL;
     lpol_t * newterm;
 
     while (curr != NULL) {
@@ -403,6 +512,7 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     TESTPTR(newterm);
     newterm->coef = coef;
     newterm->exp  = exp;
+    llpol->sz++;
 
     if (aux == NULL) llpol->root = newterm;
     else if (exp < aux->exp) aux->l = newterm;
@@ -410,9 +520,103 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     else {
         aux->coef += coef;
         FREE(newterm);
+        llpol->sz--;
     }
 
     return llpol;
+}
+
+
+llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
+    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot add polynomials of different nvar");
+    
+    
+    if (alpha == 0 && betha != 0) {
+        return llpol_coef_multiply(b, betha);
+    }
+
+    if (betha == 0 && alpha != 0) {
+        return llpol_coef_multiply(a, alpha);
+    }
+
+    llpol_t * res = llpol_malloc(a->nvar);
+    /* todo */
+    return res;
+}
+
+
+llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
+    llpol_t * res = llpol_malloc(a->nvar);
+    lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
+    TESTPTR(stack);
+    lpol_t * node = a->root;
+    int h = 0;
+
+    while (1) {
+        while (node != NULL) {
+            stack[h++] = node;
+            node = node->r;
+        }
+
+        if (h == 0) break;
+
+        node = stack[--h];
+        llpol_addterm(res, alpha * node->coef, node->exp);
+        node = node->l;
+    }
+
+    FREE(stack);
+
+    return res;
+}
+
+
+llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
+    lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
+    TESTPTR(stack);
+    lpol_t * node = a->root;
+    int h = 0;
+
+    while (1) {
+        while (node != NULL) {
+            stack[h++] = node;
+            node = node->r;
+        }
+
+        if (h == 0) break;
+
+        node = stack[--h];
+        node->coef *= alpha;
+        node = node->l;
+    }
+
+    FREE(stack);
+
+    return a;
+}
+
+
+llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
+    lpol_t ** stack = malloc(sizeof(lpol_t *) * src->sz);
+    TESTPTR(stack);
+    lpol_t * node = src->root;
+    int h = 0;
+    
+    while (1) {
+        while (node != NULL) {
+            stack[h++] = node;
+            node = node->r;
+        }
+
+        if (h == 0) break;
+
+        node = stack[--h];
+        llpol_addterm(dst, node->coef, node->exp);
+        node = node->l;
+    }
+    
+    FREE(stack);
+    return dst;
 }
 
 void printlpol(lpol_t * lpol, u8 nvar) {
