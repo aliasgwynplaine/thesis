@@ -2,7 +2,7 @@
 
 void * default_malloc(size_t sz) {
     void * ptr = malloc(sz);
-    TESTPTR(ptr);
+    CHECKPTR(ptr);
 
     return ptr;
 }
@@ -55,6 +55,13 @@ bstree_t * bstree_create(cmpfux_t * cmpfux, allocfux_t *allocfux, freefux_t * fr
 void bstree_free(bstree_t * bst) {
     bnode_free(bst->root, bst->freefux);
     FREE(bst);
+}
+
+void * bstree_search(bstree_t * bst, void * item) {
+    if (bst == NULL || item == NULL) return NULL;
+    bnode_t * curr;
+    // todo
+    return NULL;
 }
 
 

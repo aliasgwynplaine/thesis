@@ -8,8 +8,8 @@
 typedef struct mlvector_t       ml_t;   
 typedef struct mmatrix_t   mmatrix_t;  // macaulay matrix 
 typedef struct smatrix_t   smatrix_t;  // generic sparce matrix
-typedef struct smatrix_t   smatrix_t;
-typedef struct smatrix_t   crmatrix_t;
+typedef struct smatrix_t   rcatrix_t;  // 
+typedef struct smatrix_t   ccmatrix_t; // 
 typedef struct fgmatrix_t  fgmatrix_t; // faugere matrix
 typedef struct stbmatrix_t stbmatrix_t;
 typedef struct srbmatirx_t srbmatrix_t;
@@ -79,7 +79,7 @@ void        mmatrix_free(mmatrix_t * mmat);
 
 smatrix_t * smatrix_malloc(int m, int n, int nnzmax);
 smatrix_t * smatrixrealloc(smatrix_t * smat, size_t sz);
-void         smatrix_free(smatrix_t * smat);
+void        smatrix_free(smatrix_t * smat);
 
 /*
     insert & delete
@@ -91,6 +91,7 @@ int smatrix_entry(smatrix_t * smat, int i, int j, COEFTYPE x);
 /* matpol transformations*/
 
 mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz);
+
 
 
 #endif

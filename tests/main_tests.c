@@ -1,6 +1,9 @@
 #include <stdio.h>
+#include <math.h>
 #include "unittest_engine.h"
 #include "pol.h"
+#include "matrix.h"
+#include "tree.h"
 
 int tests_run    = 0;
 int failed_tests = 0;
@@ -15,14 +18,14 @@ static char * test_unpackexp() {
     u8 n = 8;
     u64 x = 7164981176274674482;
     u64 expected_exp_x[] = {0x63, 0x6f, 0x20, 0x6b, 0xa, 0x36, 0x63, 0x32};
-    u64 * exp_x = unpackexp(x, n);
+    u64 * exp_x = exp_unpack(x, n);
 
     for (int i = 0; i < n; i++) {
-        assert(expected_exp_x[i] == exp_x[i], "unpackexp function is failing!");
+        assert(expected_exp_x[i] == exp_x[i], "exp_unpack function is failing!");
     }
 
-    u64 y = packexp(exp_x, 8);
-    assert(x == y, "packexp function is failing!");
+    u64 y = exp_pack(exp_x, 8);
+    assert(x == y, "exp_pack function is failing!");
 
     FREE(exp_x);
 
@@ -33,8 +36,8 @@ static char * test_packexp() {
     u8 n = 8;
     u64 expected_x = 7164981176274674482;
     u64 exp_x[] = {0x63, 0x6f, 0x20, 0x6b, 0xa, 0x36, 0x63, 0x32};
-    u64 x = packexp(exp_x, 8);
-    assert(x == expected_x, "packexp function is failing!");
+    u64 x = exp_pack(exp_x, 8);
+    assert(x == expected_x, "exp_pack function is failing!");
 
     return 0;
 }
@@ -43,8 +46,8 @@ static char * test_packexp_with_zero() {
     u8 n = 8;
     u64 expected_x = 0;
     u64 exp_x[] = {0, 0, 0, 0, 0, 0, 0, 0};
-    u64 x = packexp(exp_x, 8);
-    assert(x == expected_x, "packexp function is failing!");
+    u64 x = exp_pack(exp_x, 8);
+    assert(x == expected_x, "exp_pack function is failing!");
 
     return 0;
 }
@@ -303,6 +306,7 @@ static char * test_llpol_coef_multiply() {
 
     assert(llpol_hard_cmp(result, expected_llpol) == 0, "llpol_coef_multiply is failing!");
 
+    llpol_free(llpol);
     llpol_free(expected_llpol);
     llpol_free(result);
 
@@ -400,21 +404,219 @@ static char * test_aapol_inplace_coef_multiply() {
 }
 
 
+static char * test_list_o_aapol2smatrix_transformation() { //todo
+    //bstree_t * s = bstree_create(aapol_monomial_cmp, aapol_malloc, aapol_free);
+    
+    assert(0, "this test is missing!");
+
+    return 0;
+}
+
+
+static char * test_aapol_add() {
+    int n = 8;
+    aapol_t * a = aapol_malloc(n);
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673);
+    aapol_addterm(a, 1, 217020518514230019);
+    aapol_addterm(a, 1, 144680345676153346);
+
+    aapol_t * b = aapol_malloc(n);
+    aapol_addterm(b, 1,                  0);
+    aapol_addterm(b, 1,  72340172838076673);
+    aapol_addterm(b, 1, 217020518514230019);
+    aapol_addterm(b, 1, 144680345676153346);
+
+    aapol_t * expected_result = aapol_malloc(n);
+    aapol_addterm(expected_result, 2,                  0);
+    aapol_addterm(expected_result, 2,  72340172838076673);
+    aapol_addterm(expected_result, 2, 217020518514230019);
+    aapol_addterm(expected_result, 2, 144680345676153346);
+
+    aapol_t * result = aapol_add(a, 1, b, 1);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    a = aapol_malloc(n);
+    
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673);
+    aapol_addterm(a, 1, 217020518514230019);
+    aapol_addterm(a, 1, 144680345676153346);
+    aapol_addterm(a, 1,         8589934594);
+
+    b = aapol_malloc(n);
+    aapol_addterm(b, 1,                   0);
+    aapol_addterm(b, 1,   72340172838076673);
+    aapol_addterm(b, 1,  217020518514230019);
+    aapol_addterm(b, 1,  144680345676153346);
+    aapol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = aapol_malloc(n);
+    aapol_addterm(expected_result, 5,   72340172838076673);
+    aapol_addterm(expected_result, 5,  217020518514230019);
+    aapol_addterm(expected_result, 5,  144680345676153346);
+    aapol_addterm(expected_result, 2,          8589934594);
+    aapol_addterm(expected_result, 3, 2305878202712596482);
+    aapol_addterm(expected_result, 5,                   0);
+
+    result = aapol_add(a, 2, b, 3);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    a = aapol_malloc(n);
+    
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673);
+    aapol_addterm(a, 1, 217020518514230019);
+    aapol_addterm(a, 1, 144680345676153346);
+    aapol_addterm(a, 1,         8589934594);
+
+    b = aapol_malloc(n);
+    aapol_addterm(b, 1,                   0);
+    aapol_addterm(b, 1,   72340172838076673);
+    aapol_addterm(b, 1,  217020518514230019);
+    aapol_addterm(b, 1,  144680345676153346);
+    aapol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = aapol_malloc(n);
+    aapol_addterm(expected_result, 0,   72340172838076673);
+    
+    result = aapol_add(a, 0, b, 0);
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals and equal to zero");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    return 0;
+}
+
+
+static char * test_int_max() {
+    int a[] = {1,4,52,2,6,213,6,7,-123,213,5634,52,5,742,5,2,6,72345};
+    int expectec_result = 72345;
+    int result = int_max(a, 2, 17);
+
+    assert(expectec_result == result, "int_max function is failing!");
+
+    result = int_max(a, 0, 4);
+    expectec_result = 52;
+
+    assert(expectec_result == result, "int_max function is failing!");
+
+    return 0;
+}
+
+
+static char * test_int_max_idx() {
+    int a[] = {1,4,52,2,6,213,6,7,-123,213,5634,52,5,742,5,2,6,72345};
+    int expectec_result = 17;
+    int result = int_max_idx(a, 2, 17);
+
+    assert(expectec_result == result, "int_max function is failing!");
+
+    result = int_max_idx(a, 0, 4);
+    expectec_result = 2;
+
+    assert(expectec_result == result, "int_max function is failing!");
+
+    return 0;
+}
+
+
+static char * test_aapol_multiply() {
+    int n = 8;
+    aapol_t * a = aapol_malloc(n);
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673); // (1,1,1,1,1,1,1,1)
+    //aapol_addterm(a, 1, 217020518514230019); // (3,3,3,3,3,3,3,3)
+    //aapol_addterm(a, 1, 144680345676153346); // (2,2,2,2,2,2,2,2)
+
+    aapol_t * b = aapol_malloc(n);
+    aapol_addterm(b, 1,                  0);
+    aapol_addterm(b, 1,  72340172838076673); // (1,1,1,1,1,1,1,1)
+    //aapol_addterm(b, 1, 217020518514230019); // (3,3,3,3,3,3,3,3)
+    //aapol_addterm(b, 1, 144680345676153346); // (2,2,2,2,2,2,2,2)
+
+    aapol_t * expected_result = aapol_malloc(n);
+    aapol_addterm(expected_result, 1,                  0);
+    aapol_addterm(expected_result, 2,  72340172838076673);
+    aapol_addterm(expected_result, 1, 144680345676153346);
+
+    aapol_t * result = aapol_multiply(a, b);
+    //printf("\nresult: "); aapol_print(result);
+    //printf("expected_result: "); aapol_print(expected_result);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    a = aapol_malloc(n);
+    aapol_addterm(a, 1, 72340172838076673);
+    b = aapol_malloc(n);
+    aapol_addterm(b, 1,                  0);
+    aapol_addterm(b, 1,  72340172838076673);
+    expected_result = aapol_malloc(n);
+    aapol_addterm(expected_result, 1,  72340172838076673);
+    aapol_addterm(expected_result, 1, 144680345676153346);
+
+    result = aapol_multiply(a, b);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    return 0;
+}
+
+
+static char * test_exp_norm() {
+    int n = 2;
+    u64 e = 4294967297; // (1,1)
+    assert(exp_norm(e, 2) == sqrt(2), "exp norm is failing.");
+    return 0;
+}
+
+
 static void all_tests() {
-    run_uniitest(test_packexp);
-    run_uniitest(test_unpackexp);
-    run_uniitest(test_packexp_with_zero);
-    run_uniitest(test_aapol_addterm_equals);
-    run_uniitest(test_aapol_addterm_different_minor);
-    run_uniitest(test_llpol_addterm_equals);
-    run_uniitest(test_llpol_addterm_different_major);
-    run_uniitest(test_llpol_addterm_different_minor);
-    run_uniitest(test_aapol_cpy);
-    run_uniitest(test_llpol_cpy);
-    run_uniitest(test_llpol_inplace_coef_multiply);
-    run_uniitest(test_llpol_coef_multiply);
-    run_uniitest(test_aapol_coef_multiply);
-    run_uniitest(test_aapol_inplace_coef_multiply);
+    run_unittest(test_packexp);
+    run_unittest(test_unpackexp);
+    run_unittest(test_packexp_with_zero);
+    run_unittest(test_aapol_addterm_equals);
+    run_unittest(test_aapol_addterm_different_minor);
+    run_unittest(test_llpol_addterm_equals);
+    run_unittest(test_llpol_addterm_different_major);
+    run_unittest(test_llpol_addterm_different_minor);
+    run_unittest(test_aapol_cpy);
+    run_unittest(test_llpol_cpy);
+    run_unittest(test_llpol_inplace_coef_multiply);
+    run_unittest(test_llpol_coef_multiply);
+    run_unittest(test_aapol_coef_multiply);
+    run_unittest(test_aapol_inplace_coef_multiply);
+    run_unittest(test_list_o_aapol2smatrix_transformation);
+    run_unittest(test_aapol_add);
+    run_unittest(test_int_max);
+    run_unittest(test_int_max_idx);
+    run_unittest(test_aapol_multiply);
+    run_unittest(test_exp_norm);
 }
 
 

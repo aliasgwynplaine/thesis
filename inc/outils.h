@@ -17,7 +17,6 @@
         exit(EXIT_FAILURE); \
     } while (0)
 
-#define SWAPINT(A, B) (A)^=(B);(B)^=(A);(A)^=(B)
 
 #ifndef __max
 #define __max(a,b)    (((a) > (b)) ? (a) : (b))
@@ -29,8 +28,10 @@
 
 #endif
 
-#ifndef TESTPTR
-#define TESTPTR(PTR)                     \
+#define SWAPINT(A, B) (A)^=(B);(B)^=(A);(A)^=(B)
+
+#ifndef CHECKPTR
+#define CHECKPTR(PTR)                     \
     do {                                 \
         if (!(PTR)) {                    \
             SAYNEXITWERROR("No memory!");\
@@ -57,12 +58,16 @@ struct bdat_t {
 };
 
 
-bdat_t    * bdat_create();
-void        bdat_free(void * bdat);
+bdat_t * bdat_create();
+void     bdat_free(void * bdat);
 
-void        print_lstr(char ** lstr);
-void        print_lstrb(char ** lstr);
+void print_lstr(char ** lstr);
+void print_lstrb(char ** lstr);
 
-int         int_cumsum(int * p, int * c, int n);
+int  int_cumsum(int * p, int * c, int n);
+int  int_max(int * a, int p, int q);
+int  int_max_idx(int * a, int p, int q);
+u64  u64_max(u64 * a, int p, int q);
+u64  u64_max_idx(u64 * a, int p, int q);
 
 #endif

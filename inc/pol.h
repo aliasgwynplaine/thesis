@@ -24,7 +24,7 @@ struct term_t {
     u64       exp;  // packed exponent
 };
 
-struct lpol_t {   // pol type for llist
+struct lpol_t {   // pol type as btree
     COEFTYPE coef;
     u64      exp;
     lpol_t * l;
@@ -32,9 +32,9 @@ struct lpol_t {   // pol type for llist
 };
 
 struct aapol_t { 
-    u8      nvar;
-    u16     sz;
-    u16     cap;     // current capacity
+    u8       nvar;
+    u16      sz;
+    u16      cap;     // current capacity
     term_t * terms;
 };
 
@@ -69,8 +69,7 @@ void      llpol_list_sort(llpol_t ** lollpol, int sz);
 
 /* polynomial operations */
 
-term_t * addpol(term_t * p, double a, term_t * q, double b); // a*p + b*q
-term_t * mulpol(term_t * p, term_t * q);
+term_t * term_multiply(term_t * p, term_t * q); // todo 
 
 
 aapol_t * smatrix2aapol(smatrix_t * smat, u64 * exps);
@@ -84,8 +83,8 @@ aapol_t  * str2aapol(char *); // todo
 
 /* pretty printing */
 void printpol(term_t * pol);
-void printllpol(llpol_t * llpol);
-void printaapol(aapol_t * aapol);
+void llpol_print(llpol_t * llpol);
+void aapol_print(aapol_t * aapol);
 
 /* define polynomial operations here */
 term_t   * llpol_head(llpol_t *);
@@ -101,23 +100,25 @@ llpol_t  * llpol_cpy(llpol_t * dst, llpol_t * src);
 
 term_t   * aapol_head(aapol_t *);
 aapol_t  * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp);
-aapol_t  * aapol_add(aapol_t * a, aapol_t * b); //todo
-void       aapol_inplace_add(aapol_t * a, aapol_t * b); //todo
+aapol_t  * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha); 
+void       aapol_inplace_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha); //todo
 aapol_t  * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha);
 aapol_t  * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha);
-aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b); // todo
+aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b); 
 int        aapol_monomial_cmp(aapol_t * a, aapol_t * b);
 int        aapol_hard_cmp(aapol_t * a, aapol_t * b); 
 aapol_t  * aapol_cpy(aapol_t * dst, aapol_t * src);
 
 /* bit masks and bit extraction*/
 
-int   exp_cmp(u64, u64, u8);
-int   exp_lex_cmp(u64, u64, u8);
-int   exp_revlex_cmp(u64, u64, u8); // todo
-void  expadd(u64 *, u64 *, u64 *);
-u64 * unpackexp(u64, u8);
-u64   packexp(u64 *, u8);
+double exp_norm(u64, u8);
+int    exp_cmp(u64, u64, u8);
+int    exp_lex_cmp(u64, u64, u8);
+int    exp_grlex_cmp(u64, u64, u8);
+int    exp_revlex_cmp(u64, u64, u8); // todo
+u64 *  exp_add(u64 *, u64 *, u64 *);
+u64 *  exp_unpack(u64, u8);
+u64    exp_pack(u64 *, u8);
 
 
 /* exponent's binary masks */

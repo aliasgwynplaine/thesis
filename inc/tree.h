@@ -63,14 +63,14 @@ void        bnode_free(bnode_t *, freefux_t *);
 
 bstree_t  * bstree_create(cmpfux_t *, allocfux_t * , freefux_t *);
 void        bstree_free(bstree_t *);
-void      * bstree_search(bnode_t *, void *); // todo
+void      * bstree_search(bstree_t *, void *); // todo
 int         bstree_insert(bstree_t *, void *);
 void        bstree_walk(bnode_t *, ORDER);    // todo
 void        bstree_inorder_walk(bnode_t *);   // todo
 void        bstree_preorder_walk(bnode_t *);  // todo
 void        bstree_postorder_walk(bnode_t *); // todo
 
-avltree_t * avltree_create();
+avltree_t * avltree_create(cmpfux_t *, allocfux_t, freefux_t *);
 void      * avltree_search(bnode_t *, void * data);
 void        avltree_insert(bnode_t *, void * data);
 void        avltree_delete(bnode_t *, void * data);
@@ -79,7 +79,8 @@ void        avltree_inorderwalk(bnode_t *);
 void        avltree_preorderwalk(bnode_t *);
 void        avltree_postorderwalk(bnode_t *);
 
-rbtree_t  * rbtree_create();
+rbtree_t  * rbtree_create(cmpfux_t *, allocfux_t *, freefux_t *);
+void        rbtree_free(rbtree_t *);
 void      * rbtree_search(rbtree_t *, void * data);
 void        rbtree_insert(rbtree_t *, void * data);
 void        rbtree_delete(rbtree_t *, void * data);

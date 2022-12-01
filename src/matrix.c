@@ -32,17 +32,17 @@ void mmatrix_free(mmatrix_t * mmat) {
 
 smatrix_t * smatrix_malloc(int m, int n, int nnzmax) {
     smatrix_t * smat = calloc(1, sizeof(smatrix_t));
-    TESTPTR(smat);
+    CHECKPTR(smat);
     smat->nnz    = 0;
     smat->m      = __max(m, 0);
     smat->n      = __max(n, 0);
     smat->nnzmax = __max(nnzmax, 1);
     smat->p = calloc((n + 1), sizeof(int));
-    TESTPTR(smat->p);
+    CHECKPTR(smat->p);
     smat->i = malloc(sizeof(int) * nnzmax);
-    TESTPTR(smat->i);
+    CHECKPTR(smat->i);
     smat->x = malloc(sizeof(COEFTYPE) * nnzmax);
-    TESTPTR(smat->x);
+    CHECKPTR(smat->x);
 
     return smat;
 }
@@ -84,7 +84,7 @@ void colsmat_inorderpush(bnode_t * root, colsmat_t * stack, int * pos) {
 
 colsmat_t * colsmat_btree_dump(bstree_t * tree) {
     colsmat_t * dump = malloc(sizeof(colsmat_t) * tree->sz);
-    TESTPTR(dump);
+    CHECKPTR(dump);
     int * pos = malloc(sizeof(int));
     *pos      = 0;
     colsmat_inorderpush(tree->root, dump, pos);
@@ -157,9 +157,9 @@ int colsmat_btree_insert(bstree_t * tree, u64 exp, int i, int xx) {
             aux->exp = exp;
             aux->p++;
             aux->i = malloc(sizeof(int));
-            TESTPTR(aux->i);
+            CHECKPTR(aux->i);
             aux->x = malloc(sizeof(COEFTYPE));
-            TESTPTR(aux->x);
+            CHECKPTR(aux->x);
             aux->i[aux->p - 1] = i;
             aux->x[aux->p - 1] = xx;
             tree->sz++;
@@ -170,18 +170,18 @@ int colsmat_btree_insert(bstree_t * tree, u64 exp, int i, int xx) {
             aux->exp = exp;
             aux->p++;
             aux->i = malloc(sizeof(int));
-            TESTPTR(aux->i);
+            CHECKPTR(aux->i);
             aux->x = malloc(sizeof(COEFTYPE));
-            TESTPTR(aux->x);
+            CHECKPTR(aux->x);
             aux->i[aux->p - 1] = i;
             aux->x[aux->p - 1] = xx;
             tree->sz++;
         } else {
             aux->p++;
             aux->i = realloc(aux->i, sizeof(int) * aux->p);
-            TESTPTR(aux->i);
+            CHECKPTR(aux->i);
             aux->x = realloc(aux->x, sizeof(int) * aux->p);
-            TESTPTR(aux->x);
+            CHECKPTR(aux->x);
             aux->i[aux->p - 1] = i;
             aux->x[aux->p - 1] = xx;
 

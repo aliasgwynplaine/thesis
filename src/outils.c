@@ -63,3 +63,66 @@ int int_cumsum(int * p, int * c, int n) {
 
     return nz2;
 }
+
+
+/**
+ * @brief function to traverse an array and 
+ * return the max element in the array
+ * 
+ * @param a array of ints
+ * @param p lower bound of the array a
+ * @param q upper bound of the array a
+ * 
+ * @return the the max element
+*/
+inline int int_max(int * a, int p, int q) {
+    if (p > q) SAYNEXITWERROR("check your bounds!");
+    int mx = a[p];
+    
+    for (int i = p ; i <= q; i++)
+        mx = __max(mx, a[i]);
+    
+    return mx;
+}
+/**
+ * @brief function to traverse an array and 
+ * return the index of the max element in 
+ * the array
+ * 
+ * @param a array of ints
+ * @param p lower bound of the array a
+ * @param q upper bound of the array a
+ * 
+ * @return the index of the max element
+*/
+inline int int_max_idx(int * a, int p, int q) { 
+    if (p > q) SAYNEXITWERROR("check your bounds!"); 
+    int mx_idx = p;
+
+    for (int i = p + 1 ; i <= q; i++)
+        mx_idx = a[mx_idx] > a[i] ? mx_idx : i;
+     
+    return mx_idx; 
+}
+
+
+inline u64 u64_max(u64 * a, int p, int q) { 
+    if (p > q) SAYNEXITWERROR("check your bounds!"); 
+    u64 mx = a[p]; 
+
+    for (int i = p + 1; i <= q; i++) 
+        mx = __max(mx, a[i]); 
+    
+    return mx; 
+}
+
+inline u64 u64_max_idx(u64 * a, int p, int q) { 
+    if (p > q) SAYNEXITWERROR("check your bounds!"); 
+    u64 mx_idx = p; 
+
+    for (int i = p ; i <= q; i++)
+        mx_idx = a[mx_idx] > a[i] ? mx_idx : i; 
+    
+    return mx_idx; 
+}
+

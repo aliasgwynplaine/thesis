@@ -1,4 +1,5 @@
 #include "pol.h"
+#include <math.h>
 
 /*
 how do i control the vars???
@@ -18,10 +19,10 @@ Using masks
 aapol_t * aapol_malloc(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     aapol_t * aapol = malloc(sizeof(aapol_t));
-    TESTPTR(aapol);
+    CHECKPTR(aapol);
     aapol->nvar  = n;
     aapol->sz    = 0;
-    aapol->cap   = 1;
+    aapol->cap   = 0;
     aapol->terms = NULL;
 
     return aapol;
@@ -78,9 +79,9 @@ void mergeaapol(aapol_t * a, int p, int q, int r) {
     n_1 = q - p + 1;
     n_2 = r - q;
     l_ = malloc((n_1 + 1) * sizeof(term_t));
-    TESTPTR(l_);
+    CHECKPTR(l_);
     r_ = malloc((n_2 + 1) * sizeof(term_t));
-    TESTPTR(r_);
+    CHECKPTR(r_);
 
     for (i = 0; i < n_1; i++) l_[i] = a->terms[i + p];
 
@@ -123,12 +124,13 @@ void mergesortaapol(aapol_t * aapol, int p, int r) {
 }
 
 void aapol_sort(aapol_t * aapol) {
+    if (aapol->sz == 0) return;
     debug("preparing pol...");
     int i;
     mergesortaapol(aapol, 0, aapol->sz - 1);
     /* todo: a smarter way to get rid off the remaining 0's */
     i = aapol->sz - 1;
-    while (aapol->terms[i].coef == 0) i--;
+    while (aapol->terms[i].coef == 0 && i >= 0) i--;
     aapol->sz = i + 1;
 }
 
@@ -174,6 +176,12 @@ void llpol_list_sort(llpol_t ** lollpol, int sz) {
     llpol_list_quicksort(lollpol, 0, sz - 1);
 }
 
+term_t * term_add(term_t * p, COEFTYPE a, term_t * q, COEFTYPE b) {
+    term_t * r = term_malloc(sizeof(term_t));
+    r->coef = a * p->coef + b * q->coef;
+    exp_add(&p->exp, &q->exp, &r->exp);
+}
+
 
 term_t * aapol_head(aapol_t * aapol) {
     term_t * term = term_malloc(sizeof(term_t));
@@ -201,7 +209,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
 
     if (!aapol->terms) {
         aapol->terms = malloc(2*sizeof(term_t));
-        TESTPTR(aapol);
+        CHECKPTR(aapol);
         aapol->cap = 2;
     }
 
@@ -211,7 +219,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
         // todo: make a smarter use of space.
         debug("trying to alloc %d chunks", aapol->cap<<1);
         aapol->terms = realloc(aapol->terms, (aapol->cap<<1) * sizeof(term_t));
-        TESTPTR(aapol->terms);
+        CHECKPTR(aapol->terms);
         aapol->cap = aapol->cap<<1;
     }
 
@@ -242,6 +250,71 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     return aapol;
 }
 
+
+aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
+    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot sum aapols of different vars.");
+    aapol_t * r;
+
+    if (alpha == 0 && betha != 0) {
+        aapol_cpy(r, b);
+        return r;
+    }
+
+    if (betha == 0 && alpha != 0) {
+        aapol_cpy(r, a);
+        return r;
+    }
+
+    r = aapol_malloc(a->nvar);
+
+    if (alpha == 0 && betha == 0) {
+        return r;
+    }
+
+    r->cap = a->sz + b->sz;
+    r->terms = term_malloc(sizeof(term_t) * r->cap);
+
+    term_t * aterms = a->terms;
+    term_t * bterms = b->terms;
+    term_t * rterms = r->terms;
+
+    int i = 0; int j = 0; int k = 0;
+    int cmp;
+
+
+    while (i < a->sz && j < b->sz) {
+        cmp = exp_cmp(aterms[i].exp, bterms[j].exp, a->nvar);
+        if (cmp < 0) {
+            rterms[k].coef = betha * bterms[j].coef;
+            rterms[k].exp  = bterms[j++].exp;
+        } else if (cmp > 0) {
+            rterms[k].coef = alpha * aterms[i].coef;
+            rterms[k].exp  = aterms[i++].exp;
+        } else {
+            rterms[k].coef = alpha * aterms[i++].coef + betha * bterms[j++].coef;
+            if (rterms[k].coef == 0) continue;
+            rterms[k].exp = aterms[i-1].exp;
+        }
+
+        k++;
+    }
+
+    while (i < a->sz) {
+        rterms[k].coef = alpha * aterms[i].coef;
+        rterms[k++].exp  = aterms[i++].exp;
+    }
+
+    while (j < b->sz) {
+        rterms[k].coef = betha * bterms[j].coef;
+        rterms[k++].exp  = bterms[j++].exp;
+    }
+
+    r->sz = k;
+
+    return r;
+}
+
+
 aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
     aapol_t * res = aapol_malloc(a->nvar);
     res->sz = a->sz;
@@ -256,6 +329,7 @@ aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
     return res;
 }
 
+
 aapol_t * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha) {
     for (int i = 0; i < a->sz; i++) {
         a->terms[i].coef *= alpha;
@@ -264,6 +338,60 @@ aapol_t * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha) {
     return a;
 }
 
+#define _DEBUG
+aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
+    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot multiply pols with different num o vars");
+
+    if (a->sz == 0 || b->sz == 0) return NULL;
+
+    //aapol_sort(a);
+    //aapol_sort(b);
+
+    aapol_t * r = aapol_malloc(a->nvar);
+    r->cap = a->sz * b->sz;
+    r->terms = malloc(sizeof(term_t) * r->cap);
+    term_t * rterms = r->terms;
+    term_t * aterms = a->terms;
+    term_t * bterms = b->terms;
+    int i = 0, k = 0, cmp;
+    int s;
+    int * f = malloc(sizeof(int) * a->sz);
+    CHECKPTR(f);
+    u64 * dp = malloc(sizeof(u64) * a->sz);
+    CHECKPTR(dp);
+    exp_add(&aterms[0].exp, &bterms[0].exp, &rterms[0].exp);
+    rterms[0].coef = 0;
+    for (int j = 0; j < a->sz; j++) {
+        f[j]  = 0;
+        // dp[i] = aterms[i].exp + bterms[f[i]].exp;
+        exp_add(&aterms[j].exp, &bterms[f[j]].exp, &dp[j]);
+    }
+
+    
+    while (i < a->sz) {
+        s   = u64_max_idx(dp, i, a->sz - 1);
+        cmp = exp_cmp(rterms[k].exp, dp[s], a->nvar);
+
+        if (cmp != 0) {
+            if (rterms[k].coef != 0) rterms[++k].coef = 0;
+
+            rterms[k].exp = dp[s];
+        }
+
+        rterms[k].coef += aterms[s].coef * bterms[f[s]].coef;
+        f[s]++;
+        exp_add(&aterms[s].exp, &bterms[f[s]].exp, &dp[s]);
+
+        if (f[s] > b->sz - 1) i = s + 1;    
+    }
+
+    r->sz = k + 1;
+    FREE(f);
+    FREE(dp);
+
+    return r;
+}
+#undef _DEBUG
 
 int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot compare polynomials of different number of variables.");
@@ -296,7 +424,9 @@ int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
     aapol_sort(a);
     aapol_sort(b);
 
-    if (a->sz != b->sz) return 1; 
+    if (a->sz != b->sz) return 1;
+
+    if (a->sz == 0) return 0;
 
     term_t * a_term_p = a->terms;
     term_t * b_term_p = b->terms;
@@ -329,9 +459,9 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot cmp polynomials of different nvar");
 
     lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
-    TESTPTR(stacka);
+    CHECKPTR(stacka);
     lpol_t ** stackb = malloc(sizeof(lpol_t *) * b->sz);
-    TESTPTR(stackb);
+    CHECKPTR(stackb);
     int ha = 0;
     int hb = 0;
     lpol_t * nodea = a->root;
@@ -376,9 +506,9 @@ int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
     if (a->sz != b->sz) return 1;
 
     lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
-    TESTPTR(stacka);
+    CHECKPTR(stacka);
     lpol_t ** stackb = malloc(sizeof(lpol_t *) * b->sz);
-    TESTPTR(stackb);
+    CHECKPTR(stackb);
     int ha = 0;
     int hb = 0;
     lpol_t * nodea = a->root;
@@ -455,7 +585,7 @@ lpol_t * lpol_malloc(size_t sz) {
 llpol_t * llpol_malloc(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     llpol_t * llpol = malloc(sizeof(llpol_t));
-    TESTPTR(llpol);
+    CHECKPTR(llpol);
     llpol->root = NULL;
     llpol->nvar = n;
     llpol->sz   = 0;
@@ -509,7 +639,7 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     }
 
     newterm = lpol_malloc(sizeof(lpol_t));
-    TESTPTR(newterm);
+    CHECKPTR(newterm);
     newterm->coef = coef;
     newterm->exp  = exp;
     llpol->sz++;
@@ -548,7 +678,7 @@ llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
 llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
     llpol_t * res = llpol_malloc(a->nvar);
     lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
-    TESTPTR(stack);
+    CHECKPTR(stack);
     lpol_t * node = a->root;
     int h = 0;
 
@@ -573,7 +703,7 @@ llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
 
 llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
     lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
-    TESTPTR(stack);
+    CHECKPTR(stack);
     lpol_t * node = a->root;
     int h = 0;
 
@@ -598,7 +728,7 @@ llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
 
 llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
     lpol_t ** stack = malloc(sizeof(lpol_t *) * src->sz);
-    TESTPTR(stack);
+    CHECKPTR(stack);
     lpol_t * node = src->root;
     int h = 0;
     
@@ -620,7 +750,7 @@ llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
 }
 
 void printlpol(lpol_t * lpol, u8 nvar) {
-    u64 * e = unpackexp(lpol->exp, nvar);
+    u64 * e = exp_unpack(lpol->exp, nvar);
     if (lpol->coef >= 0) printf("+ ");
     if (lpol->exp == 0) {
         printf("%f", lpol->coef);
@@ -653,7 +783,7 @@ void inorderprintllpol(lpol_t * root, u8 nvar) {
  * @param pol polynomial
  */
 
-void printllpol(llpol_t * llpol) {
+void llpol_print(llpol_t * llpol) {
     //debug("checking if pol is null");
     if (llpol == NULL) {
         printf("pol is  empty!\n");
@@ -664,7 +794,7 @@ void printllpol(llpol_t * llpol) {
     printf("\n");
 }
 
-void printaapol(aapol_t * aapol) {
+void aapol_print(aapol_t * aapol) {
     //debug("checking if pol is null");
     if (aapol == NULL) {
         printf("pol is  empty!\n");
@@ -682,7 +812,7 @@ void printaapol(aapol_t * aapol) {
             continue;
         }
         
-        e = unpackexp(terms[i].exp, aapol->nvar);
+        e = exp_unpack(terms[i].exp, aapol->nvar);
         printf("%0.1f*x^(", terms[i].coef);
 
         for (int i = 0; i < aapol->nvar - 1; i++) {
@@ -713,8 +843,57 @@ void llpol_free(llpol_t * llpol) {
 
 
 void aapol_free(aapol_t * aapol) {
-    FREE(aapol->terms);
+    if (aapol->terms != NULL) FREE(aapol->terms);
     FREE(aapol);
+}
+
+
+double exp_norm(u64 e, u8 nvar) {
+    if (nvar <= 0) {
+        dbgerr("nvar is no positive!");
+        exit(EXIT_FAILURE);
+    }
+
+    double cumsum = 0;
+    u16 step   = 64 / nvar;
+    const u64 * mask;
+
+    switch (nvar) {
+    case 1:
+        return sqrt(e);
+        break;
+    case 2: 
+        mask = MASK_LIST_2V;
+        break;
+    case 3: 
+        mask = MASK_LIST_3V;
+        break;
+    case 4: 
+        mask = MASK_LIST_4V;
+        break;
+    case 5: 
+        mask = MASK_LIST_5V;
+        break;
+    case 6: 
+        mask = MASK_LIST_6V;
+        break;
+    case 7: 
+        mask = MASK_LIST_7V;
+        break;
+    case 8: 
+        mask = MASK_LIST_8V;
+        break;
+    default:
+        dbgerr("Not implemented. nvars : %d", nvar);
+        exit(EXIT_FAILURE);
+        break;
+    }
+
+    for (int i = 0; i < nvar; i++) {
+        cumsum += (e & *(mask + i))>>((nvar-i-1)*step);
+    }
+
+    return sqrt(cumsum); 
 }
 
 
@@ -729,9 +908,10 @@ int exp_lex_cmp(u64 a, u64 b, u8 nvar) {
 }
 
 
-void expadd(u64 * a, u64 * b, u64 * c) {
+u64 * exp_add(u64 * a, u64 * b, u64 * c) {
     *c = *a + *b; // be carefull
     /* todo: handle "local" overflow */
+    return c;
 }
 
 /**
@@ -742,64 +922,55 @@ void expadd(u64 * a, u64 * b, u64 * c) {
  * @param nvar number of variables on e
  * @return u64* that stores unpacked variables
  */
-u64 * unpackexp(u64 e, u8 nvar) {
+u64 * exp_unpack(u64 e, u8 nvar) {
     if (nvar <= 0) {
         dbgerr("nvar is no positive!");
         exit(EXIT_FAILURE);
     }
-    u64 * exp  = malloc(nvar * sizeof(u64 *));
-    TESTPTR(exp);
-    u16 step   = 64 / nvar; 
+    u64 * exp  = malloc(nvar * sizeof(u64));
+    CHECKPTR(exp);
+    u16 step   = 64 / nvar;
+    const u64 * mask;
 
     switch (nvar) {
     case 1:
         *exp = e;
         break;
     case 2: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_2V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_2V;
         break;
     case 3: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_3V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_3V;
         break;
     case 4: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_4V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_4V;
         break;
     case 5: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_5V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_5V;
         break;
     case 6: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_6V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_6V;
         break;
     case 7: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_7V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_7V;
         break;
     case 8: 
-        for (int i = 0; i < nvar; i++) {
-            *(exp + i) = (e & *(MASK_LIST_8V + i))>>((nvar-i-1)*step);
-        }
+        mask = MASK_LIST_8V;
         break;
     default:
         dbgerr("Not implemented. nvars : %d", nvar);
         exit(EXIT_FAILURE);
         break;
     }
+
+    for (int i = 0; i < nvar; i++) {
+        *(exp + i) = (e & *(mask + i))>>((nvar-i-1)*step);
+    }
     
     return exp;
 }
 
-u64 packexp(u64 * e, u8 nvar) {
+u64 exp_pack(u64 * e, u8 nvar) {
     if (nvar <= 0) {
         dbgerr("nvar is no positive!");
         exit(EXIT_FAILURE);

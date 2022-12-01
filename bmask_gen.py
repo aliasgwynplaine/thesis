@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from calendar import c
-from re import M
 import sys
 
 int_sz = 64

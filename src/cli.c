@@ -3,6 +3,9 @@
 #define MAX_STDINPUT_LENGTH 1024
 #define MAX_ARG_NUM 64
 
+bstree_t * setoaapol;
+bstree_t * setollpol;
+
 void trimstr(char * str) {
     int len = strlen(str);
     if (str[len - 1] == '\n') str[len - 1] = '\0';
@@ -10,7 +13,7 @@ void trimstr(char * str) {
 
 char ** splitcommand(char * buffer) {
     char ** splitted = malloc(sizeof(char *) * MAX_ARG_NUM);
-    TESTPTR(splitted);
+    CHECKPTR(splitted);
     
     char * part = strtok(buffer, " \n");
     int pos     = 0;
@@ -40,17 +43,9 @@ int cli(char * prelude_str) {
     char * prelude = (char*) malloc(sizeof(char) * 32);
     strcpy(prelude, prelude_str);
     printf("%s> ", prelude);
+    //setoaapol = bstree_create(aapol_monomial_cmp, aapol_malloc, aapol_free);
     char * line;
     char ** cmds;
-    u64 * e;
-    u64 * e2;
-    u64 * e3;
-    llpol_t * llpol;
-    aapol_t * aapol;
-    aapol_t * aapol1;
-    aapol_t * aapol2;
-    aapol_t * aapol3;
-    aapol_t * laapol;
 
     while (1) {
         line = readuserinput();
@@ -79,112 +74,6 @@ int cli(char * prelude_str) {
             FREE(cmds);
             FREE(prelude);
             return 0;
-        }
-
-        if (strcmp(cmds[0], "exp") == 0) {
-            u64 x, y;
-            u8  n;
-            printf("exponent test\n");
-            printf("unpacking.\n");
-            printf("enter x: ");
-            scanf("%ld", &x);
-            printf("enter y: ");
-            scanf("%ld", &y);
-            printf("enter n: ");
-            scanf("%hhd", &n);
-            printf("x: ");
-            e = unpackexp(x, n);
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e + i));
-            }
-            printf("\ny: ");
-            e2 = unpackexp(y, n);
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e2 + i));
-            }
-            printf("\n");
-            int c = exp_lex_cmp(x, y, n);
-            if (c == 0) {
-                printf("x = y\n");
-            } else if (c < 0) printf("x < y\n");
-            else printf("x > y\n");
-            printf("x + y: ");
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e+i) + *(e2 + i));
-            }
-            printf("\nx + y = %ld\n", x+y);
-            e3 = unpackexp(x+y, n);
-            printf("x + y: ");
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e3+ i));
-            }
-            printf("\n");
-            printf("packing.");
-            printf("e: ");
-            for (int i = 0; i < n; i++) {
-                printf("%ld ", *(e + i));
-            }
-            printf("\n");
-            u64 a = packexp(e, n);
-            printf("x: %ld\n", a);
-            
-            FREE(e);
-            FREE(e2);
-            FREE(e3);
-        }
-
-        if (strcmp(cmds[0], "llpol") == 0) {
-            debug("running pol test...");
-            u8 n = 4;
-            llpol = llpol_malloc(n);
-            llpol = llpol_addterm(llpol, 1, 3);
-            llpol = llpol_addterm(llpol, 1, 3);
-            llpol = llpol_addterm(llpol, 1, 1);
-            llpol = llpol_addterm(llpol, 1, 2);
-            llpol = llpol_addterm(llpol, 1, 3);
-            llpol = llpol_addterm(llpol, 1, 7);
-            llpol = llpol_addterm(llpol, 1, 7);
-            llpol = llpol_addterm(llpol, 1, 7);
-            printllpol(llpol);
-            llpol_free(llpol);
-            
-        }
-
-        if (strcmp(cmds[0], "pol2mat") == 0) {
-            debug("running polynomial to matrix transformation");
-            aapol1 = aapol_malloc(1);
-            aapol2 = aapol_malloc(1);
-            aapol3 = aapol_malloc(1);
-            aapol_addterm(aapol1, 1, 5);
-            aapol_addterm(aapol1, 1, 3);
-            aapol_addterm(aapol1, 1, 3);
-            aapol_addterm(aapol1, 1, 2);
-            aapol_addterm(aapol2, 1, 0);
-            aapol_addterm(aapol2, 1, 1);
-            aapol_addterm(aapol2, 1, 3);
-            aapol_addterm(aapol3, 1, 5);
-            aapol_addterm(aapol3, 1, 2);
-            aapol_addterm(aapol3, 1, 1);
-            aapol_addterm(aapol3, 7, 0);
-            debug("pol is created.");
-            aapol_sort(aapol1);
-            aapol_sort(aapol2);
-            aapol_sort(aapol3);
-            printaapol(aapol3);
-            printaapol(aapol2);
-            printaapol(aapol1);
-            laapol = malloc(3 * sizeof(aapol_t));
-            laapol[0] = *aapol3;
-            laapol[1] = *aapol2;
-            laapol[2] = *aapol1;
-            mmatrix_t * smat = aapol2mmatrix(laapol, 3);
-            debug("convertion done. freeing pols");
-            aapol_free(aapol1);
-            aapol_free(aapol2);
-            aapol_free(aapol3);
-            free(laapol);
-            mmatrix_free(smat);
-            debug("done.");
         }
 
         if (strcmp("bst", cmds[0]) == 0) {
