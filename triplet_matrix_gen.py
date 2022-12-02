@@ -1,18 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import sys
-from random import random, randint
+from random import random
 
 def cerr(msg : str) :
     sys.stderr.write(msg +'\n')
-
 
 
 if __name__ == '__main__' :
     if sys.argv.__len__() < 5 :
         cerr(f"usage: {sys.argv[0]} <m> <n> <d> <filename>")
         exit(0)
-    
+
     m  = int(sys.argv[1])
     n  = int(sys.argv[2])
     d  = float(sys.argv[3])
@@ -25,12 +24,13 @@ if __name__ == '__main__' :
     print(f"args: {m} {n} {d} {fn}")
 
     with open(fn, "w") as fh :
-        print(f"{m} {n}", file=fh)
+        rndlst = [random() <= d for _ in range(m*n)]
+        print(f"{m} {n} {sum(rndlst)}", file=fh)
 
         for i in range(m) :
             for j in range(n) :
-                if random() <= d :
-                    print(f"{i} {j} {random() * 100 : .4f}", file=fh)
+                if rndlst[i*n + j] :
+                    print(f"{i} {j} {random() * 200 - 100:.4f}", file=fh)
     
     print("Done!")
 

@@ -18,7 +18,7 @@ struct colsmat_t {
 mmatrix_t * mmatrix_malloc(int m, int n, int nnzmax) {
     mmatrix_t * mmat = malloc(sizeof(mmatrix_t));
     mmat->exps = calloc(n, sizeof(u64));
-    mmat->mat  = smatrix_malloc(m, n, nnzmax);
+    mmat->mat  = csc_malloc(m, n, nnzmax);
 
     return mmat;
 }
@@ -30,8 +30,85 @@ void mmatrix_free(mmatrix_t * mmat) {
     FREE(mmat);
 }
 
-smatrix_t * smatrix_malloc(int m, int n, int nnzmax) {
-    smatrix_t * smat = calloc(1, sizeof(smatrix_t));
+csr_t * csr_malloc(int m, int n, int nnzmax) {
+    csr_t * csr = calloc(1, sizeof(smatrix_t));
+    CHECKPTR(csr);
+    csr->nnz    = 0;
+    csr->m      = __max(m, 0);
+    csr->n      = __max(n, 0);
+    csr->nnzmax = __max(nnzmax, 1);
+    csr->p = calloc((m + 1), sizeof(int));
+    CHECKPTR(csr->p);
+    csr->i = malloc(sizeof(int) * nnzmax);
+    CHECKPTR(csr->i);
+    csr->x = malloc(sizeof(COEFTYPE) * nnzmax);
+    CHECKPTR(csr->x);
+
+    return csr;
+}
+
+
+/**
+ * @brief loads a csr matrix in matrix market
+ * format.
+*/
+csr_t * csr_load(FILE * f) {
+    int i, j;
+    int m, n, sz;
+    COEFTYPE x;
+    csr_t * csr;
+
+    if (!f) return NULL;
+    if (fscanf(f, "%d %d %d\n", &m, &n, &sz) != 3) SAYNEXITWERROR("error reading matrix");
+
+    csr = csr_malloc(m, n, sz);
+
+    int i_idx = 0;
+    int p_idx = 0;
+
+    int * ci = malloc(sizeof(int) * sz);
+    CHECKPTR(ci);
+    int * cp = malloc(sizeof(int) * sz);
+    CHECKPTR(cp);
+    COEFTYPE * cx = malloc(sizeof(COEFTYPE) * sz);
+    CHECKPTR(cx);
+    int * w  = calloc(m, sizeof(int));
+    CHECKPTR(w);
+
+    while (fscanf(f, "%d %d %f\n", &i, &j, &x) == 3) {
+        cp[i_idx]   = i;
+        ci[i_idx]   = j;
+        cx[i_idx++] = x;
+    }
+
+    for (int k = 0; k < sz; k++) w[cp[k]]++;
+
+    int_cumsum(csr->p, w, m);
+
+    for (int k = 0; k < sz; k++) {
+        p_idx = w[cp[k]]++;
+        csr->i[p_idx] = ci[k];
+        csr->x[p_idx] = cx[k];
+    }
+
+    FREE(ci);
+    FREE(cp);
+    FREE(cx);
+    FREE(w);
+
+    return csr;
+}
+
+
+void csr_free(csr_t * csr) {
+    FREE(csr->i);
+    FREE(csr->p);
+    FREE(csr->x);
+    FREE(csr);
+}
+
+csc_t * csc_malloc(int m, int n, int nnzmax) {
+    csc_t * smat = calloc(1, sizeof(smatrix_t));
     CHECKPTR(smat);
     smat->nnz    = 0;
     smat->m      = __max(m, 0);
@@ -46,7 +123,7 @@ smatrix_t * smatrix_malloc(int m, int n, int nnzmax) {
 
     return smat;
 }
-smatrix_t * smatrixrealloc(smatrix_t * smat, size_t sz);
+smatrix_t * cscmatrixrealloc(smatrix_t * smat, size_t sz);
 
 
 void smatrix_free(smatrix_t * smat) {
@@ -253,3 +330,12 @@ mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz) {
     return mmat;
 }
 
+void csr_print(csr_t * csr) {
+    for (int i = 0; i < csr->m; i++) {
+        printf("row %d : loc %d : to %d\n", i, csr->p[i], csr->p[i+1] - 1);
+
+        for (int p = csr->p[i]; p < csr->p[i+1]; p++) {
+            printf(" %d : %f\n", csr->i[p], csr->x[p]);
+        }
+    }
+}

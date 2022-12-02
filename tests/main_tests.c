@@ -596,6 +596,17 @@ static char * test_exp_norm() {
 }
 
 
+static char * test_csr_load() {
+    const char * fn = "mat_7x5_03.txt";
+    FILE * fh = fopen(fn, "r");
+    csr_t * csr = csr_load(fh);
+    csr_print(csr);
+    csr_free(csr);
+    fclose(fh);
+    return 0;
+}
+
+
 static void all_tests() {
     run_unittest(test_packexp);
     run_unittest(test_unpackexp);
@@ -617,6 +628,7 @@ static void all_tests() {
     run_unittest(test_int_max_idx);
     run_unittest(test_aapol_multiply);
     run_unittest(test_exp_norm);
+    run_unittest(test_csr_load);
 }
 
 

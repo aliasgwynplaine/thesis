@@ -47,10 +47,11 @@ void print_lstr(char ** lstr)  {
     printf("\n");
 }
 
-int int_cumsum(int * p, int * c, int n) {
-    if (!p || !c) return -1;
+double int_cumsum(int * p, int * c, int n) {
+    if (!p || !c) return 0;
     
-    int nz = 0, nz2 = 0;
+    int nz = 0;
+    double nz2 = 0;
 
     for (int i = 0; i < n; i++) {
         p[i] = nz;

@@ -27,7 +27,7 @@ matrix: $(OBJ)
 
 .PHONY: tests
 tests:
-	$(CC) $(MAINTEST) $(TESTSRC) -o $@.out $(INC_FLAGS) -g $(LDFLAGS)
+	$(CC) $(MAINTEST) $(TESTSRC) -o $@.exe $(INC_FLAGS) -g $(LDFLAGS)
 
 .PHONY: clean
 clean :

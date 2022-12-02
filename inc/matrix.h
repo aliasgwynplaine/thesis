@@ -5,12 +5,12 @@
 #include "tree.h"
 #include "memory.h"
 
-typedef struct mlvector_t       ml_t;   
-typedef struct mmatrix_t   mmatrix_t;  // macaulay matrix 
-typedef struct smatrix_t   smatrix_t;  // generic sparce matrix
-typedef struct smatrix_t   rcatrix_t;  // 
-typedef struct smatrix_t   ccmatrix_t; // 
-typedef struct fgmatrix_t  fgmatrix_t; // faugere matrix
+typedef struct mlvector_t         ml_t;
+typedef struct smatrix_t         csr_t; // 
+typedef struct smatrix_t         csc_t; // 
+typedef struct smatrix_t     smatrix_t; // generic sparce matrix
+typedef struct mmatrix_t     mmatrix_t; // macaulay matrix 
+typedef struct fgmatrix_t   fgmatrix_t; // faugere matrix
 typedef struct stbmatrix_t stbmatrix_t;
 typedef struct srbmatirx_t srbmatrix_t;
 typedef struct hrbmatrix_t hrbmatrix_t;
@@ -76,10 +76,15 @@ struct stbmatrix_t {
 mmatrix_t * mmatrix_malloc(int m, int n, int nnzmax);
 void        mmatrix_free(mmatrix_t * mmat);
 
+csr_t * csr_malloc(int m, int n, int nnzmax);
+csr_t * csr_realloc(csr_t * csrmatrix, size_t sz);      // todo
+csr_t * csr_load(FILE * f);
+void    csr_free(csr_t *);
 
-smatrix_t * smatrix_malloc(int m, int n, int nnzmax);
-smatrix_t * smatrixrealloc(smatrix_t * smat, size_t sz);
-void        smatrix_free(smatrix_t * smat);
+csc_t * csc_malloc(int m, int n, int nnzmax);
+csc_t * csc_realloc(smatrix_t * smat, size_t sz);       // todo
+csc_t * csc_load(FILE * f);                             // todo
+void    smatrix_free(smatrix_t * smat);                 // todo
 
 /*
     insert & delete
@@ -92,6 +97,6 @@ int smatrix_entry(smatrix_t * smat, int i, int j, COEFTYPE x);
 
 mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz);
 
-
+void csr_print(csr_t *);
 
 #endif

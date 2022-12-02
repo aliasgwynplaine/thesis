@@ -64,10 +64,10 @@ void     bdat_free(void * bdat);
 void print_lstr(char ** lstr);
 void print_lstrb(char ** lstr);
 
-int  int_cumsum(int * p, int * c, int n);
-int  int_max(int * a, int p, int q);
-int  int_max_idx(int * a, int p, int q);
-u64  u64_max(u64 * a, int p, int q);
-u64  u64_max_idx(u64 * a, int p, int q);
+double  int_cumsum(int * p, int * c, int n);
+int     int_max(int * a, int p, int q);
+int     int_max_idx(int * a, int p, int q);
+u64     u64_max(u64 * a, int p, int q);
+u64     u64_max_idx(u64 * a, int p, int q);
 
 #endif
