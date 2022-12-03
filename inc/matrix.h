@@ -5,15 +5,15 @@
 #include "tree.h"
 #include "memory.h"
 
-typedef struct mlvector_t         ml_t;
-typedef struct smatrix_t         csr_t; // 
-typedef struct smatrix_t         csc_t; // 
-typedef struct smatrix_t     smatrix_t; // generic sparce matrix
-typedef struct mmatrix_t     mmatrix_t; // macaulay matrix 
-typedef struct fgmatrix_t   fgmatrix_t; // faugere matrix
-typedef struct stbmatrix_t stbmatrix_t;
-typedef struct srbmatirx_t srbmatrix_t;
-typedef struct hrbmatrix_t hrbmatrix_t;
+typedef struct mlvector_t      ml_t; // multiline vector
+typedef struct smatrix_t      csr_t; // compressed sparse row matrix
+typedef struct smatrix_t      csc_t; // compressed sparse column matrix
+typedef struct smatrix_t       sm_t; // generic sparce matrix
+typedef struct mmatrix_t  mmatrix_t; // macaulay matrix 
+typedef struct flmatrix_t     flm_t; // faugere-lachartre matrix
+typedef struct stbmatrix_t   stbm_t;
+typedef struct srbmatirx_t   srbm_t;
+typedef struct hrbmatrix_t   hrbm_t;
 
 
 #include "pol.h"
@@ -49,19 +49,19 @@ struct smatrix_t {
 
 struct mmatrix_t {
     u64       * exps; // multigrads
-    smatrix_t * mat;  // matrix
+    sm_t * mat;  // matrix
 };
 
 
-struct fgmatrix_t {
-    stbmatrix_t * a;
-    srbmatrix_t * b;
-    hrbmatrix_t * c;
+struct flmatrix_t {
+    stbm_t * a;
+    srbm_t * b;
+    hrbm_t * c;
     int         nnz;
 };
 
 
-struct stbmatrix_t {
+struct stbm_t {
     COEFTYPE * val;
     int      * pos;
     int      *  nb;
@@ -82,20 +82,27 @@ csr_t * csr_load(FILE * f);
 void    csr_free(csr_t *);
 
 csc_t * csc_malloc(int m, int n, int nnzmax);
-csc_t * csc_realloc(smatrix_t * smat, size_t sz);       // todo
+csc_t * csc_realloc(sm_t * smat, size_t sz);       // todo
 csc_t * csc_load(FILE * f);                             // todo
-void    smatrix_free(smatrix_t * smat);                 // todo
+void    smatrix_free(sm_t * smat);                 // todo
 
 /*
     insert & delete
 */
 
-int smatrix_entry(smatrix_t * smat, int i, int j, COEFTYPE x);
+int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
 
 
 /* matpol transformations*/
 
-mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz);
+// mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz);
+csc_t * aapol2csc(aapol_t ** laapol, int sz); // todo: convert aapol 2 csc. look up in trash
+csr_t * aapol2csr(aapol_t ** laapol, int sz); // todo: convert aapol 2 csr. look up in trash
+flm_t * csr2flm(csr_t * csr);                 // todo: convert csr_t to block sparse fgmatrix
+flm_t * aapol2flm(aapol_t ** laapol, int sz); // todo: convertaapol 2 fgmatrix
+
+
+
 
 void csr_print(csr_t *);
 

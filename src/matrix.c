@@ -31,7 +31,7 @@ void mmatrix_free(mmatrix_t * mmat) {
 }
 
 csr_t * csr_malloc(int m, int n, int nnzmax) {
-    csr_t * csr = calloc(1, sizeof(smatrix_t));
+    csr_t * csr = calloc(1, sizeof(sm_t));
     CHECKPTR(csr);
     csr->nnz    = 0;
     csr->m      = __max(m, 0);
@@ -108,7 +108,7 @@ void csr_free(csr_t * csr) {
 }
 
 csc_t * csc_malloc(int m, int n, int nnzmax) {
-    csc_t * smat = calloc(1, sizeof(smatrix_t));
+    csc_t * smat = calloc(1, sizeof(sm_t));
     CHECKPTR(smat);
     smat->nnz    = 0;
     smat->m      = __max(m, 0);
@@ -123,10 +123,10 @@ csc_t * csc_malloc(int m, int n, int nnzmax) {
 
     return smat;
 }
-smatrix_t * cscmatrixrealloc(smatrix_t * smat, size_t sz);
+sm_t * cscmatrixrealloc(sm_t * smat, size_t sz);
 
 
-void smatrix_free(smatrix_t * smat) {
+void smatrix_free(sm_t * smat) {
     if (!smat) return;
     FREE(smat->i);
     FREE(smat->p);
@@ -134,7 +134,7 @@ void smatrix_free(smatrix_t * smat) {
     FREE(smat);
 }
 
-int smatrix_entry(smatrix_t * smat, int i, int j, COEFTYPE x) {
+int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
     if (i < 0 || j < 0) return 0;
     if (smat->nnz >= smat->nnzmax) {
         // get more memory;
@@ -270,65 +270,6 @@ int colsmat_btree_insert(bstree_t * tree, u64 exp, int i, int xx) {
 }
 
 
-/**
- * @brief
- * @param aapol list of pols. They must be
- * ordered and compressed.
- * @param sz number of polinomials
- * @return mmatrix_t * macaulay matrix
-*/
-mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz) {
-    mmatrix_t * mmat;
-    smatrix_t * smat;
-    aapol_t   * aux;
-    bstree_t  * bst = bstree_create(colsmat_cmp, NULL, colsmat_free);
-    int nnzmax = 0;
-
-    for (int j = 0; j < sz; j++) {
-        aux = (laapol + j);
-        for (int i = 0; i < aux->sz; i++) {
-            debug("push: %ld, %d, %f", aux->terms[i].exp, j, aux->terms[i].coef);
-            colsmat_btree_insert(bst, aux->terms[i].exp, j, aux->terms[i].coef);
-            nnzmax++;
-        }
-    }
-
-    colsmat_t * dump = colsmat_btree_dump(bst);
-    mmat = mmatrix_malloc(sz, bst->sz, nnzmax);
-    smat = mmat->mat;
-
-    for (int i = 0; i < bst->sz; i++) {
-        smat->p[i+1]  = smat->p[i] + dump[i].p;
-        mmat->exps[i] = dump[i].exp;
-        memcpy(&smat->i[smat->p[i]], dump[i].i, dump[i].p * sizeof(int));
-        memcpy(&smat->x[smat->p[i]], dump[i].x, dump[i].p * sizeof(COEFTYPE));
-    }
-
-    mmat->mat->nnz = nnzmax;
-
-    #ifdef _DEBUG
-    
-    printf("p: ");
-    for (int i = 0; i <= bst->sz; i++)
-        printf("%d ", smat->p[i]);
-
-    printf("\ni: ");
-
-    for (int i = 0; i < smat->nnz; i++)
-        printf("%d ", smat->i[i]);
-    
-    printf("\nx: ");
-    for (int i = 0; i < smat->nnz; i++)
-        printf("%0.1f ", smat->x[i]);
-
-    printf("\n");
-    #endif
-
-    bstree_free(bst);
-    FREE(dump);
-
-    return mmat;
-}
 
 void csr_print(csr_t * csr) {
     for (int i = 0; i < csr->m; i++) {

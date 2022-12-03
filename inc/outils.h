@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
 #include "debug.h"
 
 #ifndef COEFTYPE
@@ -29,6 +32,11 @@
 #endif
 
 #define SWAPINT(A, B) (A)^=(B);(B)^=(A);(A)^=(B)
+
+#define SWAP(A, B, Temp) \
+    Temp = A;            \
+    A = B;               \
+    B = Temp;            \
 
 #ifndef CHECKPTR
 #define CHECKPTR(PTR)                     \
@@ -61,6 +69,7 @@ struct bdat_t {
 bdat_t * bdat_create();
 void     bdat_free(void * bdat);
 
+int  is_str_in_lstr(char * str, char ** lstr);
 void print_lstr(char ** lstr);
 void print_lstrb(char ** lstr);
 
