@@ -7,7 +7,6 @@ term = coef
      | [ coef ] , mvar;
 
 mvar = varx
-     | varx
      | varx , {'*' , varx };
 
 varx = var

@@ -48,23 +48,27 @@ struct llpol_t {
 /* memory handling */
 term_t  *  term_malloc(size_t sz);
 
+/**
+ * @brief
+*/
 lpol_t  * lpol_malloc(size_t sz);
 void      lpol_free(lpol_t *);
 
-llpol_t * llpol_malloc(u8 n);
+llpol_t * llpol_create(u8 n);
 void      llpol_free(llpol_t *);
 
-aapol_t * aapol_malloc(u8 n);
+aapol_t * aapol_create(u8 n);
 void      aapol_free(aapol_t *);
 
 
 
 /* sorting */
-void      minheapify(term_t * terms, int i, int sz);
-void      buildminheap(term_t * terms, int hsz);
-void      aapol_sort(aapol_t * aapol);
-void      aapol_list_sort(aapol_t ** loaapol, int sz);
-void      llpol_list_sort(llpol_t ** lollpol, int sz);
+
+void minheapify(term_t * terms, int i, int sz);
+void buildminheap(term_t * terms, int hsz);
+void aapol_sort(aapol_t * aapol);
+void aapol_list_sort(aapol_t ** loaapol, int sz); // todo : test
+void llpol_list_sort(llpol_t ** lollpol, int sz); // todo: test
 
 
 /* polynomial operations */
@@ -72,21 +76,24 @@ void      llpol_list_sort(llpol_t ** lollpol, int sz);
 term_t * term_multiply(term_t * p, term_t * q); // todo 
 
 
-aapol_t * smatrix2aapol(smatrix_t * smat, u64 * exps);
+aapol_t * smatrix2aapol(sm_t * smat, u64 * exps);
 aapol_t * mmatrix2aapol(mmatrix_t * mmat);
 
 /* reading */
+
 term_t   * str2pol(char *); // todo
-llpol_t  * str2llpol(char *); // todo
-aapol_t  * str2aapol(char *); // todo
+llpol_t  * str2llpol(const char *, const char **, u8); // todo
+aapol_t  * str2aapol(const char *, const char **, u8); // todo
 
 
 /* pretty printing */
-void printpol(term_t * pol);
+
+void term_print(term_t * pol);
 void llpol_print(llpol_t * llpol);
 void aapol_print(aapol_t * aapol);
 
 /* define polynomial operations here */
+
 term_t   * llpol_head(llpol_t *);
 llpol_t  * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp);
 llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha); // todo

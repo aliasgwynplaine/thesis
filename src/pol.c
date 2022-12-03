@@ -1,11 +1,15 @@
 #include "pol.h"
 #include <math.h>
 
-/*
-how do i control the vars???
-x0,x1,x2
-Using masks
-*/
+
+typedef struct parser_ctx_t parser_ctx_t;
+
+struct parser_ctx_t {
+    u8 nvar;
+    const char * pol_str;
+    const char ** var_lst; // ordered list of vars
+};
+
 
 /**
  * @brief creates an alternate array like pol in n
@@ -16,7 +20,7 @@ Using masks
  * @return aapol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-aapol_t * aapol_malloc(u8 n) {
+aapol_t * aapol_create(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     aapol_t * aapol = malloc(sizeof(aapol_t));
     CHECKPTR(aapol);
@@ -168,13 +172,48 @@ void llpol_list_quicksort(llpol_t ** lollpol, int p, int r) {
 }
 
 
-void aapol_list_sort(aapol_t ** loaapol, int sz) {
-}
-
 
 void llpol_list_sort(llpol_t ** lollpol, int sz) {
     llpol_list_quicksort(lollpol, 0, sz - 1);
 }
+
+
+int aapol_list_quicksort_partition(aapol_t ** loaapol, int p, int r) {
+    int i, q, cmp;
+    aapol_t * x = loaapol[r];
+    aapol_t * aux;
+    i = p - 1;
+
+    for (int j = 0; j < r; j++) {
+        cmp = aapol_monomial_cmp(loaapol[j], x);
+
+        if (cmp <= 0) {
+            i++;
+            aux = loaapol[i];
+            loaapol[i] = loaapol[j];
+            loaapol[j] = aux;
+        }
+    }
+
+    SWAP(loaapol[i + 1], loaapol[r], aux);
+
+    return i + 1;
+}
+
+
+void aapol_list_quicksort(aapol_t ** loaapol, int p, int r) {
+    if (p > r) {
+        int q = aapol_list_quicksort_partition(loaapol, p, r);
+        aapol_list_quicksort(loaapol, p, q - 1);
+        aapol_list_quicksort(loaapol, q + 1, r);
+    }
+}
+
+
+void aapol_list_sort(aapol_t ** loaapol, int sz) {
+    aapol_list_quicksort(loaapol, 0, sz - 1);
+}
+
 
 term_t * term_add(term_t * p, COEFTYPE a, term_t * q, COEFTYPE b) {
     term_t * r = term_malloc(sizeof(term_t));
@@ -203,6 +242,8 @@ term_t * aapol_head(aapol_t * aapol) {
  * the new term
  */
 aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
+    if (aapol == NULL) SAYNEXITWERROR("aapol is null");
+
     if (coef == 0) {
         return aapol;
     }
@@ -265,7 +306,7 @@ aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
         return r;
     }
 
-    r = aapol_malloc(a->nvar);
+    r = aapol_create(a->nvar);
 
     if (alpha == 0 && betha == 0) {
         return r;
@@ -316,7 +357,7 @@ aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
 
 
 aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
-    aapol_t * res = aapol_malloc(a->nvar);
+    aapol_t * res = aapol_create(a->nvar);
     res->sz = a->sz;
     res->cap = res->sz;
     res->terms = malloc(sizeof(term_t) * res->sz);
@@ -347,7 +388,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
     //aapol_sort(a);
     //aapol_sort(b);
 
-    aapol_t * r = aapol_malloc(a->nvar);
+    aapol_t * r = aapol_create(a->nvar);
     r->cap = a->sz * b->sz;
     r->terms = malloc(sizeof(term_t) * r->cap);
     term_t * rterms = r->terms;
@@ -553,7 +594,19 @@ COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
     return 0;
 }
 
-
+/**
+ * @brief works as malloc but sets 
+ * first coef and exp to 0
+ * 
+ * @param sz size of block
+ * @return pointer to the beginning
+ * of the block
+ * 
+ * @note you need to call free. In 
+ * the case you have decided to alloc
+ * more than one term, only the first
+ * pointed coef and exp will set to 0
+*/
 term_t * term_malloc(size_t sz) {
     term_t * term = malloc(sz);
     term->coef = 0;
@@ -562,7 +615,22 @@ term_t * term_malloc(size_t sz) {
     return term;
 }
 
-
+/**
+ * @brief works as malloc but sets 
+ * first coef and exp to 0 and, l and
+ * r to NULL
+ * 
+ * @param sz size of block
+ * @return pointer to the beginning
+ * of the block
+ * 
+ * @note you need to call free. In 
+ * the case you have decided to alloc
+ * more than one term, only the first
+ * pointed coef and exp will set to 0
+ * and the first pointed l and r will 
+ * be set to NULL
+*/
 lpol_t * lpol_malloc(size_t sz) {
     lpol_t * lpol = malloc(sz);
     lpol->coef = 0;
@@ -582,7 +650,7 @@ lpol_t * lpol_malloc(size_t sz) {
  * @return llpol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-llpol_t * llpol_malloc(u8 n) {
+llpol_t * llpol_create(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     llpol_t * llpol = malloc(sizeof(llpol_t));
     CHECKPTR(llpol);
@@ -669,14 +737,14 @@ llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
         return llpol_coef_multiply(a, alpha);
     }
 
-    llpol_t * res = llpol_malloc(a->nvar);
+    llpol_t * res = llpol_create(a->nvar);
     /* todo */
     return res;
 }
 
 
 llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
-    llpol_t * res = llpol_malloc(a->nvar);
+    llpol_t * res = llpol_create(a->nvar);
     lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
     CHECKPTR(stack);
     lpol_t * node = a->root;
@@ -777,11 +845,172 @@ void inorderprintllpol(lpol_t * root, u8 nvar) {
 }
 
 
+static void accept_space(parser_ctx_t * ctx) {
+    while (isspace(*ctx->pol_str)) ctx->pol_str++;
+}
+
+
+static int accept_sign(parser_ctx_t * ctx) {
+    int sign = 1;
+
+    accept_space(ctx);
+
+    if (*ctx->pol_str == '-') {
+        sign = -1;
+        ctx->pol_str++;
+    } else if (*ctx->pol_str == '+') {
+        ctx->pol_str++;
+    }
+
+    return sign;
+}
+
+
+static inline int char_varlist_lookup(char * c, const char **var_lst) {
+    int pos = 0;
+
+    while (*(var_lst + pos) != NULL) {
+        //printf("cmprng: %s with %s\n", c, *(var_lst + pos));
+        if (strcmp(c, *(var_lst + pos)) == 0) return pos;
+        pos++;
+    }
+
+    return -1;
+}
+
+
+static COEFTYPE accept_number(parser_ctx_t * ctx) {
+    COEFTYPE num;
+    char * end;
+    num = strtof(ctx->pol_str, &end);
+
+    if (ctx->pol_str == end) num = 1.0;
+
+    ctx->pol_str = end;
+    
+
+    return num;
+}
+
+
+static COEFTYPE accept_coef(parser_ctx_t * ctx) {
+    int sign      = accept_sign(ctx);
+    COEFTYPE coef = accept_number(ctx);
+
+    return sign * coef;
+}
+
+
+static u64 accept_exp(parser_ctx_t * ctx) {
+    u64 e = 0;
+    int idx;
+    char var[2];
+    u64 * exp = calloc(ctx->nvar, sizeof(u64));
+    CHECKPTR(exp);
+
+    do {
+        accept_space(ctx);
+        //printf("nxt: %c\n", *ctx->pol_str);
+        if (*ctx->pol_str == '*') {
+            //printf("skipping * ... ");
+            ctx->pol_str++;
+            accept_space(ctx);
+        }
+        //printf("nxt: %c\n", *ctx->pol_str);
+
+        if (isalpha(*ctx->pol_str)) {
+            var[0] = *ctx->pol_str++;
+            var[1] = 0;
+            idx = char_varlist_lookup(var, ctx->var_lst);
+            //printf("idx: %d\n", idx);
+
+            if (idx < 0) SAYNEXITWERROR("var not found!");
+
+            if (*ctx->pol_str == '^') {
+                *ctx->pol_str++;
+                exp[idx] = (u64)accept_number(ctx);
+            } else {
+                exp[idx] = 1;
+                //printf("coef to 1 ... nxt: %c\n", *ctx->pol_str);
+            }
+        }
+    } while (*ctx->pol_str == '*');
+
+    e = exp_pack(exp, ctx->nvar);
+    FREE(exp);
+
+    return e;
+}
+
+static term_t * accept_term(parser_ctx_t * ctx) {
+    term_t * term = term_malloc(sizeof(term_t));
+    CHECKPTR(term);
+
+    term->coef = accept_coef(ctx);
+    //printf("readed: %f | nxt: %c\n", term->coef, *ctx->pol_str);
+    term->exp  = accept_exp(ctx);
+    
+    return term;
+}
+
+llpol_t * str2llpol(const char * llpol_str, const char ** var_lst, u8 nvar) {
+    llpol_t * llpol;
+    term_t  * term;
+    parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
+
+    llpol        = llpol_create(nvar);
+    ctx->nvar    = nvar;
+    ctx->pol_str = llpol_str;
+    ctx->var_lst = var_lst;
+
+    while (*ctx->pol_str) {
+        term = accept_term(ctx);
+        llpol_addterm(llpol, term->coef, term->exp);
+        FREE(term);
+    }
+
+    return llpol;
+}
+
+
+aapol_t  * str2aapol(const char * aapol_str, const char ** var_lst, u8 nvar) {
+    aapol_t * aapol;
+    term_t  * term;
+    parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
+
+    aapol    = aapol_create(nvar);
+    ctx->nvar    = nvar;
+    ctx->pol_str = aapol_str;
+    ctx->var_lst = var_lst;
+
+    while (*ctx->pol_str) {
+        //printf("\n--------------------\n");
+        term = accept_term(ctx);
+        
+        //printf("coef: %f exp: (", term->coef);
+        u64 * e = exp_unpack(term->exp, nvar);
+        //for (int i = 0; i < nvar; i++) printf("%ld ", e[i]);
+        //printf(")\n");
+        
+        
+        aapol_addterm(aapol, term->coef, term->exp);
+        FREE(term);
+    }
+
+    return aapol;
+}
+
+
+
+
 /**
  * @brief prints a term_t *
  * 
- * @param pol polynomial
+ * @param pol term of pol
  */
+void term_print(term_t * pol) {
+    printf("coef: %f exp: %ld\n", pol->coef, pol->exp);
+}
 
 void llpol_print(llpol_t * llpol) {
     //debug("checking if pol is null");
@@ -975,6 +1204,9 @@ u64 exp_pack(u64 * e, u8 nvar) {
         dbgerr("nvar is no positive!");
         exit(EXIT_FAILURE);
     }
+
+    if (e == NULL) return 0;
+
     u64 exp  = 0;
     u16 step = 64 / nvar; 
 
