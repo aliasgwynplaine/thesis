@@ -1,5 +1,6 @@
 # EBNF
 
+## polynomial parsing
 ```enbf
 pol  = term , { sign , term };
 

@@ -1,13 +1,20 @@
 #include "pol.h"
 #include <math.h>
 
-
 typedef struct parser_ctx_t parser_ctx_t;
 
 struct parser_ctx_t {
     u8 nvar;
+    const char * pol_str_head;
     const char * pol_str;
     const char ** var_lst; // ordered list of vars
+    int status;
+};
+
+enum parser_ctx_status {
+    Ok,
+    NameError,
+    SyntaxError
 };
 
 
@@ -460,6 +467,7 @@ int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
  * Mostly used to test other functions
 */
 int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
+    if (a == NULL || b == NULL) return 1;
     if (a->nvar != b->nvar) return 1;
 
     aapol_sort(a);
@@ -543,6 +551,7 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
 }
 
 int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
+    if (a == NULL || b == NULL) return 1;
     if (a->nvar != b->nvar) return 1;
     if (a->sz != b->sz) return 1;
 
@@ -866,13 +875,10 @@ static int accept_sign(parser_ctx_t * ctx) {
 }
 
 
-static inline int char_varlist_lookup(char * c, const char **var_lst) {
-    int pos = 0;
-
-    while (*(var_lst + pos) != NULL) {
-        //printf("cmprng: %s with %s\n", c, *(var_lst + pos));
-        if (strcmp(c, *(var_lst + pos)) == 0) return pos;
-        pos++;
+static inline int char_varlist_lookup(char * c, const char **var_lst, int n) {
+    for (int i = 0; i < n; i++) {
+        //printf("cmprng: %s with %s\n", c, var_lst[i]);
+        if (strcmp(c, var_lst[i]) == 0) return i;
     }
 
     return -1;
@@ -882,13 +888,23 @@ static inline int char_varlist_lookup(char * c, const char **var_lst) {
 static COEFTYPE accept_number(parser_ctx_t * ctx) {
     COEFTYPE num;
     char * end;
+
+    if (*ctx->pol_str == '-' || *ctx->pol_str == '+' ) {
+        ctx->status = SyntaxError;
+        fprintf(stderr, "Syntax error: '%s' at ", ctx->pol_str_head);
+        fprintf(stderr, "'%c' <-\n", *ctx->pol_str);
+        return -1;
+    }
+
     num = strtof(ctx->pol_str, &end);
 
     if (ctx->pol_str == end) num = 1.0;
 
+    //printf("num: %f | ", num);
+    //printf("end: '%c'\n", *end);
+
     ctx->pol_str = end;
     
-
     return num;
 }
 
@@ -907,9 +923,9 @@ static u64 accept_exp(parser_ctx_t * ctx) {
     char var[2];
     u64 * exp = calloc(ctx->nvar, sizeof(u64));
     CHECKPTR(exp);
+    accept_space(ctx);
 
     do {
-        accept_space(ctx);
         //printf("nxt: %c\n", *ctx->pol_str);
         if (*ctx->pol_str == '*') {
             //printf("skipping * ... ");
@@ -921,10 +937,15 @@ static u64 accept_exp(parser_ctx_t * ctx) {
         if (isalpha(*ctx->pol_str)) {
             var[0] = *ctx->pol_str++;
             var[1] = 0;
-            idx = char_varlist_lookup(var, ctx->var_lst);
+            idx = char_varlist_lookup(var, ctx->var_lst, ctx->nvar);
             //printf("idx: %d\n", idx);
 
-            if (idx < 0) SAYNEXITWERROR("var not found!");
+            if (idx < 0) {
+                ctx->status = NameError;
+                fprintf(stderr, "Name '%s' is not in variable set\n", var);
+                FREE(exp);
+                return -1;
+            }
 
             if (*ctx->pol_str == '^') {
                 *ctx->pol_str++;
@@ -933,10 +954,31 @@ static u64 accept_exp(parser_ctx_t * ctx) {
                 exp[idx] = 1;
                 //printf("coef to 1 ... nxt: %c\n", *ctx->pol_str);
             }
+            accept_space(ctx);
+        } else if (*ctx->pol_str == '+' || *ctx->pol_str == '-') {
+            continue;
+        } else {
+            //printf("curr: %c\n", *ctx->pol_str);
+            // this part will change in the future
+            fprintf(stderr, "Syntax error: '%s' at ", ctx->pol_str_head);
+            fprintf(stderr, "'%c' <-\n", *ctx->pol_str);
+            ctx->status = SyntaxError;
+            FREE(exp);
+            return -1;
         }
     } while (*ctx->pol_str == '*');
 
+    accept_space(ctx);
+    if (*ctx->pol_str != '+' && *ctx->pol_str != '-' && *ctx->pol_str != 0) {
+        fprintf(stderr, "Syntax error: '%s' at ", ctx->pol_str_head);
+        fprintf(stderr, "'%c' <-\n", *ctx->pol_str);
+        ctx->status = SyntaxError;
+        FREE(exp);
+        return -1;
+    }
+
     e = exp_pack(exp, ctx->nvar);
+    //printf("exp: %ld\n", e);
     FREE(exp);
 
     return e;
@@ -960,14 +1002,33 @@ llpol_t * str2llpol(const char * llpol_str, const char ** var_lst, u8 nvar) {
 
     llpol        = llpol_create(nvar);
     ctx->nvar    = nvar;
+    ctx->pol_str_head = llpol_str;
     ctx->pol_str = llpol_str;
     ctx->var_lst = var_lst;
+    ctx->status  = 0;
 
     while (*ctx->pol_str) {
         term = accept_term(ctx);
+
+        if (ctx->status == NameError) {
+            FREE(ctx);
+            FREE(term);
+            llpol_free(llpol);
+            return NULL;
+        }
+
+        if (ctx->status == SyntaxError) {
+            FREE(ctx);
+            FREE(term);
+            llpol_free(llpol);
+            return NULL;
+        }
+
         llpol_addterm(llpol, term->coef, term->exp);
         FREE(term);
     }
+
+    FREE(ctx);
 
     return llpol;
 }
@@ -980,22 +1041,33 @@ aapol_t  * str2aapol(const char * aapol_str, const char ** var_lst, u8 nvar) {
 
     aapol    = aapol_create(nvar);
     ctx->nvar    = nvar;
+    ctx->pol_str_head = aapol_str;
     ctx->pol_str = aapol_str;
     ctx->var_lst = var_lst;
+    ctx->status  = 0;
 
     while (*ctx->pol_str) {
-        //printf("\n--------------------\n");
         term = accept_term(ctx);
-        
-        //printf("coef: %f exp: (", term->coef);
-        u64 * e = exp_unpack(term->exp, nvar);
-        //for (int i = 0; i < nvar; i++) printf("%ld ", e[i]);
-        //printf(")\n");
-        
-        
+
+        if (ctx->status == NameError) {
+            FREE(ctx);
+            FREE(term);
+            aapol_free(aapol);
+            return NULL;
+        }
+
+        if (ctx->status == SyntaxError) {
+            FREE(ctx);
+            FREE(term);
+            aapol_free(aapol);
+            return NULL;
+        }
+
         aapol_addterm(aapol, term->coef, term->exp);
         FREE(term);
     }
+
+    FREE(ctx);
 
     return aapol;
 }

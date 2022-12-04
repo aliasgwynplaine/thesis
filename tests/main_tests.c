@@ -619,6 +619,26 @@ static char * test_llpol_list_sort() {
 }
 
 
+static char * test_str2llpol() {
+    int n = 4;
+    const char * var_lst[] = {"x", "y", "z", "w"};
+    llpol_t * result = str2llpol("x^3 - 23 * x^2*y - 2 *x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
+    llpol_t * expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 1, 844424930131968);
+    llpol_addterm(expected_result, -23, 562954248388608);
+    llpol_addterm(expected_result, -2, 281479271874560);
+    llpol_addterm(expected_result, 5, 281474976710656);
+    llpol_addterm(expected_result, 1, 5);
+    llpol_addterm(expected_result, 10, 0);
+    assert(llpol_hard_cmp(result, expected_result) == 0, "str2llpol is not parsing well");
+
+    llpol_free(result);
+    llpol_free(expected_result);
+
+    return 0;
+}
+
+
 static char * test_str2aapol() {
     int n = 4;
     const char * var_lst[] = {"x", "y", "z", "w"};
@@ -630,36 +650,121 @@ static char * test_str2aapol() {
     aapol_addterm(expected_result, 5, 281474976710656);
     aapol_addterm(expected_result, 1, 5);
     aapol_addterm(expected_result, 10, 0);
-    // printf("\n");
-    // aapol_print(result);
-    // aapol_print(expected_result);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "str2aapol is not parsing well");
+
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    result = str2aapol(" - 23 * x^2*y + x^3 - 2*x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 1, 844424930131968);
+    aapol_addterm(expected_result, -23, 562954248388608);
+    aapol_addterm(expected_result, -2, 281479271874560);
+    aapol_addterm(expected_result, 5, 281474976710656);
+    aapol_addterm(expected_result, 1, 5);
+    aapol_addterm(expected_result, 10, 0);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "str2aapol is not parsing well");
+
+    aapol_free(result);
+    aapol_free(expected_result);
+    result = str2aapol("5.0 +5 - 23 * x^2*y + x^3 - 2*x*y*z^3 + 5*x + w^5 ", var_lst, n);
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 1, 844424930131968);
+    aapol_addterm(expected_result, -23, 562954248388608);
+    aapol_addterm(expected_result, -2, 281479271874560);
+    aapol_addterm(expected_result, 5, 281474976710656);
+    aapol_addterm(expected_result, 1, 5);
+    aapol_addterm(expected_result, 10, 0);
+    //printf("\n");
+    //aapol_print(result);
+    //aapol_print(expected_result);
     
     assert(aapol_hard_cmp(result, expected_result) == 0, "str2aapol is not parsing well");
 
     aapol_free(result);
+    aapol_free(expected_result);
+    result = str2aapol("+ w^5 +   5.0 +5 - 23 * x^2*y + x^3 - 2*x*y*z^3 + 5*x  ", var_lst, n);
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 1, 844424930131968);
+    aapol_addterm(expected_result, -23, 562954248388608);
+    aapol_addterm(expected_result, -2, 281479271874560);
+    aapol_addterm(expected_result, 5, 281474976710656);
+    aapol_addterm(expected_result, 1, 5);
+    aapol_addterm(expected_result, 10, 0);
+    //printf("\n");
+    //aapol_print(result);
+    //aapol_print(expected_result);
+    
+    assert(aapol_hard_cmp(result, expected_result) == 0, "str2aapol is not parsing well");
+
+    aapol_free(result);
+    aapol_free(expected_result);
 
     return 0;
 }
 
 
-static char * test_str2llpol() {
+static char * test_str2aapol_name_error() {
     int n = 4;
     const char * var_lst[] = {"x", "y", "z", "w"};
-    llpol_t * result = str2llpol("x^3 - 23 * x^2*y - 2*x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
-    llpol_t * expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 1, 844424930131968);
-    llpol_addterm(expected_result, -23, 562954248388608);
-    llpol_addterm(expected_result, -2, 281479271874560);
-    llpol_addterm(expected_result, 5, 281474976710656);
-    llpol_addterm(expected_result, 1, 5);
-    llpol_addterm(expected_result, 10, 0);
+    aapol_t * result = str2aapol("x^3 - 23 * x^2*y - 2*x*y*z^3*a + 5*x + 10 + w^5", var_lst, n);
     
-    assert(llpol_hard_cmp(result, expected_result) == 0, "str2llpol is not parsing well");
-
-    llpol_free(result);
+    assert(result == NULL, "str2aapol is not parsing well");
 
     return 0;
 }
+
+
+static char * test_str2aapol_syntax_error() {
+    int n = 4;
+    const char * var_lst[] = {"x", "y", "z", "w"};
+    aapol_t * result = str2aapol("x^3 - 23 *, x^2*y - 2*x1*y*z^3* + 5*x |+ 10 + _w^5", var_lst, n);
+    
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x^3 +----- 23 * x^2*y - 2*x1*y*z^3* + 5*x + 10 + w^5", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x^3 ++++ 23 * x^2*y - 2*x1*y*z^3* + 5*x + 10 + w^5", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x^^3 ++++ 23 * x^2*y - 2*x1*y*z^3* + 5*x + 10 + w^5", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x**3 + 23 * x^2*y - 2*x1*y*z^3* + 5*x + 10 + w^5", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x*3 + 23 * x^2*y - 2*x1*y*z^3* + 5*x + 10 + w^5", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x ^ 3 + 23 * x^2*y - 2*x1*y*z^3* + 5*x + 10 + w^5", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("xy^3", var_lst, n);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+    result = str2aapol("41234- 3*x+ 1z523 + x*y^3", var_lst, n);
+    
+    assert(result == NULL, "str2aapol is not parsing well");
+
+    result = str2aapol("x^z- 3*x+ 1z523 + x*y^3", var_lst, n);
+    //printf("result: "); aapol_print(result);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
+
+
+    return 0;
+}
+
 
 
 static void all_tests() {
@@ -686,6 +791,8 @@ static void all_tests() {
     run_unittest(test_csr_load);
     run_unittest(test_str2llpol);
     run_unittest(test_str2aapol);
+    run_unittest(test_str2aapol_name_error);
+    run_unittest(test_str2aapol_syntax_error);
 }
 
 

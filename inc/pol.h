@@ -5,6 +5,7 @@
 #include "debug.h"
 
 #define MAX_NUM_O_VARS 8
+#define MAX_LEN_O_MSG  32
 
 #define PARENT(I) (I - 1)>>1
 #define LEFT(I)   (I<<1) + 1
@@ -81,9 +82,8 @@ aapol_t * mmatrix2aapol(mmatrix_t * mmat);
 
 /* reading */
 
-term_t   * str2pol(char *); // todo
-llpol_t  * str2llpol(const char *, const char **, u8); // todo
-aapol_t  * str2aapol(const char *, const char **, u8); // todo
+llpol_t  * str2llpol(const char *, const char **, u8);
+aapol_t  * str2aapol(const char *, const char **, u8);
 
 
 /* pretty printing */
