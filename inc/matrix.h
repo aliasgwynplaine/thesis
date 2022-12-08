@@ -5,27 +5,33 @@
 #include "tree.h"
 #include "memory.h"
 
-typedef struct mlvector_t      ml_t; // multiline vector
-typedef struct smatrix_t      csr_t; // compressed sparse row matrix
-typedef struct smatrix_t      csc_t; // compressed sparse column matrix
-typedef struct smatrix_t       sm_t; // generic sparce matrix
-typedef struct mmatrix_t  mmatrix_t; // macaulay matrix 
-typedef struct flmatrix_t     flm_t; // faugere-lachartre matrix
-typedef struct stbmatrix_t   stbm_t;
-typedef struct srbmatirx_t   srbm_t;
-typedef struct hrbmatrix_t   hrbm_t;
+typedef struct sparse_block_t                      sb_t;
+typedef struct sparse_matrix_t                    csr_t; 
+typedef struct sparse_matrix_t                    csc_t; 
+typedef struct sparse_matrix_t                     sm_t;
+typedef struct macaulay_matrix_t                   mm_t;
+typedef struct multiline_vector_t                  ml_t;  
+typedef struct faugere_lachartre_matrix_t         flm_t; 
+typedef struct sparse_triangular_block_matrix_t  stbm_t;
+typedef struct sparse_rectangular_block_matrix_t srbm_t;
+typedef struct hybrid_rectangular_block_matrix_t hrbm_t;
 
+typedef struct decomposer_ctx_t  dctx_t; // pivot set struct
 
 #include "pol.h"
 
-struct mlvector_t {
-    int      * pos; /* position      */
-    COEFTYPE * val; /* values        */
-    int         sz; /* size          */
-    int        cap; /* capacity      */
-    u8           n; /* n-line vector */
+/**
+ * @brief sparse block for triangular 
+ * and rectagular sparse block matrix
+ * 
+ * @note this is from gbla
+*/
+typedef struct sparse_block_t {
+    COEFTYPE ** x;
+    idx_t    ** i;
+    idx_t    * sz;
+    int       nnz;
 };
-
 
 /**
  * @brief sparse matrix struct
@@ -35,56 +41,90 @@ struct mlvector_t {
  * by Faugere-Lacharte matrix for fast
  * Groebner basis calculation
  */
-struct smatrix_t {
-    int   nnzmax;     /* max num o entries */
-    int        m;     /* row sz   */
-    int        n;     /* col sz   */
-    int      * i;     /* row/col idex */
-    int      * p;     /* row/col pos */
-    COEFTYPE * x;     /* values   */
-    int      nnz;     /* num o entries in triplet. -1 if colcomp */
+struct sparse_matrix_t {
+    int   nnzmax;   /* max num o entries */
+    int        m;   /* row sz   */
+    int        n;   /* col sz   */
+    int      * i;   /* row/col idx */
+    int      * p;   /* row/col pos */
+    COEFTYPE * x;   /* values   */
+    int      nnz;   /* num o entries in triplet. -1 if colcomp */
 };
 
 
 
-struct mmatrix_t {
+struct macaulay_matrix_t {
     u64       * exps; // multigrads
-    sm_t * mat;  // matrix
+    sm_t       * mat;  // matrix
 };
 
 
-struct flmatrix_t {
+struct multiline_vector_t {
+    int      * pos; /* position      */
+    COEFTYPE * val; /* values        */
+    int         sz; /* size          */
+    int        cap; /* capacity      */
+    u8           n; /* n-line vector */
+};
+
+
+struct faugere_lachartre_matrix_t {
     stbm_t * a;
     srbm_t * b;
     hrbm_t * c;
-    int         nnz;
+    int    nnz;
 };
 
 
-struct stbm_t {
-    COEFTYPE * val;
-    int      * pos;
+struct sparse_triangular_block_matrix_t {
+    sb_t    ** blk;
     int      *  nb;
-    float    *  sp;  // sparcity %
+    float    *   d;  // density %
     int         sz;
 };
+
+
+
+/**
+ * @brief stores the index of the pivot 
+ * and non-pivot rows and columns
+*/
+struct decomposer_ctx_t {
+    idx_t *  pr;  // pivot rows indexes. order!
+    idx_t * npr;  // non-pivot rows indexes.
+    idx_t *  pc;  // pivot columns indexes order!
+    idx_t * rpc;  // reverse pivot column index
+    idx_t * npc;  // non-pivot columns indexes
+    idx_t  npiv;  // Npiv
+    int  blk_sz;  // block size
+};
+
 
 /*
     memory handling
 */
 
-mmatrix_t * mmatrix_malloc(int m, int n, int nnzmax);
-void        mmatrix_free(mmatrix_t * mmat);
+mm_t * mmatrix_malloc(int m, int n, int nnzmax);
+void   mmatrix_free(mm_t * mmat);
 
 csr_t * csr_malloc(int m, int n, int nnzmax);
-csr_t * csr_realloc(csr_t * csrmatrix, size_t sz);      // todo
+csr_t * csr_realloc(csr_t * csrmatrix, size_t sz);  // todo
 csr_t * csr_load(FILE * f);
 void    csr_free(csr_t *);
 
 csc_t * csc_malloc(int m, int n, int nnzmax);
 csc_t * csc_realloc(sm_t * smat, size_t sz);       // todo
-csc_t * csc_load(FILE * f);                             // todo
+csc_t * csc_load(FILE * f);                        // todo : complete test
 void    smatrix_free(sm_t * smat);                 // todo
+
+
+/*
+    operations
+*/
+
+u64  csr_head(csr_t *, u64 );
+u32  csr_width(csr_t *, u64);
+void csr_swap_col(csr_t *, idx_t, idx_t);
 
 /*
     insert & delete
@@ -93,17 +133,32 @@ void    smatrix_free(sm_t * smat);                 // todo
 int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
 
 
+/*
+    faugere-lachartre matrix transformations
+*/
+
+flm_t *  csr_decompose(csr_t *, u32);
+dctx_t * csr_analyse(csr_t *);
+
+
+void dctx_free(dctx_t * dctx);
+
+
+
 /* matpol transformations*/
 
-// mmatrix_t * aapol2mmatrix(aapol_t * laapol, int sz);
-csc_t * aapol2csc(aapol_t ** laapol, int sz); // todo: convert aapol 2 csc. look up in trash
-csr_t * aapol2csr(aapol_t ** laapol, int sz); // todo: convert aapol 2 csr. look up in trash
+// mm_t * aapol2mmatrix(aapol_t * laapol, int sz);
+csc_t * aapol_list2csc(aapol_t ** laapol, int sz); // todo: convert aapol 2 csc. look up in trash
+csr_t * aapol_list2csr(aapol_t ** laapol, int sz); // todo: convert aapol 2 csr. look up in trash
 flm_t * csr2flm(csr_t * csr);                 // todo: convert csr_t to block sparse fgmatrix
-flm_t * aapol2flm(aapol_t ** laapol, int sz); // todo: convertaapol 2 fgmatrix
+flm_t * aapol_list2flm(aapol_t ** laapol, int sz); // todo: convertaapol 2 fgmatrix
 
 
 
 
 void csr_print(csr_t *);
+void csr_dense_print(csr_t *);
+void dctx_print(dctx_t *, idx_t, idx_t);
+
 
 #endif

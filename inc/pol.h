@@ -78,7 +78,7 @@ term_t * term_multiply(term_t * p, term_t * q); // todo
 
 
 aapol_t * smatrix2aapol(sm_t * smat, u64 * exps);
-aapol_t * mmatrix2aapol(mmatrix_t * mmat);
+aapol_t * mmatrix2aapol(mm_t * mmat);
 
 /* reading */
 

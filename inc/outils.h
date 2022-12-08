@@ -20,6 +20,7 @@
         exit(EXIT_FAILURE); \
     } while (0)
 
+#define endl printf("\n")
 
 #ifndef __max
 #define __max(a,b)    (((a) > (b)) ? (a) : (b))
@@ -31,15 +32,22 @@
 
 #endif
 
-#define SWAPINT(A, B) (A)^=(B);(B)^=(A);(A)^=(B)
+#define SWAPINT(A, B) \
+    do {              \
+        (A)^=(B);     \
+        (B)^=(A);     \
+        (A)^=(B);     \
+    } while(0)        \
 
 #define SWAP(A, B, Temp) \
-    Temp = A;            \
-    A = B;               \
-    B = Temp;            \
+    do {                 \
+        (Temp) = (A);    \
+        (A) = (B);       \
+        (B) = (Temp);    \
+    } while (0)          \
 
 #ifndef CHECKPTR
-#define CHECKPTR(PTR)                     \
+#define CHECKPTR(PTR)                    \
     do {                                 \
         if (!(PTR)) {                    \
             SAYNEXITWERROR("No memory!");\
@@ -56,6 +64,8 @@ typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
 typedef uint8_t   u8;
+
+typedef int32_t idx_t;
 
 typedef struct bdat_t bdat_t;
 

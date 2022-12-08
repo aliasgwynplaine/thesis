@@ -32,6 +32,7 @@ static char * test_unpackexp() {
     return 0;
 }
 
+
 static char * test_packexp() {
     u8 n = 8;
     u64 expected_x = 7164981176274674482;
@@ -41,6 +42,7 @@ static char * test_packexp() {
 
     return 0;
 }
+
 
 static char * test_packexp_with_zero() {
     u8 n = 8;
@@ -603,6 +605,9 @@ static char * test_csr_load() {
     //csr_print(csr);
     csr_free(csr);
     fclose(fh);
+
+    assert(1 == 2, "This test needs to be completed");
+
     return 0;
 }
 
@@ -701,6 +706,22 @@ static char * test_str2aapol() {
 
     aapol_free(result);
     aapol_free(expected_result);
+    result = str2aapol("+    w^5 +   5.0 +5 - 23 * x^2 * y + x^3 - 2 *  x* y*  z^3 + 5*x  ", var_lst, n);
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 1, 844424930131968);
+    aapol_addterm(expected_result, -23, 562954248388608);
+    aapol_addterm(expected_result, -2, 281479271874560);
+    aapol_addterm(expected_result, 5, 281474976710656);
+    aapol_addterm(expected_result, 1, 5);
+    aapol_addterm(expected_result, 10, 0);
+    //printf("\n");
+    //aapol_print(result);
+    //aapol_print(expected_result);
+    
+    assert(aapol_hard_cmp(result, expected_result) == 0, "str2aapol is not parsing well");
+
+    aapol_free(result);
+    aapol_free(expected_result);
 
     return 0;
 }
@@ -748,6 +769,11 @@ static char * test_str2aapol_syntax_error() {
 
     assert(result == NULL, "str2aapol is not parsing well");
 
+    result = str2aapol("x^3 + 23 * x^2*y - 2*x*y*z^3ad + 5*x + 10 + w^5", var_lst, n);
+    //aapol_print(result);
+
+    assert(result == NULL, "str2aapol is not parsing well");
+
     result = str2aapol("xy^3", var_lst, n);
 
     assert(result == NULL, "str2aapol is not parsing well");
@@ -760,11 +786,46 @@ static char * test_str2aapol_syntax_error() {
 
     assert(result == NULL, "str2aapol is not parsing well");
 
-
-
     return 0;
 }
 
+
+static char * test_csr_head() {
+    FILE * fh = fopen("mat_7x5_03.txt", "r");
+    csr_t * csr = csr_load(fh);
+    int i = csr_head(csr, 2);
+    assert(i == 2, "csr_head is failling");
+
+    i = csr_head(csr, 3);
+    assert(i == 1, "csr_head is failling");
+
+    i = csr_head(csr, 5);
+    assert(i == 0, "csr_head is failling");
+
+    fclose(fh);
+    csr_free(csr);
+    return 0;
+}
+
+
+static char * test_csr_analyse() {
+    FILE * fh = fopen("mat80x100_05.txt", "r");
+    csr_t * csr = csr_load(fh);
+    dctx_t * piv = csr_analyse(csr);
+
+    printf("-----------------\n");
+    csr_dense_print(csr);
+    printf("=========\n");
+    csr_decompose(csr, 0);
+    dctx_print(piv, csr->m, csr->n);
+    printf("Done!");
+
+    csr_free(csr);
+    dctx_free(piv);
+    fclose(fh);
+
+    return 0;
+}
 
 
 static void all_tests() {
@@ -793,6 +854,8 @@ static void all_tests() {
     run_unittest(test_str2aapol);
     run_unittest(test_str2aapol_name_error);
     run_unittest(test_str2aapol_syntax_error);
+    run_unittest(test_csr_head);
+    run_unittest(test_csr_analyse);
 }
 
 
