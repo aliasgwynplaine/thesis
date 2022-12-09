@@ -18,7 +18,6 @@ typedef struct lpol_t lpol_t;
 typedef struct aapol_t aapol_t; // alternated array
 typedef struct llpol_t llpol_t; // tree-like pol struct
 
-#include "matrix.h"
 
 struct term_t {
     COEFTYPE  coef; // could be an AP num
@@ -76,9 +75,6 @@ void llpol_list_sort(llpol_t ** lollpol, int sz); // todo: test
 
 term_t * term_multiply(term_t * p, term_t * q); // todo 
 
-
-aapol_t * smatrix2aapol(sm_t * smat, u64 * exps);
-aapol_t * mmatrix2aapol(mm_t * mmat);
 
 /* reading */
 

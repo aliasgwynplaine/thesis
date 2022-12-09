@@ -70,24 +70,24 @@ void        bstree_inorder_walk(bnode_t *);   // todo
 void        bstree_preorder_walk(bnode_t *);  // todo
 void        bstree_postorder_walk(bnode_t *); // todo
 
-avltree_t * avltree_create(cmpfux_t *, allocfux_t, freefux_t *);
-void      * avltree_search(bnode_t *, void * data);
-void        avltree_insert(bnode_t *, void * data);
-void        avltree_delete(bnode_t *, void * data);
-void        avltree_walk(bnode_t *, ORDER);
-void        avltree_inorderwalk(bnode_t *);
-void        avltree_preorderwalk(bnode_t *);
-void        avltree_postorderwalk(bnode_t *);
+avltree_t * avltree_create(cmpfux_t *, allocfux_t, freefux_t *);   // todo 
+void      * avltree_search(bnode_t *, void * data);                // todo 
+void        avltree_insert(bnode_t *, void * data);                // todo 
+void        avltree_delete(bnode_t *, void * data);                // todo 
+void        avltree_walk(bnode_t *, ORDER);                        // todo 
+void        avltree_inorderwalk(bnode_t *);                        // todo 
+void        avltree_preorderwalk(bnode_t *);                       // todo 
+void        avltree_postorderwalk(bnode_t *);                      // todo 
 
-rbtree_t  * rbtree_create(cmpfux_t *, allocfux_t *, freefux_t *);
-void        rbtree_free(rbtree_t *);
-void      * rbtree_search(rbtree_t *, void * data);
-void        rbtree_insert(rbtree_t *, void * data);
-void        rbtree_delete(rbtree_t *, void * data);
-void        rbtree_walk(rbtree_t *, ORDER);
-void        rbtree_inorderwalk(rbtree_t *);
-void        rbtree_preorderwalk(rbtree_t *);
-void        rbtree_postorderwalk(rbtree_t *);
+rbtree_t  * rbtree_create(cmpfux_t *, allocfux_t *, freefux_t *);  // todo 
+void        rbtree_free(rbtree_t *);                               // todo 
+void      * rbtree_search(rbtree_t *, void * data);                // todo 
+void        rbtree_insert(rbtree_t *, void * data);                // todo 
+void        rbtree_delete(rbtree_t *, void * data);                // todo 
+void        rbtree_walk(rbtree_t *, ORDER);                        // todo 
+void        rbtree_inorderwalk(rbtree_t *);                        // todo 
+void        rbtree_preorderwalk(rbtree_t *);                       // todo 
+void        rbtree_postorderwalk(rbtree_t *);                      // todo 
 
 
 #endif

@@ -223,6 +223,99 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
     smat->n = __max(smat->n, j+1);
     return 1;
 }
+/**
+ * @brief decompose the csr matrix in flmatrix
+*/
+flm_t * csr_real_decompose(csr_t * csr, u32 blk_sz) {
+    dctx_t * ctx = csr_analyse(csr);
+    idx_t cp = 0;
+    idx_t p_idx = 0;
+    idx_t r_idx = -1;
+    idx_t c_idx;
+    idx_t p;
+
+    printf("Found %d npivs\n", ctx->npiv);
+    idx_t cc = 0;
+
+    printf("===================================++++++++\n");
+    //csr_print(csr);
+    printf("==================================++++++++\n");
+
+    for (idx_t k = 0; cc < ctx->npiv; k++) {
+        if (ctx->rpc[k] != -1 && ctx->rpc[k] != k) {
+            printf("swaping %d <> %d -> ", k, ctx->rpc[k]);
+            csr_swap_col(csr, ctx->rpc[k], k);
+        }
+        cc++;
+    }
+
+    printf("===================================****\n");
+    //csr_print(csr);
+    printf("===================================****\n");
+
+    do {
+        r_idx = ctx->pr[p_idx];
+        while (r_idx == -1) {
+            //printf("r_idx: %d\n", r_idx);
+            r_idx = ctx->pr[++p_idx];
+        }
+        
+        printf("%.2d - %.2d| ", cp, r_idx);
+        p = csr->p[r_idx];
+
+        for (int j = 0; j < csr->n; j++) {
+            if (j == ctx->npiv) printf("| ");
+            if (p < csr->nnz && j == csr->i[p]) {
+                printf("%.0f ", csr->x[p]);
+                // printf("%d %d - %d * %d\n", p_idx, p, csr->i[p], csr->n);
+                p++;
+            } else {
+                printf("  ");
+            }
+            // printf("%d %d - %d * %d\n", p_idx, p, csr->i[p], csr->n);
+            // p++;
+        }
+        printf("\n");
+        p_idx++;
+        cp++;
+    } while(cp < ctx->npiv);
+
+    idx_t ncp = 0;
+    p_idx = 0;
+
+    printf("-- - --| ");
+    for(int i = 0; i < csr->n; i++) {
+        printf("--");
+    }
+    endl;
+
+    while(ncp < csr->m - ctx->npiv) {
+        r_idx = ctx->npr[p_idx];
+        while (r_idx == -1) {
+            r_idx = ctx->npr[++p_idx];
+            //printf("p_idx: %d r_idx: %d\n", p_idx, r_idx);
+        }
+        
+        printf("%.2d - %.2d| ", cp, r_idx);
+        p = csr->p[r_idx];
+
+        for (int j = 0; j < csr->n; j++) {
+            if (j == ctx->npiv) printf("| ");
+            if (p < csr->nnz && j == csr->i[p]) {
+                printf("%.0f ", csr->x[p++]);
+            } else {
+                printf("  ");
+            }
+        }
+        printf("\n");
+        p_idx++;
+        ncp++;
+        cp++;
+    }
+
+    return NULL;
+}
+
 
 /**
  * @brief decompose the csr matrix in flmatrix

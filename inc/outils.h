@@ -60,6 +60,25 @@
 #define FREE(PTR) do { free(PTR); (PTR) = NULL; } while(0)
 #endif
 
+#ifndef CUDAFREE
+#define CUDAFREE(CUDAPTR, ERR)                  \
+    do {                                        \
+        ERR = cudaFree(CUDAPTR);                \
+                                                \
+        if (ERR != cudaSuccess) {               \
+            dbgerr(                             \
+                "Failed to free Cuda pointer."  \
+                " Error code %s.\n",            \
+                cudaGetErrorString(ERR)         \
+            );                                  \
+            exit(EXIT_FAILURE);                 \
+        } else {                                \
+            CUDAPTR = NULL;                     \
+        }                                       \
+    } while (0)
+
+#endif
+
 typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
