@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 
+void cuda_csr_rref(csr_t *, dctx_t *);
 void cuda_sparse_trsm(stbm_t * a, srbm_t * b);
 void cuda_sparse_gauss_elim(hrbm_t * d);
 

@@ -30,7 +30,7 @@ if __name__ == '__main__' :
         for i in range(m) :
             for j in range(n) :
                 if rndlst[i*n + j] :
-                    print(f"{i} {j} {int(random() * 10)}", file=fh)
+                    print(f"{i} {j} {int(random() * 9 + 1)}", file=fh)
             
     
     print("Done!")

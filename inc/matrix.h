@@ -13,7 +13,10 @@ typedef struct macaulay_matrix_t                   mm_t;
 typedef struct multiline_vector_t                  ml_t;  
 typedef struct dense_row_matrix_t                 drm_t;
 typedef struct dense_column_matrix_t              dcm_t;
-typedef struct faugere_lachartre_matrix_t         flm_t; 
+typedef struct faugere_lachartre_matrix_t         flm_t;
+typedef struct sparse_triangular_matrix_t         stm_t;
+typedef struct sparse_rectangular_matrix_t        srm_t;
+typedef struct hybrid_rectangular_matrix_t        hrm_t;
 typedef struct sparse_triangular_block_matrix_t  stbm_t;
 typedef struct sparse_rectangular_block_matrix_t srbm_t;
 typedef struct hybrid_rectangular_block_matrix_t hrbm_t;
@@ -91,10 +94,33 @@ struct faugere_lachartre_matrix_t {
 struct sparse_triangular_block_matrix_t {
     sb_t    ** blk;
     int      *  nb;
-    float    *   d;  // density %
+    float        d;  // density %
     int         sz;
 };
 
+
+struct sparse_triangular_matrix_t {
+    COEFTYPE ** r;
+    int      *  i;
+    float       d;
+    int        sz;
+};
+
+
+struct sparse_rectangular_matrix_t {
+    COEFTYPE ** r;
+    int      *  i;
+    float       d;
+    int        sz;
+};
+
+
+struct hybrid_rectangular_matrix_t {
+    COEFTYPE ** r;
+    int      *  i;
+    float       d;
+    int        sz;
+};
 
 
 /**
@@ -102,13 +128,14 @@ struct sparse_triangular_block_matrix_t {
  * and non-pivot rows and columns
 */
 struct decomposer_ctx_t {
-    idx_t *  pr;  // pivot rows indexes. order!
-    idx_t * npr;  // non-pivot rows indexes.
-    idx_t *  pc;  // pivot columns indexes order!
-    idx_t * rpc;  // reverse pivot column index
-    idx_t * npc;  // non-pivot columns indexes
-    idx_t  npiv;  // Npiv
-    int  blk_sz;  // block size
+    idx_t *   pr;  // pivot rows indexes. order!
+    idx_t *  npr;  // non-pivot rows indexes.
+    idx_t *   pc;  // pivot columns indexes order!
+    idx_t *  rpc;  // reverse pivot column index
+    idx_t *  npc;  // non-pivot column indexes
+    idx_t * rnpc;  // reverse non-pivot column indexes
+    idx_t   npiv;  // Npiv
+    int   blk_sz;  // block size
 };
 
 
@@ -134,8 +161,8 @@ void    smatrix_free(sm_t * smat);                 // todo
     operations
 */
 
-u64  csr_head(csr_t *, u64 );
-u32  csr_width(csr_t *, u64);
+idx_t  csr_head_idx(csr_t *, idx_t );
+idx_t  csr_width(csr_t *, idx_t);
 void csr_swap_col(csr_t *, idx_t, idx_t);
 void multiply_csr_dense(csr_t *, dcm_t *, dcm_t *);
 

@@ -53,6 +53,7 @@ csr_t * csr_malloc(int m, int n, int nnzmax) {
  * format.
 */
 csr_t * csr_load(FILE * f) {
+    if (f == NULL) return NULL;
     int i, j;
     int m, n, sz;
     COEFTYPE x;
@@ -136,7 +137,7 @@ void smatrix_free(sm_t * smat) {
 }
 
 
-u64 csr_head(csr_t * csr, u64 rw_idx) {
+idx_t csr_head_idx(csr_t * csr, idx_t rw_idx) {
     if (rw_idx < 0 || rw_idx >= csr->m) 
         SAYNEXITWERROR("rw_idx out of bounds");
     if (csr->p[rw_idx] == csr->p[rw_idx + 1])
@@ -144,7 +145,7 @@ u64 csr_head(csr_t * csr, u64 rw_idx) {
     return csr->i[csr->p[rw_idx]];
 }
 
-u32 csr_width(csr_t * csr, u64 rw_idx) {
+idx_t csr_width(csr_t * csr, idx_t rw_idx) {
     if (rw_idx < 0 || rw_idx >= csr->m) 
         SAYNEXITWERROR("rw_idx out of bounds");
     
@@ -171,7 +172,7 @@ void csr_swap_col(csr_t * csr, idx_t i, idx_t j) {
         p = csr->p[idx];
         r = csr->p[idx + 1] - 1;
 
-        for ( ; pf || rf; ) {
+        for ( ; pf || rf; ) { // could be a binsearch
             if (csr->i[p] < i && p < csr->p[idx+1]) {
                 p++;
             } else {
@@ -289,6 +290,9 @@ flm_t * csr_real_decompose(csr_t * csr, u32 blk_sz) {
     }
     endl;
 
+    srm_t * b = calloc(1, sizeof(srm_t));
+    
+
     while(ncp < csr->m - ctx->npiv) {
         r_idx = ctx->npr[p_idx];
         while (r_idx == -1) {
@@ -305,6 +309,10 @@ flm_t * csr_real_decompose(csr_t * csr, u32 blk_sz) {
                 printf("%.0f ", csr->x[p++]);
             } else {
                 printf("  ");
+            }
+            
+            if (j >= ctx->npiv) {
+                
             }
         }
         printf("\n");
@@ -442,6 +450,10 @@ dctx_t * csr_analyse(csr_t * csr) {
     ctx->rpc = malloc(sizeof(idx_t) * csr->n);
     CHECKPTR(ctx->npc);
     for (int i = 0; i < csr->n; i++) ctx->rpc[i] = -1;
+
+    ctx->rnpc = malloc(sizeof(idx_t) * csr->n);
+    CHECKPTR(ctx->npc);
+    for (int i = 0; i < csr->n; i++) ctx->rnpc[i] = -1;
     
     ctx->pc  = malloc(sizeof(idx_t) * csr->n);
     CHECKPTR(ctx->pc);
@@ -450,7 +462,7 @@ dctx_t * csr_analyse(csr_t * csr) {
     /* pivot n non-pivot rows */
     for (idx_t i = 0; i < csr->m; i++) {
         if (csr_width(csr, i) != 0) {
-            idx = csr_head(csr, i);
+            idx = csr_head_idx(csr, i);
 
             if (ctx->pr[idx] == -1) {
                 ctx->pr[idx] = i;
@@ -464,6 +476,7 @@ dctx_t * csr_analyse(csr_t * csr) {
                 }
             }
         } else {
+            printf("width zero! %d\n", i);
             ctx->npr[i] = i;
         }
     }
@@ -478,6 +491,7 @@ dctx_t * csr_analyse(csr_t * csr) {
             pc_idx++;
         } else {
             ctx->npc[j] = npc_idx;
+            ctx->rnpc[npc_idx] = j;
             npc_idx++;
         }
     }
@@ -486,6 +500,7 @@ dctx_t * csr_analyse(csr_t * csr) {
 }
 
 void csr_print(csr_t * csr) {
+
     printf("m: %d, n: %d nnz: %d\n", csr->m, csr->n, csr->nnz);
     for (idx_t i = 0; i < csr->m; i++) {
         printf("row %d : loc %d : to %d\n", i, csr->p[i], csr->p[i+1] - 1);
@@ -523,12 +538,6 @@ void dctx_print(dctx_t * ps, idx_t m, idx_t n) {
     }
     endl;
 
-    printf("%-12s", "\nps->npr:");
-    for (idx_t i = 0; i < __max(m, n); i++) {
-        printf(ps->npr[i] < 0 ? "%d " : "%.2d ", ps->npr[i]);
-    }
-    endl;
-
     printf("%-12s", "\nps->pc:");
     for (idx_t i = 0; i < n; i++) {
         printf(ps->pc[i] < 0 ? "%d " : "%.2d ", ps->pc[i]);
@@ -540,12 +549,25 @@ void dctx_print(dctx_t * ps, idx_t m, idx_t n) {
         printf(ps->rpc[i] < 0 ? "%d " : "%.2d ", ps->rpc[i]);
     }
     endl;
+
+    printf("%-12s", "\nps->rnpc:");
+    for (idx_t i = 0; i < n; i++) {
+        printf(ps->npr[i] < 0 ? "%d " : "%.2d ", ps->rnpc[i]);
+    }
+    endl;
     
     printf("%-12s", "\nps->npc:");
     for (idx_t i = 0; i < n; i++) {
         printf(ps->npc[i] < 0 ? "%d " : "%.2d ", ps->npc[i]);
     }
     endl;
+
+    printf("%-12s", "\nps->npr:");
+    for (idx_t i = 0; i < __max(m, n); i++) {
+        printf(ps->npr[i] < 0 ? "%d " : "%.2d ", ps->npr[i]);
+    }
+    endl;
+
     
 }
 

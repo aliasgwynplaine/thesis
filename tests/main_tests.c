@@ -793,14 +793,14 @@ static char * test_str2aapol_syntax_error() {
 static char * test_csr_head() {
     FILE * fh = fopen("mat_7x5_03.txt", "r");
     csr_t * csr = csr_load(fh);
-    int i = csr_head(csr, 2);
-    assert(i == 2, "csr_head is failling");
+    int i = csr_head_idx(csr, 2);
+    assert(i == 2, "csr_head_idx is failling");
 
-    i = csr_head(csr, 3);
-    assert(i == 1, "csr_head is failling");
+    i = csr_head_idx(csr, 3);
+    assert(i == 1, "csr_head_idx is failling");
 
-    i = csr_head(csr, 5);
-    assert(i == 0, "csr_head is failling");
+    i = csr_head_idx(csr, 5);
+    assert(i == 0, "csr_head_idx is failling");
 
     fclose(fh);
     csr_free(csr);
