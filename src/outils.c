@@ -2,7 +2,6 @@
 
 int  is_str_in_lstr(char * str, char ** lstr) {
     char ** ptr = lstr;
-    int cmp;
 
     while (*ptr != NULL) {
         if (strcmp(str, *ptr) == 0) return true;

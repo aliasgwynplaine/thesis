@@ -137,6 +137,151 @@ void smatrix_free(sm_t * smat) {
 }
 
 
+void flsm_print(flsm_t * flsm) {
+
+    printf("nnz: %d\n", flsm->nnz);
+    for (int i = 0; i < flsm->m; i++) {
+        printf("%.2d  ", i);
+
+        for (int j = 0; j < flsm->width[i]; j++) {
+            printf("%.0f ", flsm->rows[i][j]);
+        }
+
+        endl;
+        printf("    ");
+
+        for (int j = 0; j < flsm->width[i]; j++) {
+            printf("%d ", flsm->pos[i][j]);
+        }
+
+        endl;
+    }
+}
+
+
+void flsm_free(flsm_t * flsm) {
+    if (flsm == NULL) return;
+    if (flsm->rows != NULL) {
+        for (int i = 0; i < flsm->m; i++) {
+            if (flsm->rows[i] != NULL) 
+                FREE(flsm->rows[i]);
+        }
+        FREE(flsm->rows);
+    }
+    if (flsm->pos != NULL) {
+        for (int i = 0; i < flsm->m; i++) {
+            if (flsm->pos[i] != NULL) 
+                FREE(flsm->pos[i]);
+        }
+        FREE(flsm->pos);
+    }
+    if (flsm->width != NULL) FREE(flsm->width);
+
+    FREE(flsm);
+}
+
+dctx_t *flsm_analyse(flsm_t * flsm) {
+    dctx_t * ctx = malloc(sizeof(dctx_t));
+    CHECKPTR(ctx);
+    idx_t max_sz = __max(flsm->m, flsm->n);
+    idx_t idx;
+    idx_t pc_idx;
+    idx_t npc_idx;
+
+    ctx->npiv = 0;
+    ctx->pr  = malloc(sizeof(idx_t) * flsm->n);
+    CHECKPTR(ctx->pr);
+    for (int i = 0; i < flsm->n; i++) ctx->pr[i] = -1;
+    
+    ctx->npr = malloc(sizeof(idx_t) * max_sz);
+    CHECKPTR(ctx->npr);
+    for (int i = 0; i < max_sz; i++) ctx->npr[i] = -1;
+    
+    ctx->npc = malloc(sizeof(idx_t) * flsm->n);
+    CHECKPTR(ctx->npc);
+    for (int i = 0; i < flsm->n; i++) ctx->npc[i] = -1;
+
+    ctx->rpc = malloc(sizeof(idx_t) * flsm->n);
+    CHECKPTR(ctx->npc);
+    for (int i = 0; i < flsm->n; i++) ctx->rpc[i] = -1;
+
+    ctx->rnpc = malloc(sizeof(idx_t) * flsm->n);
+    CHECKPTR(ctx->npc);
+    for (int i = 0; i < flsm->n; i++) ctx->rnpc[i] = -1;
+    
+    ctx->pc  = malloc(sizeof(idx_t) * flsm->n);
+    CHECKPTR(ctx->pc);
+    for (int i = 0; i < flsm->n; i++) ctx->pc[i] = -1;
+
+    /* pivot n non-pivot rows */
+    for (idx_t i = 0; i < flsm->m; i++) {
+        if (flsm->width[i] != 0) {
+            idx = flsm->pos[i][0];
+
+            if (ctx->pr[idx] == -1) {
+                ctx->pr[idx] = i;
+                ctx->npiv++;
+            } else {
+                if (flsm->width[ctx->pr[idx]] > flsm->width[i]) {
+                    ctx->npr[ctx->pr[idx]] = ctx->pr[idx];
+                    ctx->pr[idx] = i;
+                } else {
+                    ctx->npr[i] = i;
+                }
+            }
+        } else {
+            printf("width zero! %d\n", i);
+            ctx->npr[i] = i;
+        }
+    }
+
+    pc_idx = 0;
+    npc_idx = 0;
+
+    for (idx_t j = 0; j < flsm->n; j++) {
+        if (ctx->pr[j] != -1) {
+            ctx->pc[j] = pc_idx;
+            ctx->rpc[pc_idx] = j;
+            pc_idx++;
+        } else {
+            ctx->npc[j] = npc_idx;
+            ctx->rnpc[npc_idx] = j;
+            npc_idx++;
+        }
+    }
+
+    return ctx;
+}
+
+flsm_t *csr2flsm(csr_t *csr) {
+    if (csr == NULL) return NULL;
+    
+    flsm_t * flsm = malloc(sizeof(flsm_t));
+    flsm->m = csr->m;
+    flsm->n = csr->n;
+    flsm->nnz = csr->nnz;
+    flsm->width = malloc(sizeof(int) * flsm->m);
+    flsm->rows  = malloc(sizeof(COEFTYPE *) * flsm->m);
+    flsm->pos   = malloc(sizeof(int *) * flsm->m);
+
+    for (idx_t i = 0; i < csr->m; i++) {
+        flsm->width[i] = csr_width(csr, i);
+        flsm->rows[i] = malloc(sizeof(COEFTYPE) * flsm->width[i]);
+        flsm->pos[i] = malloc(sizeof(int) * flsm->width[i]);
+        COEFTYPE * rows = flsm->rows[i];
+        int      * pos  = flsm->pos[i];
+        idx_t k = 0;
+
+        for (idx_t j = csr->p[i]; j < csr->p[i + 1]; j++) {
+            rows[k] = csr->x[j];
+            pos[k]  = csr->i[j];
+            k++;
+        }
+    }
+
+    return flsm;
+}
+
 idx_t csr_head_idx(csr_t * csr, idx_t rw_idx) {
     if (rw_idx < 0 || rw_idx >= csr->m) 
         SAYNEXITWERROR("rw_idx out of bounds");
@@ -227,195 +372,141 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
 /**
  * @brief decompose the csr matrix in flmatrix
 */
-flm_t * csr_real_decompose(csr_t * csr, u32 blk_sz) {
+tmat_t * csr_decompose(csr_t * csr) {
     dctx_t * ctx = csr_analyse(csr);
-    idx_t cp = 0;
-    idx_t p_idx = 0;
-    idx_t r_idx = -1;
-    idx_t c_idx;
-    idx_t p;
+    idx_t max_sz = __max(csr->m, csr->n);
+    flsm_t * a = calloc(1, sizeof(flsm_t));
+    flsm_t * b = calloc(1, sizeof(flsm_t));
+    flsm_t * c = calloc(1, sizeof(flsm_t));
+    flsm_t * d = calloc(1, sizeof(flsm_t));
 
-    printf("Found %d npivs\n", ctx->npiv);
-    idx_t cc = 0;
+    a->m = ctx->npiv;
+    a->n = a->m;
+    a->width = malloc(sizeof(int) * a->m);
+    a->rows  = malloc(sizeof(COEFTYPE *) * a->m);
+    a->pos   = malloc(sizeof(int *) * a->m);
 
-    printf("===================================++++++++\n");
-    //csr_print(csr);
-    printf("==================================++++++++\n");
+    b->m = ctx->npiv;
+    b->n = csr->n - ctx->npiv;
+    b->width = malloc(sizeof(int) * b->m);
+    b->rows  = malloc(sizeof(COEFTYPE *) * b->m);
+    b->pos   = malloc(sizeof(int *) * b->m);
 
-    for (idx_t k = 0; cc < ctx->npiv; k++) {
-        if (ctx->rpc[k] != -1 && ctx->rpc[k] != k) {
-            printf("swaping %d <> %d -> ", k, ctx->rpc[k]);
-            csr_swap_col(csr, ctx->rpc[k], k);
+    c->m = csr->m - ctx->npiv;
+    c->n = ctx->npiv;
+    c->width = malloc(sizeof(int) * c->m);
+    c->rows  = malloc(sizeof(COEFTYPE *) * c->m);
+    c->pos   = malloc(sizeof(int *) * c->m);
+
+    d->m = c->m;
+    d->n = b->n;
+    d->width = malloc(sizeof(int) * d->m);
+    d->rows  = malloc(sizeof(COEFTYPE *) * d->m);
+    d->pos   = malloc(sizeof(int *) * d->m);
+
+    COEFTYPE * pccoefbuff = malloc(sizeof(COEFTYPE) * ctx->npiv);
+    int      * pcposbuff  = malloc(sizeof(int) * ctx->npiv);
+
+    COEFTYPE * npccoefbuff = malloc(sizeof(COEFTYPE) * csr->n - ctx->npiv);
+    int      * npcposbuff  = malloc(sizeof(int) * csr->n - ctx->npiv);
+
+    idx_t idx = 0;
+
+    for (idx_t i = 0; idx < ctx->npiv; i++) {
+        if (ctx->pr[i] == -1) continue;
+
+        idx_t p = csr->p[ctx->pr[i]];
+        idx_t pcsz  = 0;
+        idx_t npcsz = 0;
+
+        for (; p < csr->p[ctx->pr[i] + 1]; p++) {
+            if (ctx->pc[csr->i[p]] != -1) { // pivot column
+                pccoefbuff[pcsz] = csr->x[p];
+                pcposbuff[pcsz++]  = ctx->pc[csr->i[p]];
+            } else { // no pivot column
+                npccoefbuff[npcsz] = csr->x[p];
+                npcposbuff[npcsz++]  = ctx->npc[csr->i[p]];
+            }
         }
-        cc++;
-    }
 
-    printf("===================================****\n");
-    //csr_print(csr);
-    printf("===================================****\n");
+        a->rows[idx]  = malloc(sizeof(COEFTYPE) * pcsz);
+        a->pos[idx]   = malloc(sizeof(int) * pcsz);
+        a->width[idx] = pcsz;
+        a->nnz       += pcsz;
 
-    do {
-        r_idx = ctx->pr[p_idx];
-        while (r_idx == -1) {
-            //printf("r_idx: %d\n", r_idx);
-            r_idx = ctx->pr[++p_idx];
+        b->rows[idx]  = malloc(sizeof(COEFTYPE) * npcsz);
+        b->pos[idx]   = malloc(sizeof(int) * npcsz);
+        b->width[idx] = npcsz;
+        b->nnz       += npcsz;
+
+        for (int k = 0; k < pcsz; k++) {
+            a->rows[idx][k] = pccoefbuff[k];
+            a->pos[idx][k]  = pcposbuff[k];
+        }
+
+        for (int k = 0; k < npcsz; k++) {
+            b->rows[idx][k] = npccoefbuff[k];
+            b->pos[idx][k]  = npcposbuff[k];
         }
         
-        printf("%.2d - %.2d| ", cp, r_idx);
-        p = csr->p[r_idx];
-
-        for (int j = 0; j < csr->n; j++) {
-            if (j == ctx->npiv) printf("| ");
-            if (p < csr->nnz && j == csr->i[p]) {
-                printf("%.0f ", csr->x[p]);
-                // printf("%d %d - %d * %d\n", p_idx, p, csr->i[p], csr->n);
-                p++;
-            } else {
-                printf("  ");
-            }
-            // printf("%d %d - %d * %d\n", p_idx, p, csr->i[p], csr->n);
-            // p++;
-        }
-        printf("\n");
-        p_idx++;
-        cp++;
-    } while(cp < ctx->npiv);
-
-    idx_t ncp = 0;
-    p_idx = 0;
-
-    printf("-- - --| ");
-    for(int i = 0; i < csr->n; i++) {
-        printf("--");
+        idx++;
     }
-    endl;
-
-    srm_t * b = calloc(1, sizeof(srm_t));
     
+    idx = 0;
 
-    while(ncp < csr->m - ctx->npiv) {
-        r_idx = ctx->npr[p_idx];
-        while (r_idx == -1) {
-            r_idx = ctx->npr[++p_idx];
-            //printf("p_idx: %d r_idx: %d\n", p_idx, r_idx);
-        }
+    for (idx_t i = 0; idx < c->m; i++) {
+        if (ctx->npr[i] == -1) continue;
+
+        idx_t p = csr->p[ctx->npr[i]];
+        idx_t pcsz  = 0;
+        idx_t npcsz = 0;
         
-        printf("%.2d - %.2d| ", cp, r_idx);
-        p = csr->p[r_idx];
-
-        for (int j = 0; j < csr->n; j++) {
-            if (j == ctx->npiv) printf("| ");
-            if (p < csr->nnz && j == csr->i[p]) {
-                printf("%.0f ", csr->x[p++]);
-            } else {
-                printf("  ");
-            }
-            
-            if (j >= ctx->npiv) {
-                
+        for (; p < csr->p[ctx->npr[i] + 1]; p++) {
+            if (ctx->pc[csr->i[p]] != -1) { // pivot column
+                pccoefbuff[pcsz] = csr->x[p];
+                pcposbuff[pcsz++]  = ctx->pc[csr->i[p]];
+            } else { // no pivot column
+                npccoefbuff[npcsz] = csr->x[p];
+                npcposbuff[npcsz++]  = ctx->npc[csr->i[p]];
             }
         }
-        printf("\n");
-        p_idx++;
-        ncp++;
-        cp++;
+
+        c->rows[idx]  = malloc(sizeof(COEFTYPE) * pcsz);
+        c->pos[idx]   = malloc(sizeof(int) * pcsz);
+        c->width[idx] = pcsz;
+        c->nnz       += pcsz;
+
+        d->rows[idx]  = malloc(sizeof(COEFTYPE) * npcsz);
+        d->pos[idx]   = malloc(sizeof(int) * npcsz);
+        d->width[idx] = npcsz;
+        d->nnz       += npcsz;
+
+        for (int k = 0; k < pcsz; k++) {
+            c->rows[idx][k] = pccoefbuff[k];
+            c->pos[idx][k]  = pcposbuff[k];
+        }
+
+        for (int k = 0; k < npcsz; k++) {
+            d->rows[idx][k] = npccoefbuff[k];
+            d->pos[idx][k]  = npcposbuff[k];
+        }
+
+        idx++;
     }
 
-    return NULL;
-}
+    tmat_t * flm = malloc(sizeof(flm_t));
+    flm->a = a;
+    flm->b = b;
+    flm->c = c;
+    flm->d = d;
 
-
-/**
- * @brief decompose the csr matrix in flmatrix
-*/
-flm_t * csr_decompose(csr_t * csr, u32 blk_sz) {
-    dctx_t * ctx = csr_analyse(csr);
-    idx_t cp = 0;
-    idx_t p_idx = 0;
-    idx_t r_idx = -1;
-    idx_t c_idx;
-    idx_t p;
-
-    printf("Found %d npivs\n", ctx->npiv);
-    idx_t cc = 0;
-
-    printf("===================================++++++++\n");
-    //csr_print(csr);
-    printf("==================================++++++++\n");
-
-    for (idx_t k = 0; cc < ctx->npiv; k++) {
-        if (ctx->rpc[k] != -1 && ctx->rpc[k] != k) {
-            printf("swaping %d <> %d -> ", k, ctx->rpc[k]);
-            csr_swap_col(csr, ctx->rpc[k], k);
-        }
-        cc++;
-    }
-
-    printf("===================================****\n");
-    //csr_print(csr);
-    printf("===================================****\n");
-
-    do {
-        r_idx = ctx->pr[p_idx];
-        while (r_idx == -1) {
-            //printf("r_idx: %d\n", r_idx);
-            r_idx = ctx->pr[++p_idx];
-        }
-        
-        printf("%.2d - %.2d| ", cp, r_idx);
-        p = csr->p[r_idx];
-
-        for (int j = 0; j < csr->n; j++) {
-            if (j == ctx->npiv) printf("| ");
-            if (p < csr->nnz && j == csr->i[p]) {
-                printf("%.0f ", csr->x[p]);
-                // printf("%d %d - %d * %d\n", p_idx, p, csr->i[p], csr->n);
-                p++;
-            } else {
-                printf("  ");
-            }
-            // printf("%d %d - %d * %d\n", p_idx, p, csr->i[p], csr->n);
-            // p++;
-        }
-        printf("\n");
-        p_idx++;
-        cp++;
-    } while(cp < ctx->npiv);
-
-    idx_t ncp = 0;
-    p_idx = 0;
-
-    printf("-- - --| ");
-    for(int i = 0; i < csr->n; i++) {
-        printf("--");
-    }
-    endl;
-
-    while(ncp < csr->m - ctx->npiv) {
-        r_idx = ctx->npr[p_idx];
-        while (r_idx == -1) {
-            r_idx = ctx->npr[++p_idx];
-            //printf("p_idx: %d r_idx: %d\n", p_idx, r_idx);
-        }
-        
-        printf("%.2d - %.2d| ", cp, r_idx);
-        p = csr->p[r_idx];
-
-        for (int j = 0; j < csr->n; j++) {
-            if (j == ctx->npiv) printf("| ");
-            if (p < csr->nnz && j == csr->i[p]) {
-                printf("%.0f ", csr->x[p++]);
-            } else {
-                printf("  ");
-            }
-        }
-        printf("\n");
-        p_idx++;
-        ncp++;
-        cp++;
-    }
-
-    return NULL;
+    dctx_free(ctx);
+    FREE(pccoefbuff);
+    FREE(pcposbuff);
+    FREE(npccoefbuff);
+    FREE(npcposbuff);
+    
+    return flm;
 }
 
 
@@ -572,9 +663,11 @@ void dctx_print(dctx_t * ps, idx_t m, idx_t n) {
 }
 
 void dctx_free(dctx_t * dctx) {
-    if (dctx->pr != NULL) FREE(dctx->pr);
-    if (dctx->npr != NULL) FREE(dctx->npr);
-    if (dctx->pc != NULL) FREE(dctx->pc);
-    if (dctx->npc != NULL) FREE(dctx->npc);
+    if (dctx->pr   != NULL) FREE(dctx->pr);
+    if (dctx->npr  != NULL) FREE(dctx->npr);
+    if (dctx->pc   != NULL) FREE(dctx->pc);
+    if (dctx->npc  != NULL) FREE(dctx->npc);
+    if (dctx->rnpc != NULL) FREE(dctx->rnpc);
+    if (dctx->rpc  != NULL) FREE(dctx->rpc);
     FREE(dctx);
 }

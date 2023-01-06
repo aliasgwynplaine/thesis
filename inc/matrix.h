@@ -17,6 +17,7 @@ typedef struct faugere_lachartre_matrix_t         flm_t;
 typedef struct sparse_triangular_matrix_t         stm_t;
 typedef struct sparse_rectangular_matrix_t        srm_t;
 typedef struct hybrid_rectangular_matrix_t        hrm_t;
+typedef struct faugere_lachartre_sparse_matrix_t flsm_t;
 typedef struct sparse_triangular_block_matrix_t  stbm_t;
 typedef struct sparse_rectangular_block_matrix_t srbm_t;
 typedef struct hybrid_rectangular_block_matrix_t hrbm_t;
@@ -123,6 +124,28 @@ struct hybrid_rectangular_matrix_t {
 };
 
 
+struct faugere_lachartre_sparse_matrix_t {
+    idx_t n;
+    idx_t m;
+    COEFTYPE ** rows;
+    int * width;
+    idx_t ** pos;
+    float d;
+    idx_t nnz;
+};
+
+
+struct temp_mat_t {
+    flsm_t * a;
+    flsm_t * b;
+    flsm_t * c;
+    flsm_t * d;
+    int    nnz;
+};
+
+typedef struct temp_mat_t tmat_t;
+
+
 /**
  * @brief stores the index of the pivot 
  * and non-pivot rows and columns
@@ -153,9 +176,16 @@ void    csr_free(csr_t *);
 
 csc_t * csc_malloc(int m, int n, int nnzmax);
 csc_t * csc_realloc(sm_t * smat, size_t sz);       // todo
-csc_t * csc_load(FILE * f);                        // todo : complete test
+csc_t * csc_load(FILE * f);                        // todo
 void    smatrix_free(sm_t * smat);                 // todo
 
+
+flsm_t * flsm_malloc(int m, int n); // todo
+flsm_t * flsm_load(FILE * f); // todo
+void     flsm_print(flsm_t * flsm);
+void     flsm_free(flsm_t * flsm);
+dctx_t * flsm_analyse(flsm_t * flsm);
+flsm_t * csr2flsm(csr_t * csr);
 
 /*
     operations
@@ -177,7 +207,7 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
     faugere-lachartre matrix transformations
 */
 
-flm_t *  csr_decompose(csr_t *, u32);
+tmat_t * csr_decompose(csr_t *);
 dctx_t * csr_analyse(csr_t *);
 
 

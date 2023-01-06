@@ -59,7 +59,7 @@ void bstree_free(bstree_t * bst) {
 
 void * bstree_search(bstree_t * bst, void * item) {
     if (bst == NULL || item == NULL) return NULL;
-    bnode_t * curr;
+    //bnode_t * curr;
     // todo
     return NULL;
 }
@@ -82,7 +82,7 @@ int bstree_insert(bstree_t * tree, void * d) {
         tree->root    = bnode_create();
         tree->root->d = d;
         tree->sz++;
-    } else if (cmp = tree->cmp(d, y->d) < 0){
+    } else if ((cmp = tree->cmp(d, y->d) < 0)){
         y->l    = bnode_create();
         y->l->d = d;
         tree->sz++;

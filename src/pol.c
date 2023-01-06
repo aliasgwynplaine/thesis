@@ -84,7 +84,7 @@ void buildminheap(term_t * terms, int hsz) {
 
 
 void mergeaapol(aapol_t * a, int p, int q, int r) {
-    int n_1, n_2, i, j, k, c, m;
+    int n_1, n_2, i, j, k, c;
     term_t * l_;
     term_t * r_;
     n_1 = q - p + 1;
@@ -147,7 +147,7 @@ void aapol_sort(aapol_t * aapol) {
 
 
 int llpol_quicksort_partition(llpol_t ** lollpol, int p, int r) {
-    int i, q, cmp;
+    int i, cmp;
     llpol_t * x = lollpol[r];
     llpol_t * aux;
     i = p - 1;
@@ -186,7 +186,7 @@ void llpol_list_sort(llpol_t ** lollpol, int sz) {
 
 
 int aapol_list_quicksort_partition(aapol_t ** loaapol, int p, int r) {
-    int i, q, cmp;
+    int i, cmp;
     aapol_t * x = loaapol[r];
     aapol_t * aux;
     i = p - 1;
@@ -226,6 +226,8 @@ term_t * term_add(term_t * p, COEFTYPE a, term_t * q, COEFTYPE b) {
     term_t * r = term_malloc(sizeof(term_t));
     r->coef = a * p->coef + b * q->coef;
     exp_add(&p->exp, &q->exp, &r->exp);
+    
+    return r;
 }
 
 
@@ -301,7 +303,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
 
 aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot sum aapols of different vars.");
-    aapol_t * r;
+    aapol_t * r = NULL;
 
     if (alpha == 0 && betha != 0) {
         aapol_cpy(r, b);

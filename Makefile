@@ -4,7 +4,7 @@ SRCFILES = pol.c matrix.c tree.c cli.c outils.c
 
 OBJ = $(SRCFILES:.c=.o)
 
-CFLAGS = -g -D_DEBUG
+CFLAGS = -g -D_DEBUG -Wall
 LDFLAGS = -lm
 INC_DIRS = inc
 SRC_DIR  = src
@@ -27,7 +27,7 @@ matrix: $(OBJ)
 
 .PHONY: tests
 tests:
-	$(CC) $(MAINTEST) $(TESTSRC) -o $@.exe $(INC_FLAGS) -g $(LDFLAGS)
+	$(CC) $(MAINTEST) $(TESTSRC) -o $@.exe $(INC_FLAGS) -g $(LDFLAGS) -Wall
 
 .PHONY: clean
 clean :

@@ -37,7 +37,7 @@ static char * test_packexp() {
     u8 n = 8;
     u64 expected_x = 7164981176274674482;
     u64 exp_x[] = {0x63, 0x6f, 0x20, 0x6b, 0xa, 0x36, 0x63, 0x32};
-    u64 x = exp_pack(exp_x, 8);
+    u64 x = exp_pack(exp_x, n);
     assert(x == expected_x, "exp_pack function is failing!");
 
     return 0;
@@ -48,7 +48,7 @@ static char * test_packexp_with_zero() {
     u8 n = 8;
     u64 expected_x = 0;
     u64 exp_x[] = {0, 0, 0, 0, 0, 0, 0, 0};
-    u64 x = exp_pack(exp_x, 8);
+    u64 x = exp_pack(exp_x, n);
     assert(x == expected_x, "exp_pack function is failing!");
 
     return 0;
@@ -593,7 +593,7 @@ static char * test_aapol_multiply() {
 static char * test_exp_norm() {
     int n = 2;
     u64 e = 4294967297; // (1,1)
-    assert(exp_norm(e, 2) == sqrt(2), "exp norm is failing.");
+    assert(exp_norm(e, n) == sqrt(2), "exp norm is failing.");
     return 0;
 }
 
@@ -808,7 +808,7 @@ static char * test_csr_head() {
 }
 
 
-static char * test_csr_analyse() {
+static char * test_csr_analyse_n_decompose() {
     FILE * fh = fopen("mat80x100_05.txt", "r");
     csr_t * csr = csr_load(fh);
     dctx_t * piv = csr_analyse(csr);
@@ -816,12 +816,42 @@ static char * test_csr_analyse() {
     printf("-----------------\n");
     csr_dense_print(csr);
     printf("=========\n");
-    csr_decompose(csr, 0);
+    tmat_t * mat = csr_decompose(csr);
+    printf("A:\n");
+    flsm_print(mat->a);
+    printf("B:\n");
+    flsm_print(mat->b);
+    printf("C:\n");
+    flsm_print(mat->c);
+    printf("D:\n");
+    flsm_print(mat->d);
     dctx_print(piv, csr->m, csr->n);
     printf("Done!");
 
+    flsm_free(mat->a);
+    flsm_free(mat->b);
+    flsm_free(mat->c);
+    flsm_free(mat->d);
+    FREE(mat);
     csr_free(csr);
     dctx_free(piv);
+    fclose(fh);
+
+    return 0;
+}
+
+
+static char * test_csr2flsm() {
+    FILE * fh = fopen("mat80x100_05.txt", "r");
+    csr_t * csr = csr_load(fh);
+    flsm_t * flsm = csr2flsm(csr);
+    flsm_print(flsm);
+    dctx_t * dctx = flsm_analyse(flsm);
+    dctx_print(dctx, flsm->m, flsm->n);;
+    
+    csr_free(csr);
+    dctx_free(dctx);
+    flsm_free(flsm);
     fclose(fh);
 
     return 0;
@@ -855,7 +885,8 @@ static void all_tests() {
     run_unittest(test_str2aapol_name_error);
     run_unittest(test_str2aapol_syntax_error);
     run_unittest(test_csr_head);
-    run_unittest(test_csr_analyse);
+    run_unittest(test_csr_analyse_n_decompose);
+    //run_unittest(test_csr2flsm);
 }
 
 
