@@ -60,6 +60,8 @@
 #define FREE(PTR) do { free(PTR); (PTR) = NULL; } while(0)
 #endif
 
+typedef unsigned char uchar;
+
 typedef uint64_t u64;
 typedef uint32_t u32;
 typedef uint16_t u16;
@@ -69,6 +71,9 @@ typedef int32_t idx_t;
 
 typedef struct bdat_t bdat_t;
 
+typedef int    cmpfux_t(const void * a, const void * b);
+typedef void * allocfux_t(const size_t sz);
+typedef void   freefux_t(void *);
 
 struct bdat_t {
     void * k;

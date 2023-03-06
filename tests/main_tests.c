@@ -832,6 +832,7 @@ static char * test_csr_analyse_n_decompose() {
     flsm_free(mat->b);
     flsm_free(mat->c);
     flsm_free(mat->d);
+    dctx_free(mat->dctx);
     FREE(mat);
     csr_free(csr);
     dctx_free(piv);
@@ -853,6 +854,29 @@ static char * test_csr2flsm() {
     dctx_free(dctx);
     flsm_free(flsm);
     fclose(fh);
+
+    return 0;
+}
+
+
+static char * test_sparse2dense() {
+    idx_t n   = 4;
+    idx_t dim = 10;
+    COEFTYPE v[] = {1, 3, 6, 8};
+    idx_t    i[] = {1, 3, 6, 8};
+    COEFTYPE expected_result[] = {0, 1, 0, 3, 0, 0, 6, 0, 8, 0};
+    COEFTYPE * dv = sparse2dense(v, i, n, dim);
+    int cmp = 0;
+
+    for (idx_t j = 0; j < dim; j++) {
+        if (expected_result[j] != dv[j]) {
+            cmp = 1;
+            break;
+        }
+    }
+
+    assert(cmp == 0, "sparse2dense is failing!");
+    FREE(dv);
 
     return 0;
 }
@@ -887,6 +911,7 @@ static void all_tests() {
     run_unittest(test_csr_head);
     run_unittest(test_csr_analyse_n_decompose);
     //run_unittest(test_csr2flsm);
+    run_unittest(test_sparse2dense);
 }
 
 

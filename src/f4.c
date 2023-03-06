@@ -12,8 +12,9 @@ aapol_t ** compute_groebner_f4(aapol_t ** loa, int sz) {
     /* some stuff here */
 
     csr_t * mat = aapol_list2csr(loa, sz);
-    dctx_t * ctx = csr_analyse(mat);
-    csr_rref(mat, ctx);
+    tmat_t * tmat = csr_decompose(mat);
+    
+
 
     /* process matrix to extract gb information */
 

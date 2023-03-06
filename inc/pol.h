@@ -19,6 +19,14 @@ typedef struct aapol_t aapol_t; // alternated array
 typedef struct llpol_t llpol_t; // tree-like pol struct
 
 
+enum MONOMIAL_ORDER {
+    lex,
+    revlex,
+    grevlex,
+    glex
+};
+
+
 struct term_t {
     COEFTYPE  coef; // could be an AP num
     u64       exp;  // packed exponent
@@ -115,9 +123,9 @@ aapol_t  * aapol_cpy(aapol_t * dst, aapol_t * src);
 /* bit masks and bit extraction*/
 
 double exp_norm(u64, u8);
-int    exp_cmp(u64, u64, u8);
+int    exp_cmp(u64, u64, u8, enum MONOMIAL_ORDER);
 int    exp_lex_cmp(u64, u64, u8);
-int    exp_grlex_cmp(u64, u64, u8);
+int    exp_grlex_cmp(u64, u64, u8); // TODO
 int    exp_revlex_cmp(u64, u64, u8); // todo
 u64 *  exp_add(u64 *, u64 *, u64 *);
 u64 *  exp_unpack(u64, u8);

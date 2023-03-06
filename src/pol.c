@@ -333,7 +333,7 @@ aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
 
 
     while (i < a->sz && j < b->sz) {
-        cmp = exp_cmp(aterms[i].exp, bterms[j].exp, a->nvar);
+        cmp = exp_cmp(aterms[i].exp, bterms[j].exp, a->nvar, lex);
         if (cmp < 0) {
             rterms[k].coef = betha * bterms[j].coef;
             rterms[k].exp  = bterms[j++].exp;
@@ -420,7 +420,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
     
     while (i < a->sz) {
         s   = u64_max_idx(dp, i, a->sz - 1);
-        cmp = exp_cmp(rterms[k].exp, dp[s], a->nvar);
+        cmp = exp_cmp(rterms[k].exp, dp[s], a->nvar, lex);
 
         if (cmp != 0) {
             if (rterms[k].coef != 0) rterms[++k].coef = 0;
@@ -455,7 +455,7 @@ int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar);
+        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
 
         if (cmp != 0) return cmp;
         
@@ -485,7 +485,7 @@ int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar);
+        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
 
         if (cmp != 0 || (a_term_p[i].coef != b_term_p[i].coef)) return 1;
         
@@ -536,7 +536,7 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
 
         nodea = stacka[--ha];
         nodeb = stackb[--hb];
-        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar);
+        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar, lex);
 
         if (cmp != 0) {
             FREE(stackb);
@@ -584,7 +584,7 @@ int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
 
         nodea = stacka[--ha];
         nodeb = stackb[--hb];
-        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar);
+        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar, lex);
 
         if (cmp != 0 || (nodea->coef != nodeb->coef)) {
             FREE(stackb);
@@ -1200,9 +1200,9 @@ double exp_norm(u64 e, u8 nvar) {
 }
 
 
-int exp_cmp(u64 a, u64 b, u8 nvar) {
+int exp_cmp(u64 a, u64 b, u8 nvar, enum MONOMIAL_ORDER mo) {
     // todo: handle different ways to compare
-    return exp_lex_cmp(a, b, nvar);
+    if (mo == lex) return exp_lex_cmp(a, b, nvar);
 }
 
 

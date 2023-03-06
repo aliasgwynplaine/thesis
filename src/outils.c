@@ -137,4 +137,3 @@ inline u64 u64_max_idx(u64 * a, int p, int q) {
     
     return mx_idx; 
 }
-

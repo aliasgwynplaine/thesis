@@ -141,6 +141,7 @@ struct temp_mat_t {
     flsm_t * c;
     flsm_t * d;
     int    nnz;
+    dctx_t * dctx;
 };
 
 typedef struct temp_mat_t tmat_t;
@@ -193,8 +194,12 @@ flsm_t * csr2flsm(csr_t * csr);
 
 idx_t  csr_head_idx(csr_t *, idx_t );
 idx_t  csr_width(csr_t *, idx_t);
-void csr_swap_col(csr_t *, idx_t, idx_t);
-void multiply_csr_dense(csr_t *, dcm_t *, dcm_t *);
+void   csr_swap_col(csr_t *, idx_t, idx_t);
+void   csr_print(csr_t *);
+void   csr_dense_print(csr_t *);
+void   multiply_csr_dense(csr_t *, dcm_t *, dcm_t *);
+tmat_t * csr_decompose(csr_t *);
+dctx_t * csr_analyse(csr_t *);
 
 /*
     insert & delete
@@ -202,15 +207,18 @@ void multiply_csr_dense(csr_t *, dcm_t *, dcm_t *);
 
 int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
 
-
 /*
-    faugere-lachartre matrix transformations
+    dense-sparse transformations
 */
 
-tmat_t * csr_decompose(csr_t *);
-dctx_t * csr_analyse(csr_t *);
+COEFTYPE * sparse2dense(COEFTYPE *, idx_t *, idx_t, idx_t);
 
 
+/*
+    decomposer_ctx utils
+*/
+
+void dctx_print(dctx_t *, idx_t, idx_t);
 void dctx_free(dctx_t * dctx);
 
 
@@ -226,9 +234,7 @@ void dctx_free(dctx_t * dctx);
 
 
 
-void csr_print(csr_t *);
-void csr_dense_print(csr_t *);
-void dctx_print(dctx_t *, idx_t, idx_t);
+
 
 
 #endif

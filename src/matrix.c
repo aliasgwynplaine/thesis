@@ -369,6 +369,30 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
     smat->n = __max(smat->n, j+1);
     return 1;
 }
+
+/**
+ * @brief transforms a sparse vector to a
+ * dense vector.
+ * 
+ * @param v array of coefs
+ * @param i array of index
+ * @param n sparse vector size
+ * @param dim dimention of the vector
+ * 
+ * @return dv dense vector
+ * @note don't forget to free dv
+ */
+COEFTYPE * sparse2dense(COEFTYPE * v, idx_t * i, idx_t n, idx_t dim) {
+    COEFTYPE * dv = calloc(dim, sizeof(COEFTYPE));
+
+    for (idx_t j = 0; j < n; j++) {
+        dv[i[j]] = v[j];
+    }
+
+    return dv;
+}
+
+
 /**
  * @brief decompose the csr matrix in flmatrix
 */
@@ -500,7 +524,8 @@ tmat_t * csr_decompose(csr_t * csr) {
     flm->c = c;
     flm->d = d;
 
-    dctx_free(ctx);
+    //dctx_free(ctx);
+    flm->dctx = ctx;
     FREE(pccoefbuff);
     FREE(pcposbuff);
     FREE(npccoefbuff);
