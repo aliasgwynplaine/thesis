@@ -881,7 +881,6 @@ static char * test_sparse2dense() {
     return 0;
 }
 
-
 static void all_tests() {
     run_unittest(test_packexp);
     run_unittest(test_unpackexp);
@@ -912,6 +911,8 @@ static void all_tests() {
     run_unittest(test_csr_analyse_n_decompose);
     //run_unittest(test_csr2flsm);
     run_unittest(test_sparse2dense);
+    run_unittest(cuda_test);
+    
 }
 
 
