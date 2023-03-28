@@ -518,7 +518,7 @@ tmat_t * csr_decompose(csr_t * csr) {
         idx++;
     }
 
-    tmat_t * flm = malloc(sizeof(flm_t));
+    tmat_t * flm = malloc(sizeof(*flm));
     flm->a = a;
     flm->b = b;
     flm->c = c;
