@@ -54,9 +54,9 @@ parser.o: src/main_parser.c
 	$(CC) $(CFLAGS) -c src/main_parser.c -o main.o $(INC_FLAGS)
 
 src/grammar.c: src/grammar.y
-	bison -d -v src/grammar.y
-	mv src/grammar.tab.c src/grammar.c
-	mv src/grammar.tab.h inc/grammar.h
+	bison -d -v src/grammar.y -o grammar.c 
+	mv grammar.c src/grammar.c
+	mv grammar.h inc/grammar.h
 
 src/lexer.c: src/lexer.l
 	flex src/lexer.l
@@ -68,4 +68,4 @@ clean :
 
 .PHONY: clean_parser
 clean_parser:
-	rm -f parser.exe lexer.o grammar.o src/grammar.c inc/grammar.h lex.yy.c
+	rm -f parser.exe lexer.o grammar.o src/grammar.c src/grammar.output inc/grammar.h lex.yy.c src/lexer.c
