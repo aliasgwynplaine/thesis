@@ -20,8 +20,8 @@ TESTSRC   = $(addprefix $(SRC_DIR)/, $(TESTFILES))
 
 PROGRAM = main
 
-tests.exe: outils.o tree.o matrix.o pol.o cuda_test.o
-	$(CC) $(MAINTEST) outils.o tree.o matrix.o pol.o cuda_test.o -o $@ $(INC_FLAGS) -g $(LDFLAGS)
+tests.exe: outils.o tree.o matrix.o pol.o 
+	$(CC) $(MAINTEST) outils.o tree.o matrix.o pol.o -o $@ $(INC_FLAGS) -g $(LDFLAGS)
 
 parser.exe: src/main_parser.c grammar.o lexer.o parser.o
 	$(CC) -g -Wall grammar.o lexer.o main.o -lfl -o parser.exe $(INC_FLAGS)
