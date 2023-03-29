@@ -27,11 +27,12 @@ variable    [a-zA-Z][a-zA-Z0-9]*
 
 %%
 
-{integer}       return INTEGER;
-{floating}      return FLOATING;
 aapol           return AAPOLTOK;
 llpol           return LLPOLTOK;
-{variable}      return VAR;
+symtab          return SYMTABTOK;
+{integer}       yylval.int_val = atoi(yytext); return INTEGER;
+{floating}      yylval.float_val = atof(yytext); return FLOATING;
+{variable}      yylval.str_val = strdup(yytext); return VAR;
 \{              printf("OBRACKET ");
 \}              printf("EBRACKET ");
 \n              return NEWLINE;

@@ -2,10 +2,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "sym_table.h"
 
 #ifdef _DEBUG
 int yydebug = 1;
 #endif
+
+//sym_table_t * st = st_create(SYM_TABLE_SZ);
 
 %}
 
@@ -15,7 +18,9 @@ int yydebug = 1;
     char  * str_val;
 }
 
-%token INTEGER FLOATING AAPOLTOK LLPOLTOK NEWLINE VAR
+%type <str_val> VAR
+
+%token AAPOLTOK LLPOLTOK SYMTABTOK INTEGER FLOATING NEWLINE VAR
 
 %%
 
@@ -27,9 +32,10 @@ stmt: simple_stmt NEWLINE
 
 simple_stmt: pol
     | assignment
+    | directive
     ;
 
-assignment: VAR '=' expression
+assignment: VAR '=' expression  { printf("Here you insert %s to the hashtable\n", $1); }
     ;
 
 expression: aapol_expr
@@ -74,6 +80,9 @@ exp: '^' INTEGER
 sign: '+'
     | '-'
     ;
+
+directive: SYMTABTOK 
+    ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 
 %%
 
