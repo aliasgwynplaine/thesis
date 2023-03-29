@@ -1127,6 +1127,76 @@ void aapol_print(aapol_t * aapol) {
     printf("\n");
 }
 
+char * llpol_repr(llpol_t * llpol) {
+    char * repr = malloc(REPR_MAX_SZ * sizeof(*repr));
+
+}
+
+/**
+ * @brief return string representation of aapol
+ * as a char *
+ * @param aapol alternet array polynomial
+ * @return pointer to char that needs to be freed
+*/
+char * aapol_repr(aapol_t * aapol) {
+    int c;
+    u64 * e;
+    int p = REPR_MAX_SZ; // space left in repr
+    char buff[32];
+    char * repr = calloc(REPR_MAX_SZ, sizeof(*repr));
+    for (int i = 0; i < aapol->sz; i++) {
+        if (aapol->terms[i].coef >= 0) {
+            p = p - 3;
+            if (p >= 3) strncat(repr, "+ ", p);
+            else {
+                strncat(repr, "...", p);
+                return repr;
+            }
+        }
+
+        c = snprintf(buff, 32, "%.3f", aapol->terms[i].coef);
+        p = p - c;
+        if (p >= 3) strcat(repr, buff);
+        else {
+            strncat(repr, "...", p);
+            return repr;
+        }
+        if (aapol->terms[i].exp == 0) {
+            continue;
+        }
+        p = p - 4;
+        if (p >= 3) strncat(repr, "x^(", p);
+        else {
+            strncat(repr, "...", p);
+            return repr;
+        }
+
+        e = exp_unpack(aapol->terms[i].exp, aapol->nvar);
+
+        for (int j = 0; j < aapol->nvar - 1; j++) {
+            c = snprintf(buff, 32, "%ld, ", *(e+i));
+            p = p - c;
+            if (p >= 3) strcat(repr, buff);
+            else {
+                strncat(repr, "...", p);
+                return repr;
+            }
+        }
+
+        c = snprintf(buff, 32, "%ld)", *(e+aapol->nvar-1));
+        p = p - c;
+        if (p >= 3) strcat(repr, buff);
+        else {
+            strncat(repr, "...", p);
+            return repr;
+        }
+
+        FREE(e);
+    }
+
+    return repr;
+}
+
 /**
  * @brief traverse the ll and
  * free all the terms of polynomial

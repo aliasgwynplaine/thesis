@@ -6,6 +6,7 @@
 
 #define MAX_NUM_O_VARS 8
 #define MAX_LEN_O_MSG  32
+#define REPR_MAX_SZ    32
 
 #define PARENT(I) (I - 1)>>1
 #define LEFT(I)   (I<<1) + 1
@@ -95,6 +96,8 @@ aapol_t  * str2aapol(const char *, const char **, u8);
 void term_print(term_t * pol);
 void llpol_print(llpol_t * llpol);
 void aapol_print(aapol_t * aapol);
+char * llpol_repr(llpol_t * llpol);
+char * aapol_repr(aapol_t * aapol);
 
 /* define polynomial operations here */
 

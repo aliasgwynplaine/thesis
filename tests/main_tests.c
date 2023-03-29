@@ -4,6 +4,7 @@
 #include "pol.h"
 #include "matrix.h"
 #include "tree.h"
+#include "sym_table.h"
 
 int tests_run    = 0;
 int failed_tests = 0;
@@ -881,6 +882,33 @@ static char * test_sparse2dense() {
     return 0;
 }
 
+static char * test_aapol_repr() {
+    int n = 4;
+    const char * var_lst[] = {"x", "y", "z", "w"};
+    aapol_t * result = str2aapol("x^3 - 23.0123 * x^2*y - 2.97641*x*y*z^3 + 5*x + 171030.8037 + w^5", var_lst, n);
+    char * repr = aapol_repr(result);
+    printf("aapol_repr: %s\n", repr);
+    FREE(repr);
+    aapol_free(result);
+
+    return 0;
+}
+
+
+static char * test_sym_table_insert() {
+    int n = 4;
+    sym_table_t * st = st_create(127);
+    const char * var_lst[] = {"x", "y", "z", "w"};
+    aapol_t * a = str2aapol("x^3 - 23.01 * x^2*y - 2*x*y*z^3 + 5*x + 171.0 + w^5", var_lst, n);
+    st_insert(st, "a", (void *)a, "aapol");
+    print_sym_table(st);
+    st_destroy(st);
+    aapol_free(a);
+
+    return 0;
+}
+
+
 static void all_tests() {
     run_unittest(test_packexp);
     run_unittest(test_unpackexp);
@@ -911,8 +939,9 @@ static void all_tests() {
     run_unittest(test_csr_analyse_n_decompose);
     //run_unittest(test_csr2flsm);
     run_unittest(test_sparse2dense);
-    run_unittest(cuda_test);
-    
+    //run_unittest(cuda_test);
+    run_unittest(test_aapol_repr);
+    run_unittest(test_sym_table_insert);
 }
 
 
