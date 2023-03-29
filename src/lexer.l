@@ -4,20 +4,41 @@
 #include <stdlib.h>
 #include <string.h>
 #include "grammar.h"
+// {integer}       printf("INTEGER ");
+// {floating}      printf("FLOATING ");
+// aapol           printf("AAPOLTOK");
+// llpol           printf("LLPOLTOK");
+// [a-z][0-9]*     printf("VAR ");
+// \*              printf("TIMES ");
+// \+|\-           printf("SIGN ");
+// \^              printf("POW ");
+// \(              printf("OPAR ");
+// \)              printf("EPAR ");
+// \n              printf("\n");
+// [ \t]+          /* ignore */
 
 %}
 
 digit       [0-9]
-dnz         [1-9]
-upper_alpha [A-Z]+
-lower_alpha [a-z]
+integer     {digit}+
+floating    {digit}+\.{digit}+
+
+
 
 %%
 
-[0-9]+      yylval.int_val = atoi(yytext); return NUMBER;
-lower_alpha *(yylval.str_val) = yytext[0]; return ALPH;
-\n          /* ignore */;
-[ \t]+      /* ignore */;
-.           return (int) yytext[0];       
+{integer}       return INTEGER;
+{floating}      return FLOATING;
+aapol           printf("AAPOLTOK");
+llpol           printf("LLPOLTOK");
+[a-z][0-9]*     return VAR;
+\(              printf("OBRACE ");
+\)              printf("EBRACE ");
+\{              printf("OBRACKET ");
+\}              printf("EBRACKET ");
+\n              return NEWLINE;
+[ \t]+          /* ignore */;
+.               return (int) yytext[0];
+
 
 %%
