@@ -15,7 +15,7 @@ int yydebug = 1;
     char  * str_val;
 }
 
-%token INTEGER FLOATING TOKPOL NEWLINE VAR
+%token INTEGER FLOATING AAPOLTOK LLPOLTOK NEWLINE VAR
 
 %%
 
@@ -23,19 +23,37 @@ stmts: stmts stmt
     |
     ;
 
-stmt: pol NEWLINE { printf("pol detected!\n"); }
+stmt: simple_stmt NEWLINE
+
+simple_stmt: pol
+    | assignment
+    ;
+
+assignment: VAR '=' expression
+    ;
+
+expression: aapol_expr
+    | llpol_expr
+    | number
+    ;
+
+aapol_expr: AAPOLTOK '(' pol ')' { printf("aapol detected!\n"); }
+    ;
+
+llpol_expr: LLPOLTOK '(' pol ')' { printf("llpol detected!\n"); }
+    ;
 
 pol: pol term
     | term
     |
     ;
 
-term: coef '*' mvar
-    | coef
+term: number '*' mvar
+    | number
     | mvar
     ;
 
-coef: sign INTEGER
+number: sign INTEGER
     | sign FLOATING
     | INTEGER
     | FLOATING

@@ -22,18 +22,16 @@
 digit       [0-9]
 integer     {digit}+
 floating    {digit}+\.{digit}+
-
+variable    [a-zA-Z][a-zA-Z0-9]*
 
 
 %%
 
 {integer}       return INTEGER;
 {floating}      return FLOATING;
-aapol           printf("AAPOLTOK");
-llpol           printf("LLPOLTOK");
-[a-z][0-9]*     return VAR;
-\(              printf("OBRACE ");
-\)              printf("EBRACE ");
+aapol           return AAPOLTOK;
+llpol           return LLPOLTOK;
+{variable}      return VAR;
 \{              printf("OBRACKET ");
 \}              printf("EBRACKET ");
 \n              return NEWLINE;
