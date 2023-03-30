@@ -7,7 +7,7 @@ struct parser_ctx_t {
     u8 nvar;
     const char * pol_str_head;
     const char * pol_str;
-    const char ** var_lst; // ordered list of vars
+    char ** var_lst; // ordered list of vars
     int status;
 };
 
@@ -877,7 +877,7 @@ static int accept_sign(parser_ctx_t * ctx) {
 }
 
 
-static inline int char_varlist_lookup(char * c, const char **var_lst, int n) {
+static inline int char_varlist_lookup(char * c, char **var_lst, int n) {
     for (int i = 0; i < n; i++) {
         //printf("cmprng: %s with %s\n", c, var_lst[i]);
         if (strcmp(c, var_lst[i]) == 0) return i;
@@ -893,7 +893,7 @@ static COEFTYPE accept_number(parser_ctx_t * ctx) {
 
     if (*ctx->pol_str == '-' || *ctx->pol_str == '+' ) {
         ctx->status = SyntaxError;
-        fprintf(stderr, "Syntax error: '%s' at ", ctx->pol_str_head);
+        fprintf(stderr, "Syntax error: 1'%s' at ", ctx->pol_str_head);
         fprintf(stderr, "'%c' <-\n", *ctx->pol_str);
         return -1;
     }
@@ -957,12 +957,12 @@ static u64 accept_exp(parser_ctx_t * ctx) {
                 //printf("coef to 1 ... nxt: %c\n", *ctx->pol_str);
             }
             accept_space(ctx);
-        } else if (*ctx->pol_str == '+' || *ctx->pol_str == '-') {
+        } else if (*ctx->pol_str == '+' || *ctx->pol_str == '-' || *ctx->pol_str == 0) {
             continue;
         } else {
             //printf("curr: %c\n", *ctx->pol_str);
             // this part will change in the future
-            fprintf(stderr, "Syntax error: '%s' at ", ctx->pol_str_head);
+            fprintf(stderr, "Syntax error: 2'%s' at ", ctx->pol_str_head);
             fprintf(stderr, "'%c' <-\n", *ctx->pol_str);
             ctx->status = SyntaxError;
             FREE(exp);
@@ -972,7 +972,7 @@ static u64 accept_exp(parser_ctx_t * ctx) {
 
     accept_space(ctx);
     if (*ctx->pol_str != '+' && *ctx->pol_str != '-' && *ctx->pol_str != 0) {
-        fprintf(stderr, "Syntax error: '%s' at ", ctx->pol_str_head);
+        fprintf(stderr, "Syntax error: 3'%s' at ", ctx->pol_str_head);
         fprintf(stderr, "'%c' <-\n", *ctx->pol_str);
         ctx->status = SyntaxError;
         FREE(exp);
@@ -997,7 +997,7 @@ static term_t * accept_term(parser_ctx_t * ctx) {
     return term;
 }
 
-llpol_t * str2llpol(const char * llpol_str, const char ** var_lst, u8 nvar) {
+llpol_t * str2llpol(const char * llpol_str, char ** var_lst, u8 nvar) {
     llpol_t * llpol;
     term_t  * term;
     parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
@@ -1036,7 +1036,7 @@ llpol_t * str2llpol(const char * llpol_str, const char ** var_lst, u8 nvar) {
 }
 
 
-aapol_t  * str2aapol(const char * aapol_str, const char ** var_lst, u8 nvar) {
+aapol_t  * str2aapol(const char * aapol_str, char ** var_lst, u8 nvar) {
     aapol_t * aapol;
     term_t  * term;
     parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
@@ -1154,7 +1154,7 @@ char * aapol_repr(aapol_t * aapol) {
             }
         }
 
-        c = snprintf(buff, 32, "%.3f", aapol->terms[i].coef);
+        c = snprintf(buff, 32, "%.2f", aapol->terms[i].coef);
         p = p - c;
         if (p >= 3) strcat(repr, buff);
         else {
@@ -1174,7 +1174,7 @@ char * aapol_repr(aapol_t * aapol) {
         e = exp_unpack(aapol->terms[i].exp, aapol->nvar);
 
         for (int j = 0; j < aapol->nvar - 1; j++) {
-            c = snprintf(buff, 32, "%ld, ", *(e+i));
+            c = snprintf(buff, 32, "%ld,", *(e+j));
             p = p - c;
             if (p >= 3) strcat(repr, buff);
             else {

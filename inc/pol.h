@@ -6,7 +6,7 @@
 
 #define MAX_NUM_O_VARS 8
 #define MAX_LEN_O_MSG  32
-#define REPR_MAX_SZ    32
+#define REPR_MAX_SZ    64
 
 #define PARENT(I) (I - 1)>>1
 #define LEFT(I)   (I<<1) + 1
@@ -87,8 +87,8 @@ term_t * term_multiply(term_t * p, term_t * q); // todo
 
 /* reading */
 
-llpol_t  * str2llpol(const char *, const char **, u8);
-aapol_t  * str2aapol(const char *, const char **, u8);
+llpol_t  * str2llpol(const char *, char **, u8);
+aapol_t  * str2aapol(const char *, char **, u8);
 
 
 /* pretty printing */

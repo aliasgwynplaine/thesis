@@ -21,23 +21,27 @@
 
 digit       [0-9]
 integer     {digit}+
-floating    {digit}+\.{digit}+
-variable    [a-zA-Z][a-zA-Z0-9]*
+floating    {digit}+\.{digit}{1,6}
+variable    [a-zA-Z][a-zA-Z0-9_]*
+string      \"(\\.|[^\"])*\"
 
 
 %%
 
-aapol           return AAPOLTOK;
-llpol           return LLPOLTOK;
-symtab          return SYMTABTOK;
-{integer}       yylval.int_val = atoi(yytext); return INTEGER;
-{floating}      yylval.float_val = atof(yytext); return FLOATING;
-{variable}      yylval.str_val = strdup(yytext); return VAR;
-\{              printf("OBRACKET ");
-\}              printf("EBRACKET ");
-\n              return NEWLINE;
-[ \t]+          /* ignore */;
-.               return (int) yytext[0];
+aapol               return AAPOLTOK;
+llpol               return LLPOLTOK;
+symtab              return SYMTABTOK;
+set_vars            return SETVARSTOK;
+quit|q|bye          return QUIT;
+{integer}           yylval.int_val = atoi(yytext); return INTEGER;
+{floating}          yylval.float_val = atof(yytext); return FLOATING;
+{variable}          yylval.str_val = strdup(yytext); return VAR;
+{string}            yylval.str_val = strdup(yytext); return STRING;
+\n                  return NEWLINE;
+[ \t]+              /* ignore */;
+\/\/.*              /* ignore */;
+\/\*(.*\n)*.*\*\/   /* ignore */;
+.                   return (int) yytext[0];
 
 
 %%

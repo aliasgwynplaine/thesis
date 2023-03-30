@@ -23,8 +23,8 @@ PROGRAM = main
 tests.exe: outils.o tree.o matrix.o pol.o sym_table.o
 	$(CC) $(MAINTEST) outils.o tree.o matrix.o pol.o sym_table.o -o $@ $(INC_FLAGS) -g $(LDFLAGS)
 
-parser.exe: $(SRC_DIR)/main_parser.c grammar.o lexer.o parser.o
-	$(CC) -g -Wall grammar.o lexer.o main.o -lfl -o parser.exe $(INC_FLAGS)
+parser.exe: $(SRC_DIR)/main_parser.c grammar.o lexer.o parser.o sym_table.o pol.o outils.o
+	$(CC) -g -Wall grammar.o lexer.o parser.o sym_table.o pol.o outils.o -lm -lfl -o parser.exe $(INC_FLAGS)
 
 sym_table.o: $(SRC_DIR)/sym_table.c
 	$(CC) -c $(SRC_DIR)/sym_table.c -o $@ $(INC_FLAGS)
@@ -51,7 +51,7 @@ lexer.o: $(SRC_DIR)/lexer.c
 	$(CC) -c $(SRC_DIR)/lexer.c -o lexer.o -lfl $(INC_FLAGS)
 
 parser.o: $(SRC_DIR)/main_parser.c
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/main_parser.c -o main.o $(INC_FLAGS)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/main_parser.c -o parser.o $(INC_FLAGS)
 
 src/grammar.c: $(SRC_DIR)/grammar.y
 	bison -d -v $(SRC_DIR)/grammar.y -o grammar.c 

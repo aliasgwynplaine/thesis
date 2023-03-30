@@ -107,7 +107,7 @@ int print_sym_table(sym_table_t * st) {
     int enough = 10;
     char * str;
     char buff[enough];
-    printf("\n| %5s | %10s | %6s | %32s |\n", "hash", "name", "type", "repr");
+    printf("\n| %5s | %10s | %6s | %64s |\n", "hash", "name", "type", "repr");
 
     for (int i = 0; i < st->sz; i++) {
         if (st->e[i].h != -1) {
@@ -117,9 +117,14 @@ int print_sym_table(sym_table_t * st) {
                 snprintf(buff, enough, "%d",  *((int*)st->e[i].v));
                 str = strdup(buff);
             }
-            printf("| %5ld | %10s | %6s | %32s |\n", st->e[i].h, st->e[i].n, st->e[i].t, str);
+            if (strcmp(st->e[i].t, "float") == 0) {
+                snprintf(buff, enough, "%f",  *((float*)st->e[i].v));
+                str = strdup(buff);
+            }
+            printf("| %5ld | %10s | %6s | %64s |\n", st->e[i].h, st->e[i].n, st->e[i].t, str);
             FREE(str);
         }
     }
 
+    printf("\n");
 }
