@@ -112,7 +112,7 @@ int print_sym_table(sym_table_t * st) {
     for (int i = 0; i < st->sz; i++) {
         if (st->e[i].h != -1) {
             if (strcmp(st->e[i].t, "aapol") == 0) str = aapol_repr(st->e[i].v);
-            if (strcmp(st->e[i].t, "llpol") == 0) str = strdup("NOT IMPLEMENTED!");
+            if (strcmp(st->e[i].t, "llpol") == 0) str = strdup("NOT IMPLEMENTED... yet!");
             if (strcmp(st->e[i].t, "int") == 0) {
                 snprintf(buff, enough, "%d",  *((int*)st->e[i].v));
                 str = strdup(buff);

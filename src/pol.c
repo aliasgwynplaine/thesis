@@ -957,8 +957,10 @@ static u64 accept_exp(parser_ctx_t * ctx) {
                 //printf("coef to 1 ... nxt: %c\n", *ctx->pol_str);
             }
             accept_space(ctx);
-        } else if (*ctx->pol_str == '+' || *ctx->pol_str == '-' || *ctx->pol_str == 0) {
+        } else if (*ctx->pol_str == '+' || *ctx->pol_str == '-') {
             continue;
+        } else if (*ctx->pol_str == 0) {
+            return e;
         } else {
             //printf("curr: %c\n", *ctx->pol_str);
             // this part will change in the future
