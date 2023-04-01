@@ -925,6 +925,9 @@ static u64 accept_exp(parser_ctx_t * ctx) {
     char var[2];
     u64 * exp = calloc(ctx->nvar, sizeof(u64));
     CHECKPTR(exp);
+
+    if (ctx->pol_str && ctx->pol_str[0] == 0) {FREE(exp); return e;}
+
     accept_space(ctx);
 
     do {
@@ -1003,7 +1006,6 @@ llpol_t * str2llpol(const char * llpol_str, char ** var_lst, u8 nvar) {
     llpol_t * llpol;
     term_t  * term;
     parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
-
     llpol        = llpol_create(nvar);
     ctx->nvar    = nvar;
     ctx->pol_str_head = llpol_str;
@@ -1039,6 +1041,8 @@ llpol_t * str2llpol(const char * llpol_str, char ** var_lst, u8 nvar) {
 
 
 aapol_t  * str2aapol(const char * aapol_str, char ** var_lst, u8 nvar) {
+    if (aapol_str && aapol_str[0] == 0) {printf("aapol_str is empty"); return NULL;}
+    
     aapol_t * aapol;
     term_t  * term;
     parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
@@ -1212,7 +1216,7 @@ void lpol_free(lpol_t * pol) {
 }
 
 void llpol_free(llpol_t * llpol) {
-    lpol_free(llpol->root);
+    if (llpol->root != NULL) lpol_free(llpol->root);
     FREE(llpol);
 }
 

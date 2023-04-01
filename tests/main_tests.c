@@ -122,6 +122,15 @@ static char * test_aapol_addterm_different_minor() {
 }
 
 
+static char * test_llpol_free_empty() {
+    int n = 4;
+    llpol_t * test = llpol_create(n);
+    llpol_free(test);
+
+    return 0;
+}
+
+
 static char * test_llpol_addterm_equals() {
     u8 n = 4;
     llpol_t * llpol = llpol_create(n);
@@ -627,7 +636,7 @@ static char * test_llpol_list_sort() {
 
 static char * test_str2llpol() {
     int n = 4;
-    const char * var_lst[] = {"x", "y", "z", "w"};
+    char * var_lst[] = {"x", "y", "z", "w"};
     llpol_t * result = str2llpol("x^3 - 23 * x^2*y - 2 *x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
     llpol_t * expected_result = llpol_create(n);
     llpol_addterm(expected_result, 1, 844424930131968);
@@ -647,7 +656,7 @@ static char * test_str2llpol() {
 
 static char * test_str2aapol() {
     int n = 4;
-    const char * var_lst[] = {"x", "y", "z", "w"};
+    char * var_lst[] = {"x", "y", "z", "w"};
     aapol_t * result = str2aapol("x^3 - 23 * x^2*y - 2*x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
     aapol_t * expected_result = aapol_create(n);
     aapol_addterm(expected_result, 1, 844424930131968);
@@ -730,7 +739,7 @@ static char * test_str2aapol() {
 
 static char * test_str2aapol_name_error() {
     int n = 4;
-    const char * var_lst[] = {"x", "y", "z", "w"};
+    char * var_lst[] = {"x", "y", "z", "w"};
     aapol_t * result = str2aapol("x^3 - 23 * x^2*y - 2*x*y*z^3*a + 5*x + 10 + w^5", var_lst, n);
     
     assert(result == NULL, "str2aapol is not parsing well");
@@ -741,7 +750,7 @@ static char * test_str2aapol_name_error() {
 
 static char * test_str2aapol_syntax_error() {
     int n = 4;
-    const char * var_lst[] = {"x", "y", "z", "w"};
+    char * var_lst[] = {"x", "y", "z", "w"};
     aapol_t * result = str2aapol("x^3 - 23 *, x^2*y - 2*x1*y*z^3* + 5*x |+ 10 + _w^5", var_lst, n);
     
     assert(result == NULL, "str2aapol is not parsing well");
@@ -884,7 +893,7 @@ static char * test_sparse2dense() {
 
 static char * test_aapol_repr() {
     int n = 4;
-    const char * var_lst[] = {"x", "y", "z", "w"};
+    char * var_lst[] = {"x", "y", "z", "w"};
     aapol_t * result = str2aapol("x^3 - 23.0123 * x^2*y - 2.97641*x*y*z^3 + 5*x + 171030.8037 + w^5", var_lst, n);
     char * repr = aapol_repr(result);
     printf("aapol_repr: %s\n", repr);
@@ -898,12 +907,19 @@ static char * test_aapol_repr() {
 static char * test_sym_table_insert() {
     int n = 4;
     sym_table_t * st = st_create(127);
-    const char * var_lst[] = {"x", "y", "z", "w"};
+    char * var_lst[] = {"x", "y", "z", "w"};
     aapol_t * a = str2aapol("x^3 - 23.01 * x^2*y - 2*x*y*z^3 + 5*x + 171.0 + w^5", var_lst, n);
+    llpol_t * b = str2llpol("x^3 - 23.01 * x^2*y - 2*x*y*z^3 + 5*x + 171.0 + w^5", var_lst, n);
+    float * c = malloc(sizeof(*b));
+    *c = 4.0;
     st_insert(st, "a", (void *)a, "aapol");
+    st_insert(st, "b", (void *)b, "llpol");
+    st_insert(st, "c", (void *)c, "number");
     print_sym_table(st);
     st_destroy(st);
     aapol_free(a);
+    llpol_free(b);
+    FREE(c);
 
     return 0;
 }
@@ -915,6 +931,7 @@ static void all_tests() {
     run_unittest(test_packexp_with_zero);
     run_unittest(test_aapol_addterm_equals);
     run_unittest(test_aapol_addterm_different_minor);
+    run_unittest(test_llpol_free_empty);
     run_unittest(test_llpol_addterm_equals);
     run_unittest(test_llpol_addterm_different_major);
     run_unittest(test_llpol_addterm_different_minor);

@@ -2,7 +2,6 @@
 #define _POL_H
 
 #include "outils.h"
-#include "debug.h"
 
 #define MAX_NUM_O_VARS 8
 #define MAX_LEN_O_MSG  32

@@ -15,20 +15,21 @@ sym_table_t * st_create(u64 size) {
 
 
 void st_destroy(sym_table_t * st) {
-    for (int i = 0; i < 0; i++) {
+    int c = 0;
+    for (int i = 0; i < st->sz, c != st->c; i++) {
         if (st->e[i].h != -1) {
-            // st->e[i].freefux(st->e->v);
-            if (strcmp("aapol", st->e[i].t) == 0) aapol_free(st->e[i].v);
+            if (strcmp("aapol",st->e[i].t) == 0) aapol_free(st->e[i].v);
             if (strcmp("llpol", st->e[i].t) == 0) llpol_free(st->e[i].v);
+            if (strcmp("number", st->e[i].t) == 0) FREE(st->e[i].v);
             FREE(st->e[i].t);
             FREE(st->e[i].n);
+            c++;
         }
     }
 
     FREE(st->e);
     FREE(st);
 }
-
 
 
 /** 
@@ -43,7 +44,15 @@ void * st_insert(sym_table_t * st, char * n, void * v, char * t/*, freefux_t * f
     u64 h = compute_hash(n, st->sz);
     
     while (st->e[h].h != -1) {
-        if (strcmp(n, st->e[h].n) == 0) break;
+        if (strcmp(n, st->e[h].n) == 0) {
+            if (strcmp("aapol",st->e[h].t) == 0) aapol_free(st->e[h].v);
+            if (strcmp("llpol", st->e[h].t) == 0) llpol_free(st->e[h].v);
+            if (strcmp("number", st->e[h].t) == 0) FREE(st->e[h].v);
+            FREE(st->e[h].t);
+            FREE(st->e[h].n);
+            st->c--;
+            break;
+        }
         else h = (h + 1) % st->sz;
     }
 
@@ -96,7 +105,7 @@ void * st_delete(sym_table_t * st, const char * n) {
 u64 compute_hash(const char * s, u64 table_sz) { 
     u64 h = 0;
 
-    for (/* */; *s != '\0'; s++) {
+    for (/* empty */; *s != '\0'; s++) {
         h = (SYM_TABLE_P * h + *s) % table_sz;
     }
 
@@ -104,7 +113,7 @@ u64 compute_hash(const char * s, u64 table_sz) {
 }
 
 int print_sym_table(sym_table_t * st) {
-    int enough = 10;
+    int enough = 20;
     char * str;
     char buff[enough];
     printf("\n| %5s | %10s | %6s | %64s |\n", "hash", "name", "type", "repr");
@@ -113,12 +122,8 @@ int print_sym_table(sym_table_t * st) {
         if (st->e[i].h != -1) {
             if (strcmp(st->e[i].t, "aapol") == 0) str = aapol_repr(st->e[i].v);
             if (strcmp(st->e[i].t, "llpol") == 0) str = strdup("NOT IMPLEMENTED... yet!");
-            if (strcmp(st->e[i].t, "int") == 0) {
-                snprintf(buff, enough, "%d",  *((int*)st->e[i].v));
-                str = strdup(buff);
-            }
-            if (strcmp(st->e[i].t, "float") == 0) {
-                snprintf(buff, enough, "%f",  *((float*)st->e[i].v));
+            if (strcmp(st->e[i].t, "number") == 0) {
+                snprintf(buff, enough, "%.2f",  *((float*)st->e[i].v));
                 str = strdup(buff);
             }
             printf("| %5ld | %10s | %6s | %64s |\n", st->e[i].h, st->e[i].n, st->e[i].t, str);

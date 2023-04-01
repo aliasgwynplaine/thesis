@@ -1,8 +1,8 @@
 %{
 
-#include <stdio.h>
-#include <stdlib.h>
 #include "sym_table.h"
+#include "pol_parser.h"
+#include "pol.h"
 
 #ifdef _DEBUG
 int yydebug = 1;
@@ -11,17 +11,19 @@ int yydebug = 1;
 extern sym_table_t * st;
 extern int nvars;
 extern char ** var_lst;
+extern u64 * var_cntr;
+extern llpol_t * aux_pol;
+// %token <str_val>   STRING
 
 %}
+
+%code requires { #include "pol_parser.h" }
 
 %union {
     float         float_val;
     int           int_val;
     char        * str_val;
-    struct expr_entry_t {
-        char * t;
-        void * v;
-    } expr_val;
+    ee_t        * expr_val;
 }
 
 
@@ -29,94 +31,121 @@ extern char ** var_lst;
 %token <float_val> FLOATING
 %token <int_val>   INTEGER
 %token <str_val>   VAR
-%token <str_val>   STRING
 %type <expr_val>   expression
-%type <expr_val>   aapol_expr;
-%type <expr_val>   llpol_expr;
-%type <expr_val>   number;
-%type <int_val>    sign;
+%type <expr_val>   aapol_expr
+%type <expr_val>   llpol_expr
+%type <expr_val>   pol_expr
+%type <float_val>  number
+%type <int_val>    sign
+%type <int_val>    exp
+
+%left '+' '-'
+%right '*' '/'
+%right '='
 
 %%
 
-stmts: stmts stmt
-    |
+stmts: stmts stmt NEWLINE { printf("prelude> "); }
+    | stmts NEWLINE
+    | /* empty */
+    | error NEWLINE { yyerror("Error!"); printf("prelude> "); yyerrok;  }
     ;
 
-stmt: simple_stmt NEWLINE { printf("prelude> "); }
-
-simple_stmt: VAR { 
+stmt: VAR { 
         ste_t * entry = st_probe(st, $1);
 
         if (!entry) printf("undefined variable: %s\n", $1);
         else {
             if (strcmp(entry->t, "aapol") == 0) aapol_print((aapol_t *)entry->v);
             if (strcmp(entry->t, "llpol") == 0) llpol_print((llpol_t *)entry->v);
-            if (strcmp(entry->t, "int") == 0) printf("%d\n", *(int *)entry->v);
-            if (strcmp(entry->t, "float") == 0) printf("%f\n", *(float *)entry->v);
+            if (strcmp(entry->t, "number") == 0) printf("%f\n", *(float *)entry->v);
         } 
+        FREE($1);
     }
     | assignment
     | directive
     ;
 
 assignment: VAR '=' expression  { 
-        /*printf("Here you insert '%s' to the symboltable\n", $1);
-        printf("type: %s", $3.t);
-
-        if (strcmp($3.t, "aapol") == 0)
-            aapol_print((aapol_t *)$3.v);
-
-        if (strcmp($3.t, "llpol") == 0)
-            llpol_print((llpol_t *)$3.v);*/
-        
-        st_insert(st, $1, $3.v, $3.t);
-    }
-    ;
-
-expression: aapol_expr 
-    | llpol_expr    
-    | number
-    ;
-
-aapol_expr: AAPOLTOK '(' STRING ')' { 
-        int len = strlen($3);
-        $$.t = strdup("aapol");
-        char * aapol_str = malloc((len - 2) * sizeof(*aapol_str));
-        CHECKPTR(aapol_str);
-        memcpy(aapol_str, $3 + 1, len - 2);
-        aapol_str[len - 1] = 0;
-        aapol_t * a = str2aapol(aapol_str, var_lst, nvars);
-        if (!a) { 
-            printf("wrong!!\n"); exit(1);
-            //todo : handle
-        }
-        $$.v = (void *) a;
-        FREE(aapol_str);
+        printf("Here you insert '%s' to the symbol table\n", $1);
+        if ($3->t) st_insert(st, $1, $3->v, $3->t);
         FREE($3);
     }
     ;
 
-llpol_expr: LLPOLTOK '(' STRING ')' {
-        int len = strlen($3);
-        $$.t = strdup("llpol");
-        char * llpol_str = malloc((len - 2) * sizeof(*llpol_str));
-        CHECKPTR(llpol_str);
-        memcpy(llpol_str, $3 + 1, len - 2);
-        llpol_str[len - 1] = 0;
-        llpol_t * a = str2llpol(llpol_str, var_lst, nvars);
-        if (!a) { 
-            printf("wrong!!\n"); exit(1);
-            //todo : handle
+expression: expression '+' expression
+    | expression '-' expression
+    | expression '*' expression
+    | expression '/' expression 
+    | pol_expr
+    | number { 
+        //printf("num: %f\n", $1);
+        // yylex_destroy(); return 0;
+        $$ = malloc(sizeof(*$$)); CHECKPTR($$);
+        $$->t = strdup("number");
+        $$->v = malloc(sizeof(float)); CHECKPTR($$->v);
+        *(float *)$$->v = $1;
         }
-        $$.v = (void *) a;
-        FREE(llpol_str);
+    | VAR { 
+        ste_t * entry = st_probe(st, $1);
+        if (!entry) {
+            printf("undefined variable: %s\n", $1); $$->t = NULL;
+        } else {
+            $$ = malloc(sizeof(*$$));
+            $$->t = entry->t;
+            $$->v = entry->v;
+        }
+        FREE($1);
+        }
+    ;
+
+pol_expr: aapol_expr | llpol_expr;
+
+aapol_expr: AAPOLTOK '(' pol ')' { 
+    printf("NOT IMPLEMENTED. Using llpol.\n"); 
+    $$ = malloc(sizeof(*$$)); 
+    $$->t = strdup("llpol"); 
+    $$->v = (void *)aux_pol; 
+    aux_pol = llpol_create(nvars);
     }
     ;
 
-number: sign INTEGER { $$.t = strdup("int"); $$.v = malloc(sizeof(int)); *(int *)$$.v = $1 * $2; }
-    | sign FLOATING  { $$.t = strdup("float"); $$.v = malloc(sizeof(float)); *(float *)$$.v = $1 * $2; }
-    | INTEGER        { $$.t = strdup("int"); $$.v = malloc(sizeof(int)); *(int *)$$.v = $1; }
-    | FLOATING       { $$.t = strdup("float"); $$.v = malloc(sizeof(float)); *(float *)$$.v = $1; }
+llpol_expr: LLPOLTOK '(' pol ')' { 
+    printf("llpol detected!\n"); 
+    $$ = malloc(sizeof(*$$)); 
+    $$->t = strdup("llpol"); 
+    $$->v = (void *)aux_pol; 
+    aux_pol = llpol_create(nvars);
+    }
+    ;
+
+pol: pol term
+    | term
+    | /* empty */
+    ;
+
+term: number '*' mvar { ee_generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
+    | mvar '*' number { ee_generate_term(aux_pol, $3, var_cntr, var_lst, nvars); }
+    | sign mvar       { ee_generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
+    | mvar            { ee_generate_term(aux_pol, 1, var_cntr, var_lst, nvars);  }
+    | number          { llpol_addterm(aux_pol, 1, 0);}
+    ;
+
+number: sign INTEGER { $$ = (float) ($1 * $2); }
+    | sign FLOATING  { $$ = $1 * $2; }
+    | INTEGER        { $$ = (float) $1; }
+    | FLOATING       { $$ = $1; }
+    ;
+
+mvar: mvar '*' varx
+    | varx
+    ;
+
+varx: VAR     { int idx = str_varlist_lookup($1, var_lst, nvars); var_cntr[idx]++; FREE($1); }
+    | VAR exp { int idx = str_varlist_lookup($1, var_lst, nvars); var_cntr[idx]+= $2; FREE($1); }
+    ;
+
+exp: '^' INTEGER { $$ = $2; }
     ;
 
 sign: '+' { $$ =  1; }
@@ -124,8 +153,8 @@ sign: '+' { $$ =  1; }
     ;
 
 directive: SYMTABTOK { print_sym_table(st); }
-    | SETVARSTOK '{' vars '}'
-    | QUIT { printf("bye!\n"); exit(0); }
+    | SETVARSTOK '{' vars '}' { /* update nvars and var_lst */ }
+    | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 
 vars: vars ',' VAR

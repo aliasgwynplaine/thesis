@@ -23,38 +23,41 @@ PROGRAM = main
 tests.exe: outils.o tree.o matrix.o pol.o sym_table.o
 	$(CC) $(MAINTEST) outils.o tree.o matrix.o pol.o sym_table.o -o $@ $(INC_FLAGS) -g $(LDFLAGS)
 
-parser.exe: $(SRC_DIR)/main_parser.c grammar.o lexer.o parser.o sym_table.o pol.o outils.o
-	$(CC) -g -Wall grammar.o lexer.o parser.o sym_table.o pol.o outils.o -lm -lfl -o parser.exe $(INC_FLAGS)
+parser.exe: grammar.o lexer.o main_parser.o pol_parser.o sym_table.o pol.o outils.o
+	$(CC) -g -Wall grammar.o lexer.o main_parser.o pol_parser.o sym_table.o pol.o outils.o -lm -lfl -o parser.exe $(INC_FLAGS)
 
-sym_table.o: $(SRC_DIR)/sym_table.c
-	$(CC) -c $(SRC_DIR)/sym_table.c -o $@ $(INC_FLAGS)
+pol_parser.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
 
-outils.o: $(SRC_DIR)/outils.c
-	$(CC) -c $(SRC_DIR)/outils.c -o $@ $(INC_FLAGS) 
+sym_table.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
 
-tree.o: $(SRC_DIR)/tree.c
-	$(CC) -c $(SRC_DIR)/tree.c -o $@ $(INC_FLAGS)
+outils.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
 
-matrix.o: $(SRC_DIR)/matrix.c
-	$(CC) -c $(SRC_DIR)/matrix.c -o $@ $(INC_FLAGS)
+tree.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
 
-pol.o: $(SRC_DIR)/pol.c
-	$(CC) -c $(SRC_DIR)/pol.c -o $@ $(INC_FLAGS) -lm
+matrix.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
+
+pol.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -lm -g
 
 cuda_test.o:
-	$(NVCC) -c $(INC_DIRS)/cuda_test.cu -o cuda_test.o
+	$(NVCC) -c $(SRC_DIR)/$(@:.o=.cu) -o $@
 
-grammar.o: $(SRC_DIR)/grammar.c
-	$(CC) -c $(SRC_DIR)/grammar.c -o $@ $(INC_FLAGS)
+grammar.o: src/grammar.c
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g 
 
-lexer.o: $(SRC_DIR)/lexer.c 
-	$(CC) -c $(SRC_DIR)/lexer.c -o lexer.o -lfl $(INC_FLAGS)
+lexer.o: src/lexer.c
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ -lfl $(INC_FLAGS) -g
 
-parser.o: $(SRC_DIR)/main_parser.c
-	$(CC) $(CFLAGS) -c $(SRC_DIR)/main_parser.c -o parser.o $(INC_FLAGS)
+main_parser.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
 
 src/grammar.c: $(SRC_DIR)/grammar.y
-	bison -d -v $(SRC_DIR)/grammar.y -o grammar.c 
+	bison -d -v $(SRC_DIR)/grammar.y -o grammar.c --verbose --debug
 	mv grammar.c $(SRC_DIR)/grammar.c
 	mv grammar.h inc/grammar.h
 
@@ -69,3 +72,6 @@ clean :
 .PHONY: clean_parser
 clean_parser:
 	rm -f parser.exe lexer.o grammar.o src/grammar.c src/grammar.output inc/grammar.h lex.yy.c src/lexer.c
+
+.PHONY: clean_all
+clean_all: clean_parser clean
