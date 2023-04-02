@@ -805,6 +805,10 @@ llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
 }
 
 
+/// @brief make a copy of an llpol
+/// @param dst pointer to the dest llpol.
+/// @param src pointer to the src llpol.
+/// @return pointer to the dest llpol
 llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
     lpol_t ** stack = malloc(sizeof(lpol_t *) * src->sz);
     CHECKPTR(stack);

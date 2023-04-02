@@ -40,7 +40,7 @@ extern llpol_t * aux_pol;
 %type <int_val>    exp
 
 %left '+' '-'
-%right '*' '/'
+%left '*' '/'
 %right '='
 
 %%
@@ -51,26 +51,13 @@ stmts: stmts stmt NEWLINE { printf("prelude> "); }
     | error NEWLINE { yyerror("Error!"); printf("prelude> "); yyerrok;  }
     ;
 
-stmt: VAR { 
-        ste_t * entry = st_probe(st, $1);
-
-        if (!entry) printf("undefined variable: %s\n", $1);
-        else {
-            if (strcmp(entry->t, "aapol") == 0) aapol_print((aapol_t *)entry->v);
-            if (strcmp(entry->t, "llpol") == 0) llpol_print((llpol_t *)entry->v);
-            if (strcmp(entry->t, "number") == 0) printf("%f\n", *(float *)entry->v);
-        } 
-        FREE($1);
-    }
+stmt: VAR { print_var(st, $1); FREE($1); }
     | assignment
     | directive
     ;
 
-assignment: VAR '=' expression  { 
-        printf("Here you insert '%s' to the symbol table\n", $1);
-        if ($3->t) st_insert(st, $1, $3->v, $3->t);
-        FREE($3);
-    }
+assignment: VAR '=' expression
+        { if ($3) { st_insert(st, $1, $3->v, $3->t); FREE($3);} }
     ;
 
 expression: expression '+' expression
@@ -78,44 +65,25 @@ expression: expression '+' expression
     | expression '*' expression
     | expression '/' expression 
     | pol_expr
-    | number { 
-        //printf("num: %f\n", $1);
-        // yylex_destroy(); return 0;
-        $$ = malloc(sizeof(*$$)); CHECKPTR($$);
-        $$->t = strdup("number");
-        $$->v = malloc(sizeof(float)); CHECKPTR($$->v);
-        *(float *)$$->v = $1;
-        }
-    | VAR { 
-        ste_t * entry = st_probe(st, $1);
-        if (!entry) {
-            printf("undefined variable: %s\n", $1); $$->t = NULL;
-        } else {
-            $$ = malloc(sizeof(*$$));
-            $$->t = entry->t;
-            $$->v = entry->v;
-        }
-        FREE($1);
-        }
+    | number { $$ = resolve_number_as_expression(st, $1); }
+    | VAR { $$ = resolve_var_as_expression(st, $1); FREE($1); }
     ;
 
 pol_expr: aapol_expr | llpol_expr;
 
-aapol_expr: AAPOLTOK '(' pol ')' { 
-    printf("NOT IMPLEMENTED. Using llpol.\n"); 
-    $$ = malloc(sizeof(*$$)); 
-    $$->t = strdup("llpol"); 
-    $$->v = (void *)aux_pol; 
-    aux_pol = llpol_create(nvars);
+aapol_expr: AAPOLTOK '(' pol ')' {
+        $$ = malloc(sizeof(*$$)); 
+        $$->t = strdup("llpol"); 
+        $$->v = (void *)aux_pol; 
+        aux_pol = llpol_create(nvars);
     }
     ;
 
 llpol_expr: LLPOLTOK '(' pol ')' { 
-    printf("llpol detected!\n"); 
-    $$ = malloc(sizeof(*$$)); 
-    $$->t = strdup("llpol"); 
-    $$->v = (void *)aux_pol; 
-    aux_pol = llpol_create(nvars);
+        $$ = malloc(sizeof(*$$)); 
+        $$->t = strdup("llpol"); 
+        $$->v = (void *)aux_pol; 
+        aux_pol = llpol_create(nvars);
     }
     ;
 
@@ -124,14 +92,18 @@ pol: pol term
     | /* empty */
     ;
 
-term: number '*' mvar { ee_generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
-    | mvar '*' number { ee_generate_term(aux_pol, $3, var_cntr, var_lst, nvars); }
-    | sign mvar       { ee_generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
-    | mvar            { ee_generate_term(aux_pol, 1, var_cntr, var_lst, nvars);  }
-    | number          { llpol_addterm(aux_pol, 1, 0);}
+term: number '*' mvar { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
+    | mvar '*' number { generate_term(aux_pol, $3, var_cntr, var_lst, nvars); }
+    | sign mvar       { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
+    | mvar            { generate_term(aux_pol, 1, var_cntr, var_lst, nvars);  }
+    | number          { llpol_addterm(aux_pol, $1, 0);}
     ;
 
-number: sign INTEGER { $$ = (float) ($1 * $2); }
+number: number '+' number { $$ = $1 + $3; }
+    | number '-' number { $$ = $1 - $3; }
+    | number '*' number { $$ = $1 * $3; }
+    | number '/' number {$$ = $1 / $3; } 
+    | sign INTEGER { $$ = (float) ($1 * $2); }
     | sign FLOATING  { $$ = $1 * $2; }
     | INTEGER        { $$ = (float) $1; }
     | FLOATING       { $$ = $1; }
@@ -141,8 +113,8 @@ mvar: mvar '*' varx
     | varx
     ;
 
-varx: VAR     { int idx = str_varlist_lookup($1, var_lst, nvars); var_cntr[idx]++; FREE($1); }
-    | VAR exp { int idx = str_varlist_lookup($1, var_lst, nvars); var_cntr[idx]+= $2; FREE($1); }
+varx: VAR     { var_cntr[str_varlist_lookup($1, var_lst, nvars)]++; FREE($1); }
+    | VAR exp { var_cntr[str_varlist_lookup($1, var_lst, nvars)]+= $2; FREE($1); }
     ;
 
 exp: '^' INTEGER { $$ = $2; }
