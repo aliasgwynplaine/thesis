@@ -9,7 +9,7 @@ sym_table_t * st;
 int nvars;
 char ** var_lst;
 u64 * var_cntr;
-llpol_t * aux_pol;
+aapol_t * aux_pol;
 
 int main(int argc, char * argv[]) {
     nvars = 3;
@@ -21,7 +21,7 @@ int main(int argc, char * argv[]) {
     var_lst[0] = "x"; //var_lst[0] = strdup("x");
     var_lst[1] = "y";
     var_lst[2] = "z";
-    aux_pol = llpol_create(3);
+    aux_pol = aapol_create(3);
     printf("auxpol before: %p\n", aux_pol);
     printf("setvars = {x,y,z}\n");
     printf("prelude> ");
@@ -30,7 +30,7 @@ int main(int argc, char * argv[]) {
     printf(":P\n");
     //print_sym_table(st);
     st_destroy(st);
-    llpol_free(aux_pol);
+    aapol_free(aux_pol);
     FREE(var_cntr);
     FREE(var_lst);
 
