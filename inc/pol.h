@@ -106,7 +106,7 @@ llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha); 
 void       llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha);// todo
 llpol_t  * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha);
 llpol_t  * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha);
-llpol_t  * llpol_multiply(llpol_t * a, llpol_t b); // todo 
+llpol_t  * llpol_multiply(llpol_t * a, llpol_t * b); // todo 
 int        llpol_monomial_cmp(llpol_t * a, llpol_t * b); 
 int        llpol_hard_cmp(llpol_t * a, llpol_t * b);
 llpol_t  * llpol_cpy(llpol_t * dst, llpol_t * src);

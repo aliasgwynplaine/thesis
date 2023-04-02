@@ -804,6 +804,9 @@ llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
     return a;
 }
 
+llpol_t * llpol_multiply(llpol_t *a, llpol_t *b) {
+    return NULL;
+}
 
 /// @brief make a copy of an llpol
 /// @param dst pointer to the dest llpol.
@@ -1287,7 +1290,9 @@ int exp_cmp(u64 a, u64 b, u8 nvar, enum MONOMIAL_ORDER mo) {
 
 
 int exp_lex_cmp(u64 a, u64 b, u8 nvar) {
-    return a - b;
+    if (a == b) return 0;
+    else if (a < b) return -1;
+    else if (a > b) return 1;
 }
 
 
