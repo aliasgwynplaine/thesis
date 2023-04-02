@@ -145,10 +145,10 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
             }
             
             if (strcmp(op, "*") == 0)
-                ee->v = aapol_coef_multiply(e2->v, *(float *)e1->v);
+                ee->v = aapol_coef_multiply(e1->v, *(float *)e2->v);
 
             if (strcmp(op, "/") == 0) {
-                ee->v = aapol_coef_multiply(e2->v, 1 / *(float *)e1->v);
+                ee->v = aapol_coef_multiply(e1->v, 1 / *(float *)e2->v);
             }
         }
 
