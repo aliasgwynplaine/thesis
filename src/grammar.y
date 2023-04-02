@@ -12,7 +12,7 @@ extern sym_table_t * st;
 extern int nvars;
 extern char ** var_lst;
 extern u64 * var_cntr;
-extern llpol_t * aux_pol;
+extern aapol_t * aux_pol;
 // %token <str_val>   STRING
 
 %}
@@ -57,13 +57,13 @@ stmt: VAR { print_var(st, $1); FREE($1); }
     ;
 
 assignment: VAR '=' expression
-        { if ($3) { st_insert(st, $1, $3->v, $3->t); FREE($3);} }
+        { if ($3) { st_insert(st, $1, $3->v, $3->t); FREE($3); } }
     ;
 
-expression: expression '+' expression
-    | expression '-' expression
-    | expression '*' expression
-    | expression '/' expression 
+expression: expression '+' expression { $$ = resolve_op_expression(st, $1, $3, "+"); ee_free($1); ee_free($3); }
+    | expression '-' expression { $$ = resolve_op_expression(st, $1, $3, "-"); ee_free($1); ee_free($3); }
+    | expression '*' expression { $$ = resolve_op_expression(st, $1, $3, "*"); ee_free($1); ee_free($3); }
+    | expression '/' expression { $$ = resolve_op_expression(st, $1, $3, "/"); ee_free($1); ee_free($3); }
     | pol_expr
     | number { $$ = resolve_number_as_expression(st, $1); }
     | VAR { $$ = resolve_var_as_expression(st, $1); FREE($1); }
@@ -73,17 +73,17 @@ pol_expr: aapol_expr | llpol_expr;
 
 aapol_expr: AAPOLTOK '(' pol ')' {
         $$ = malloc(sizeof(*$$)); 
-        $$->t = strdup("llpol"); 
+        $$->t = strdup("aapol"); 
         $$->v = (void *)aux_pol; 
-        aux_pol = llpol_create(nvars);
+        aux_pol = aapol_create(nvars);
     }
     ;
 
 llpol_expr: LLPOLTOK '(' pol ')' { 
         $$ = malloc(sizeof(*$$)); 
-        $$->t = strdup("llpol"); 
+        $$->t = strdup("aapol"); 
         $$->v = (void *)aux_pol; 
-        aux_pol = llpol_create(nvars);
+        aux_pol = aapol_create(nvars);
     }
     ;
 
@@ -96,14 +96,10 @@ term: number '*' mvar { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
     | mvar '*' number { generate_term(aux_pol, $3, var_cntr, var_lst, nvars); }
     | sign mvar       { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
     | mvar            { generate_term(aux_pol, 1, var_cntr, var_lst, nvars);  }
-    | number          { llpol_addterm(aux_pol, $1, 0);}
+    | number          { aapol_addterm(aux_pol, $1, 0);}
     ;
 
-number: number '+' number { $$ = $1 + $3; }
-    | number '-' number { $$ = $1 - $3; }
-    | number '*' number { $$ = $1 * $3; }
-    | number '/' number {$$ = $1 / $3; } 
-    | sign INTEGER { $$ = (float) ($1 * $2); }
+number: sign INTEGER { $$ = (float) ($1 * $2); }
     | sign FLOATING  { $$ = $1 * $2; }
     | INTEGER        { $$ = (float) $1; }
     | FLOATING       { $$ = $1; }

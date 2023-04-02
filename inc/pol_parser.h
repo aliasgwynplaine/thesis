@@ -25,10 +25,13 @@ enum parser_ctx_status {
     SyntaxError
 };
 
+
+void ee_free(ee_t *);
 int str_varlist_lookup(char * , char **, int );
-void generate_term(llpol_t * , COEFTYPE , u64 * , char ** , int );
+void generate_term(void * , COEFTYPE , u64 * , char ** , int );
 void print_var(sym_table_t *, char *);
 ee_t * resolve_var_as_expression(sym_table_t * , char * );
 ee_t * resolve_number_as_expression(sym_table_t * , float );
+ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *);
 
 #endif

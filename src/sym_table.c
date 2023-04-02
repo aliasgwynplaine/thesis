@@ -120,13 +120,18 @@ int print_sym_table(sym_table_t * st) {
 
     for (int i = 0; i < st->sz; i++) {
         if (st->e[i].h != -1) {
-            if (strcmp(st->e[i].t, "aapol") == 0) str = aapol_repr(st->e[i].v);
-            if (strcmp(st->e[i].t, "llpol") == 0) str = strdup("NOT IMPLEMENTED... yet!");
+            if (strcmp(st->e[i].t, "aapol") == 0) 
+                str = aapol_repr(st->e[i].v);
+            if (strcmp(st->e[i].t, "llpol") == 0) 
+                str = strdup("NOT IMPLEMENTED... yet!");
             if (strcmp(st->e[i].t, "number") == 0) {
                 snprintf(buff, enough, "%.2f",  *((float*)st->e[i].v));
                 str = strdup(buff);
             }
-            printf("| %5ld | %10s | %6s | %64s |\n", st->e[i].h, st->e[i].n, st->e[i].t, str);
+            printf(
+                "| %5ld | %10s | %6s | %64s |\n", 
+                st->e[i].h, st->e[i].n, st->e[i].t, str
+            );
             FREE(str);
         }
     }
