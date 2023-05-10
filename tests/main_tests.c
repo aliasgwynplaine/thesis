@@ -925,7 +925,7 @@ static char * test_sym_table_insert() {
 }
 
 
-static char * test_exp_grlex_cmp() {
+static char * test_exp_glex_cmp() {
     u8 n = 3;
     u64 e1[] = {1,2,3};
     u64 e2[] = {3,2,0};
@@ -937,6 +937,40 @@ static char * test_exp_grlex_cmp() {
 
     cmp = exp_glex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
     assert(cmp == -1, "exp_glex_cmp is no working properly.");
+
+    return 0;
+}
+
+
+static char * test_exp_revlex_cmp() {
+    u8 n = 3;
+    u64 e1[] = {1,5,2};
+    u64 e2[] = {4,1,3};
+    u64 e3[] = {1,2,4};
+    u64 e4[] = {1,1,5};
+    
+    int cmp  = exp_revlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    assert(cmp == 1, "exp_revlex_cmp is not working properly.");
+
+    cmp = exp_revlex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
+    assert(cmp == 1, "exp_revlex_cmp is no working properly.");
+
+    return 0;
+}
+
+
+static char * test_exp_grevlex_cmp() {
+    u8 n = 3;
+    u64 e1[] = {4,5,1};
+    u64 e2[] = {4,2,3};
+    u64 e3[] = {1,5,2};
+    u64 e4[] = {4,1,3};
+    
+    int cmp  = exp_grevlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    assert(cmp == 1, "exp_grevlex_cmp is not working properly.");
+
+    cmp = exp_grevlex_cmp(exp_pack(e3, n), exp_pack(e4, n), n);
+    assert(cmp == 1, "exp_grevlex_cmp is no working properly.");
 
     return 0;
 }
@@ -976,7 +1010,9 @@ static void all_tests() {
     //run_unittest(cuda_test);
     //run_unittest(test_aapol_repr);
     //run_unittest(test_sym_table_insert);
-    run_unittest(test_exp_grlex_cmp);
+    run_unittest(test_exp_glex_cmp);
+    run_unittest(test_exp_revlex_cmp);
+    run_unittest(test_exp_grevlex_cmp);
 }
 
 

@@ -1339,7 +1339,49 @@ int exp_glex_cmp(u64 a, u64 b, u8 nvar) {
 
 
 int exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
+    u64 * e_a = exp_unpack(a, nvar);
+    u64 * e_b = exp_unpack(b, nvar);
+    int cmp = 0;
+
+    for (int i = 0; i < nvar; i++) {
+        if (cmp == 0) {
+            cmp = *(e_a + i) - *(e_b + i);
+        } else break;
+    }
+
+    FREE(e_a);
+    FREE(e_b);
+
+    if (cmp < 0) return 1;
+    if (cmp > 0) return -1;
     
+    return 0;
+}
+
+
+int exp_grevlex_cmp(u64 a, u64 b, u8 nvar) {
+    u64 * e_a = exp_unpack(a, nvar);
+    u64 * e_b = exp_unpack(b, nvar);
+    u64 sum_a = 0;
+    u64 sum_b = 0;
+    int cmp   = 0;
+
+    for (int i = 0; i < nvar; i++) {
+        sum_a += *(e_a + i);
+        sum_b += *(e_b + i);
+        
+        if (cmp == 0) {
+            cmp = *(e_a + i) - *(e_b + i);
+        }
+    }
+
+    FREE(e_a);
+    FREE(e_b);
+
+    if (sum_a == sum_b) return cmp < 0 ? 1 : -1;
+
+    if (sum_a < sum_b) return -1;
+    if (sum_a > sum_b) return 1;
 }
 
 

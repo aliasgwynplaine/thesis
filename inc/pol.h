@@ -130,7 +130,8 @@ double exp_norm(u64, u8);
 int    exp_cmp(u64, u64, u8, enum MONOMIAL_ORDER);
 int    exp_lex_cmp(u64, u64, u8);
 int    exp_glex_cmp(u64, u64, u8); 
-int    exp_revlex_cmp(u64, u64, u8); // todo
+int    exp_revlex_cmp(u64, u64, u8);
+int    exp_grevlex_cmp(u64, u64, u8);
 u64 *  exp_add(u64 *, u64 *, u64 *);
 u64 *  exp_unpack(u64, u8);
 u64    exp_pack(u64 *, u8);
