@@ -110,6 +110,7 @@ llpol_t  * llpol_multiply(llpol_t * a, llpol_t * b); // todo
 int        llpol_monomial_cmp(llpol_t * a, llpol_t * b); 
 int        llpol_hard_cmp(llpol_t * a, llpol_t * b);
 llpol_t  * llpol_cpy(llpol_t * dst, llpol_t * src);
+term_t   * llpol_head_lcm(llpol_t * l1, llpol_t * l2, enum MONOMIAL_ORDER mo); // todo
 
 term_t   * aapol_head(aapol_t *);
 aapol_t  * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp);
@@ -121,13 +122,14 @@ aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b);
 int        aapol_monomial_cmp(aapol_t * a, aapol_t * b);
 int        aapol_hard_cmp(aapol_t * a, aapol_t * b); 
 aapol_t  * aapol_cpy(aapol_t * dst, aapol_t * src);
+term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo);
 
 /* bit masks and bit extraction*/
 
 double exp_norm(u64, u8);
 int    exp_cmp(u64, u64, u8, enum MONOMIAL_ORDER);
 int    exp_lex_cmp(u64, u64, u8);
-int    exp_grlex_cmp(u64, u64, u8); // TODO
+int    exp_glex_cmp(u64, u64, u8); 
 int    exp_revlex_cmp(u64, u64, u8); // todo
 u64 *  exp_add(u64 *, u64 *, u64 *);
 u64 *  exp_unpack(u64, u8);

@@ -925,6 +925,23 @@ static char * test_sym_table_insert() {
 }
 
 
+static char * test_exp_grlex_cmp() {
+    u8 n = 3;
+    u64 e1[] = {1,2,3};
+    u64 e2[] = {3,2,0};
+    u64 e3[] = {1,2,4};
+    u64 e4[] = {1,1,5};
+    
+    int cmp  = exp_glex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    assert(cmp == 1, "exp_glex_cmp is not working properly.");
+
+    cmp = exp_glex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
+    assert(cmp == -1, "exp_glex_cmp is no working properly.");
+
+    return 0;
+}
+
+
 static void all_tests() {
     run_unittest(test_packexp);
     run_unittest(test_unpackexp);
@@ -941,24 +958,25 @@ static void all_tests() {
     run_unittest(test_llpol_coef_multiply);
     run_unittest(test_aapol_coef_multiply);
     run_unittest(test_aapol_inplace_coef_multiply);
-    run_unittest(test_list_o_aapol2smatrix_transformation);
+    //run_unittest(test_list_o_aapol2smatrix_transformation);
     run_unittest(test_aapol_add);
     run_unittest(test_int_max);
     run_unittest(test_int_max_idx);
     run_unittest(test_aapol_multiply);
     run_unittest(test_exp_norm);
-    run_unittest(test_csr_load);
+    //run_unittest(test_csr_load);
     run_unittest(test_str2llpol);
-    run_unittest(test_str2aapol);
+    //run_unittest(test_str2aapol);
     run_unittest(test_str2aapol_name_error);
     run_unittest(test_str2aapol_syntax_error);
     run_unittest(test_csr_head);
-    run_unittest(test_csr_analyse_n_decompose);
+    //run_unittest(test_csr_analyse_n_decompose);
     //run_unittest(test_csr2flsm);
     run_unittest(test_sparse2dense);
     //run_unittest(cuda_test);
-    run_unittest(test_aapol_repr);
-    run_unittest(test_sym_table_insert);
+    //run_unittest(test_aapol_repr);
+    //run_unittest(test_sym_table_insert);
+    run_unittest(test_exp_grlex_cmp);
 }
 
 

@@ -505,6 +505,23 @@ aapol_t * aapol_cpy(aapol_t * dst, aapol_t * src) {
     return dst;
 }
 
+term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo) {
+    if (a1->nvar != a2->nvar) {
+        dbgerr("Cannot get lcm from pols of diverent numovars.");
+        return NULL;
+    }
+    term_t * head_lcm = term_malloc(sizeof(*head_lcm));
+    term_t * h1 = aapol_head(a1);
+    term_t * h2 = aapol_head(a2);
+    
+    for (int i = 0; i < a1->nvar; i++) {
+        /* choose the min */
+        /* consider handle exponents in different way...*/
+    }
+
+    return head_lcm;
+}
+
 
 int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot cmp polynomials of different nvar");
@@ -1293,6 +1310,36 @@ int exp_lex_cmp(u64 a, u64 b, u8 nvar) {
     if (a == b) return 0;
     else if (a < b) return -1;
     else if (a > b) return 1;
+}
+
+int exp_glex_cmp(u64 a, u64 b, u8 nvar) {
+    u64 * e_a = exp_unpack(a, nvar);
+    u64 * e_b = exp_unpack(b, nvar);
+    u64 sum_a = 0;
+    u64 sum_b = 0;
+    int cmp   = 0;
+
+    for (int i = 0; i < nvar; i++) {
+        sum_a += *(e_a + i);
+        sum_b += *(e_b + i);
+        
+        if (cmp == 0) {
+            cmp = *(e_a + i) - *(e_b + i);
+        }
+    }
+
+    FREE(e_a);
+    FREE(e_b);
+
+    if (sum_a == sum_b) return cmp < 0 ? -1 : 1;
+
+    if (sum_a < sum_b) return -1;
+    if (sum_a > sum_b) return 1;
+}
+
+
+int exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
+    
 }
 
 
