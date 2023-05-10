@@ -1,6 +1,6 @@
 CC = gcc
 NVCC = nvcc
-SRCFILES = pol.c matrix.c tree.c cli.c outils.c sym_table.c
+SRCFILES = pol.c matrix.c tree.c outils.c sym_table.c
 
 OBJ = $(SRCFILES:.c=.o)
 
@@ -67,7 +67,7 @@ src/lexer.c: $(SRC_DIR)/lexer.l
 
 .PHONY: clean
 clean :
-	rm $(PROGRAM) $(OBJ)
+	rm tests.exe $(OBJ)
 
 .PHONY: clean_parser
 clean_parser:
