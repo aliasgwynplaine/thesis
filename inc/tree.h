@@ -103,7 +103,7 @@ rbtree_t  * rbtree_create(cmpfux_t *, allocfux_t *, freefux_t *);
 void        rbtree_free(rbtree_t *);
 void      * rbtree_search(const rbtree_t *, const void * data);
 int         rbtree_insert(rbtree_t *, void * data);
-void        rbtree_delete(rbtree_t *, void * data);
+void      * rbtree_delete(rbtree_t *, void * data);
 void        rbtree_walk(rbtree_t *, ORDER);                        // todo 
 void        rbtree_inorderwalk(rbtree_t *);                        // todo 
 void        rbtree_preorderwalk(rbtree_t *);                       // todo 

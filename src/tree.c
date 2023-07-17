@@ -265,7 +265,7 @@ int rbtree_insert(rbtree_t * rbt, void * data) {
 }
 
 
-void rbtree_delete(rbtree_t * rbt, void * data) {
+void * rbtree_delete(rbtree_t * rbt, void * data) {
     rbnode_t * stack[rbt->sz];
     uchar dir[rbt->sz];
     rbnode_t * p;

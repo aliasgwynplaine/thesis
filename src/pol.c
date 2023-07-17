@@ -519,6 +519,9 @@ term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo) {
         /* consider handle exponents in different way...*/
     }
 
+    FREE(h1);
+    FREE(h2);
+
     return head_lcm;
 }
 
