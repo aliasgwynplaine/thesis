@@ -33,5 +33,7 @@ void print_var(sym_table_t *, char *);
 ee_t * resolve_var_as_expression(sym_table_t * , char * );
 ee_t * resolve_number_as_expression(sym_table_t * , float );
 ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *);
+void   print_expr(ee_t *);
+void   change_pol_order(char *);
 
 #endif

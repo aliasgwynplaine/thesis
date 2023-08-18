@@ -12,18 +12,19 @@ u64 * var_cntr;
 aapol_t * aux_pol;
 
 int main(int argc, char * argv[]) {
-    nvars = 3;
+    nvars = 4;
     var_cntr = calloc(nvars, sizeof(*var_cntr));
     printf("Creating symbol table...");
     st = st_create(SYM_TABLE_SZ);
     printf("done!\n");
     var_lst = malloc((nvars) * sizeof(*var_lst));
-    var_lst[0] = "x"; //var_lst[0] = strdup("x");
-    var_lst[1] = "y";
-    var_lst[2] = "z";
-    aux_pol = aapol_create(3);
+    var_lst[0] = "a"; //var_lst[0] = strdup("x");
+    var_lst[1] = "c";
+    var_lst[2] = "b";
+    var_lst[3] = "d";
+    aux_pol = aapol_create(nvars);
     printf("auxpol before: %p\n", aux_pol);
-    printf("setvars = {x,y,z}\n");
+    printf("setvars = {a, b, c, d}\n");
     printf("prelude> ");
     yyparse();
     printf("auxpol after: %p\n", aux_pol);

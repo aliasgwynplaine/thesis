@@ -27,7 +27,8 @@ extern aapol_t * aux_pol;
 }
 
 
-%token AAPOLTOK LLPOLTOK SYMTABTOK SETVARSTOK NEWLINE QUIT
+%token AAPOLTOK LLPOLTOK SYMTABTOK SETORDTOK SETVARSTOK NEWLINE QUIT
+%token <str_val> LEX GLEX GRLEX RLEX;
 %token <float_val> FLOATING
 %token <int_val>   INTEGER
 %token <str_val>   VAR
@@ -35,6 +36,7 @@ extern aapol_t * aux_pol;
 %type <expr_val>   aapol_expr
 %type <expr_val>   llpol_expr
 %type <expr_val>   pol_expr
+%type <str_val>    termorder
 %type <float_val>  number
 %type <int_val>    sign
 %type <int_val>    exp
@@ -53,6 +55,7 @@ stmts: stmts stmt NEWLINE { printf("prelude> "); }
 
 stmt: VAR { print_var(st, $1); FREE($1); }
     | assignment
+    | expression { print_expr($1); ee_free($1); }
     | directive
     ;
 
@@ -121,9 +124,16 @@ sign: '+' { $$ =  1; }
     ;
 
 directive: SYMTABTOK { print_sym_table(st); }
+    | SETORDTOK termorder { printf("not implemented: %s order\n", $2); }
     | SETVARSTOK '{' vars '}' { /* update nvars and var_lst */ }
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
+
+termorder: LEX   { $$ = strdup("lex"); }
+    | GLEX  { $$ = strdup("glex"); }
+    | RLEX  { $$ = strdup("rlex"); }
+    | GRLEX { $$ = strdup("grlex"); }
+    ;
 
 vars: vars ',' VAR
     | VAR

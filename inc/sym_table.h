@@ -44,8 +44,8 @@ struct st_allocator {
 void free_ste(ste_t *);
 
 sym_table_t * st_create(u64 size);
-void          st_destroy(sym_table_t *); // todo: test
-ste_t       * st_probe(sym_table_t *, char *); // todo: test
+void          st_destroy(sym_table_t *);
+ste_t       * st_probe(sym_table_t *, char *);
 void        * st_insert(sym_table_t *, char *, void *, char * /*, freefux_t * */);
 void        * st_delete(sym_table_t *, const char *); // todo: test
 
