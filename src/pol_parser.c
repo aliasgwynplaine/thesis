@@ -181,8 +181,12 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
     return ee;
 }
 
-void print_expr(ee_t * ee) {
+void ee_print(ee_t * ee) {
     if (strcmp("number", ee->t) == 0) printf("%f\n", *(float *)ee->v);
     if (strcmp("llpol", ee->t) == 0) llpol_print(ee->v);
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
+
+// void dummy() {
+//     rbtree_t * set = rbtree_create(aapol_monomial_cmp, NULL, aapol_free);
+// }

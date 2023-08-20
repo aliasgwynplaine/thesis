@@ -168,7 +168,7 @@ void * rbtree_search(const rbtree_t * rbt, const void * data) {
 }
 
 
-int rbtree_insert(rbtree_t * rbt, void * data) {
+void ** rbtree_insert(rbtree_t * rbt, void * data) {
     rbnode_t * p = NULL;
     rbnode_t * n = NULL;
     rbnode_t * stack[rbt->sz + 1];
@@ -261,7 +261,7 @@ int rbtree_insert(rbtree_t * rbt, void * data) {
 
     rbt->root->c = black;  
 
-    return 1;
+    return &n->d;
 }
 
 
@@ -434,4 +434,241 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
 
     return (void *) data;
 
+}
+
+
+void rbtree_trav_refresh(rbt_trav_t * trav) {
+    assert(trav != NULL);
+
+    if (trav->node != NULL) {
+        cmpfux_t * cmp = trav->tree->cmp;
+        rbnode_t * node = trav->node;
+        rbnode_t * i;
+        trav->h = 0;
+
+        for (i = trav->tree->root; i != node; ) {
+            assert(trav->h < MAX_HEIGHT);
+            assert(i != NULL);
+            trav->stack[trav->h++] = i;
+            
+            if (cmp(node->d, i->d) > 0) i = i->r;
+            else i = i->l;
+        }
+    }
+}
+
+void rbtree_trav_init(rbt_trav_t * trav, rbtree_t * tree) {
+    trav->tree = tree;
+    trav->node = NULL;
+    trav->h    = 0;
+    trav->gen  = 0; // todo: gen
+}
+
+void * rbtree_trav_first(rbt_trav_t * trav, rbtree_t * tree) {
+    rbnode_t * x;
+    assert(tree != NULL && trav != NULL);
+    trav->tree = tree;
+    trav->h    = 0;
+    trav->gen  = 0; // todo: gen
+    
+    x = tree->root;
+
+    if (x != NULL) {
+        while (x->l != NULL) {
+            assert(trav->h < MAX_HEIGHT);
+            trav->stack[trav->h++] = x;
+            x = x->l;
+        }
+    }
+
+    trav->node = x;
+
+    return x != NULL ? x->d : NULL;
+}
+
+void * rbtree_trav_last(rbt_trav_t * trav, rbtree_t * tree) {
+    rbnode_t * x;
+    assert(tree != NULL && trav != NULL);
+    trav->tree = tree;
+    trav->h    = 0;
+    trav->gen  = 0; // todo: gen
+    
+    x = tree->root;
+
+    if (x != NULL) {
+        while (x->r != NULL) {
+            assert(trav->h < MAX_HEIGHT);
+            trav->stack[trav->h++] = x;
+            x = x->r;
+        }
+    }
+
+    trav->node = x;
+
+    return x != NULL ? x->d : NULL;
+}
+
+void * rbtree_trav_find(rbt_trav_t * trav, rbtree_t * tree, void * d) {
+    rbnode_t * p, * q;
+    assert(tree != NULL && trav != NULL);
+    trav->tree = tree;
+    trav->h    = 0;
+    trav->gen  = 0; // todo: gen
+
+    for (p = tree->root; p!= NULL; p = q) {
+        int cmp = tree->cmp(d, p->d);
+        
+        if (cmp < 0) q = p->r;
+        else if (cmp > 0) q = p->l;
+        else {
+            trav->node = p;
+            return p->d;
+        }
+
+        assert(trav->h < MAX_HEIGHT);
+        trav->stack[trav->h++] = p;
+    }
+
+    trav->h    = 0;
+    trav->node = NULL;
+
+    return NULL;
+}
+
+
+void * rbtree_trav_insert(rbt_trav_t * trav, rbtree_t * rbt, void * d) {
+    void ** p;
+    assert(trav != NULL && rbt != NULL && d != NULL);
+    
+    p = rbtree_insert(rbt, d);
+
+    if (p != NULL) {
+        trav->tree = rbt;
+        trav->node = (rbtree_t *) ((char *)p - offsetof(rbnode_t, d));
+        trav->gen = 0; // todo
+        return *p;
+    } else {
+        rbtree_trav_init(trav, rbt);
+        return NULL;
+    }
+
+}
+
+void * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src) {
+    assert(trav != NULL && src != NULL);
+
+    if (trav != src) {
+        trav->tree = src->tree;
+        trav->node = src->node;
+        trav->gen  = src->gen;
+        
+        if (trav->gen == 0 /*trav->tree->gen*/) { // todo
+            trav->h = src->h;
+            memcpy(
+                trav->stack, 
+                (const void *) src->stack, 
+                sizof(*trav->stack) * trav->h
+            );
+        }
+    }
+
+    return trav->node != NULL ? trav->node->d : NULL;
+}
+
+
+void * rbtree_trav_next(rbt_trav_t * trav) {
+    rbnode_t * x;
+    assert(trav != NULL);
+
+    if (trav->gen != 0 /*trav->tree->gen */) {
+        rbtree_trav_refresh(trav);
+    }
+
+    x = trav->node;
+
+    if (x == NULL) {
+        return rbtree_trav_first(trav, trav->tree);
+    } else if (x->r != NULL) {
+        assert(trav->h < MAX_HEIGHT);
+        trav->stack[trav->h++] = x;
+        x = x->r;
+
+        while (x->l != NULL) {
+            assert(trav->h < MAX_HEIGHT);
+            trav->stack[trav->h++] = x;
+            x = x->l;
+        }
+    } else {
+        rbnode_t * y;
+
+        do {
+            if (trav->h == 0) {
+                trav->node = NULL;
+                return NULL;
+            }
+
+            y = x;
+            x = trav->stack[--trav->h];
+        } while(y == x->r);
+    }
+
+    trav->node = x;
+
+    return x->d;
+}
+
+void * rbtree_trav_prev(rbt_trav_t * trav) {
+    rbnode_t * x;
+    assert(trav != NULL);
+
+    if (trav->gen != 0 /*trav->tree->gen */) {
+        rbtree_trav_refresh(trav);
+    }
+
+    x = trav->node;
+
+    if (x == NULL) {
+        return rbtree_trav_last(trav, trav->tree);
+    } else if (x->l != NULL) {
+        assert(trav->h < MAX_HEIGHT);
+        trav->stack[trav->h++] = x;
+        x = x->l;
+
+        while (x->r != NULL) {
+            assert(trav->h < MAX_HEIGHT);
+            trav->stack[trav->h++] = x;
+            x = x->r;
+        }
+    } else {
+        rbnode_t * y;
+
+        do {
+            if (trav->h == 0) {
+                trav->node = NULL;
+                return NULL;
+            }
+
+            y = x;
+            x = trav->stack[--trav->h];
+        } while(y == x->l);
+    }
+
+    trav->node = x;
+
+    return x->d;
+}
+
+
+void * rbtree_trav_curr(rbt_trav_t * trav) {
+    assert(trav != NULL);
+
+    return trav->node != NULL ? trav->node->d : NULL;
+}
+void * rbtree_trav_repl(rbt_trav_t * trav, void * new) {
+    void * old;
+    assert(trav != NULL && trav->node != NULL & new != NULL);
+    old = trav->node->d;
+    trav->node->d = new;
+
+    return old;
 }

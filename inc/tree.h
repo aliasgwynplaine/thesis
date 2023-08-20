@@ -3,13 +3,16 @@
 
 #include "outils.h"
 
-typedef struct bnode_t      bnode_t; // binary node
-typedef struct tnode_t      tnode_t; // ternary node
-typedef struct bstree_t    bstree_t;
-typedef struct rbnode_t    rbnode_t;
-typedef struct rbtree_t    rbtree_t;
-typedef struct avltree_t  avltree_t;
-typedef struct setoint_t  setoint_t;
+#define MAX_HEIGHT 32
+
+typedef struct bnode_t            bnode_t; // binary node
+typedef struct tnode_t            tnode_t; // ternary node
+typedef struct bstree_t          bstree_t;
+typedef struct rbnode_t          rbnode_t;
+typedef struct rbtree_t          rbtree_t;
+typedef struct avltree_t        avltree_t;
+typedef struct setoint_t        setoint_t;
+typedef struct rbt_traverser_t rbt_trav_t;
 
 typedef enum ORDER ORDER;
 typedef enum RB_COLOR RB_COLOR;
@@ -45,13 +48,13 @@ struct bstree_t {
     cmpfux_t   *      cmp; // a ¿? b
     allocfux_t *    alloc;
     freefux_t  *     free;
-    int                sz;
+    size_t             sz;
 };
 
 struct avltree_t {
     bnode_t * root;
     cmpfux_t * cmp;
-    int         sz;
+    size_t      sz;
 };
 
 enum RB_COLOR {
@@ -71,7 +74,16 @@ struct rbtree_t {
     cmpfux_t   *      cmp;
     allocfux_t *    alloc; // alloc for the nodes
     freefux_t  *     free;
-    int                sz;
+    size_t             sz;
+    u32               gen;
+};
+
+struct rbt_traverser_t {
+    rbtree_t              * tree;
+    rbnode_t              * node;
+    rbnode_t * stack[MAX_HEIGHT];
+    size_t                     h;
+    u32                      gen;
 };
 
 
@@ -102,12 +114,25 @@ void        avltree_postorderwalk(bnode_t *);                      // todo
 rbtree_t  * rbtree_create(cmpfux_t *, allocfux_t *, freefux_t *); 
 void        rbtree_free(rbtree_t *);
 void      * rbtree_search(const rbtree_t *, const void * data);
-int         rbtree_insert(rbtree_t *, void * data);
+void     ** rbtree_insert(rbtree_t *, void * data);
 void      * rbtree_delete(rbtree_t *, void * data);
 void        rbtree_walk(rbtree_t *, ORDER);                        // todo 
 void        rbtree_inorderwalk(rbtree_t *);                        // todo 
 void        rbtree_preorderwalk(rbtree_t *);                       // todo 
 void        rbtree_postorderwalk(rbtree_t *);                      // todo 
+void        rbtree_trav_refresh(rbt_trav_t * trav);
+void        rbtree_trav_init(rbt_trav_t * trav, rbtree_t * tree);
+void      * rbtree_trav_first(rbt_trav_t * trav, rbtree_t * tree);
+void      * rbtree_trav_last(rbt_trav_t * trav, rbtree_t * tree);
+void      * rbtree_trav_find(rbt_trav_t * trav, rbtree_t * tree, void * data);
+void      * rbtree_trav_insert(rbt_trav_t * trav, rbtree_t * tree, void * data);
+void      * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src);
+void      * rbtree_trav_next(rbt_trav_t * trav); 
+void      * rbtree_trav_prev(rbt_trav_t * trav);
+void      * rbtree_trav_curr(rbt_trav_t * trav);
+void      * rbtree_trav_repl(rbt_trav_t * trav, void * new);
+
+
 
 
 #endif

@@ -31,15 +31,16 @@ variable    [a-zA-Z][a-zA-Z0-9_]*
 
 aapol               return AAPOLTOK;
 pol                 return LLPOLTOK;
+F4                  return F4TOK;
 symtab              return SYMTABTOK;
-set_vars            return SETVARSTOK;
-set_ord             return SETORDTOK;
+setvars            return SETVARSTOK;
+setord             return SETORDTOK;
 lex                 return LEX;
 rlex                return RLEX;
 glex                return GLEX;
 grlex               return GRLEX;
 quit|q|bye          return QUIT;
-{integer}           yylval.int_val = atoi(yytext); return INTEGER;
+{integer}           yylval.int_val = atoi(yytext);   return INTEGER;
 {floating}          yylval.float_val = atof(yytext); return FLOATING;
 {variable}          yylval.str_val = strdup(yytext); return VAR;
 \n                  return NEWLINE;
