@@ -187,6 +187,35 @@ void ee_print(ee_t * ee) {
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
 
-// void dummy() {
-//     rbtree_t * set = rbtree_create(aapol_monomial_cmp, NULL, aapol_free);
-// }
+rbtree_t * create_set_for_expr_l() {
+    rbtree_t * set = rbtree_create(aapol_monomial_cmp, NULL, aapol_free);
+
+    return set;
+}
+void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
+    if(rbt == NULL)SAYNEXITWERROR("geee");
+    if(d == NULL) SAYNEXITWERROR("gaa");
+    aapol_t * pol;
+
+    if (strcmp(d->t, "number") == 0) {
+        pol = aapol_create(n);
+        aapol_addterm(pol, *(float *)d->v, 0);
+    }
+
+    if (strcmp(d->t, "aapol") == 0) {
+        pol = (aapol_t *)d->v;
+    }
+
+    rbtree_insert(rbt, pol);
+
+    // todo: llpol
+}
+
+void set_print(rbtree_t * rbt) {
+    rbt_trav_t trav;
+    aapol_t * pol;
+
+    for (pol = rbtree_trav_first(&trav, rbt); pol != NULL; pol = rbtree_trav_next(&trav)) {
+        aapol_print(pol);
+    }
+}

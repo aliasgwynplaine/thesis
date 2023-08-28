@@ -8,6 +8,7 @@
 #include <stdbool.h>
 #include <ctype.h>
 #include <stddef.h>
+#include <assert.h>
 #include "debug.h"
 
 #ifndef COEFTYPE

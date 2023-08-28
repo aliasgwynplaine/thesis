@@ -1,5 +1,13 @@
 #include "f4.h"
 
+rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
+    if (F == NULL) return NULL;
+    if (F->sz == 0) return NULL;
+    
+    
+}
+
+
 void csr_rref(csr_t * m, dctx_t * ctx) {
     cuda_rref(m, ctx);
 }

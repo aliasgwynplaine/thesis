@@ -32,6 +32,9 @@ void ee_free(ee_t *);
 void ee_print(ee_t * ee);
 int  str_varlist_lookup(char * , char **, int );
 void generate_term(void * , COEFTYPE , u64 * , char ** , int );
+rbtree_t * create_set_for_expr_l();
+void set_insert(rbtree_t * rbt, ee_t * d, u8 n);
+
 void print_var(sym_table_t *, char *);
 ee_t * resolve_var_as_expression(sym_table_t * , char * );
 ee_t * resolve_number_as_expression(sym_table_t * , float );

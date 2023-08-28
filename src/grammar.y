@@ -69,8 +69,9 @@ assignment: VAR '=' expression
     ;
 
 expression_list
-    : expression { printf("expr: "); ee_print($1); ee_free($1); }
-    | expression_list ',' expression { printf("expr_list! and "); ee_print($3); ee_free($3); }
+    : expression { $$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); ee_free($1); }
+    | expression_list ',' expression 
+        { $$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); ee_free($3); }
     ;
 
 expression
@@ -109,7 +110,7 @@ pol: pol term
 term: number '*' mvar { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
     | mvar '*' number { generate_term(aux_pol, $3, var_cntr, var_lst, nvars); }
     | sign mvar       { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
-    | mvar            { generate_term(aux_pol, 1, var_cntr, var_lst, nvars);  }
+    | mvar            { generate_term(aux_pol,  1, var_cntr, var_lst, nvars); }
     | number          { aapol_addterm(aux_pol, $1, 0);}
     ;
 
@@ -137,7 +138,7 @@ sign: '+' { $$ =  1; }
 directive: SYMTABTOK { print_sym_table(st); }
     | SETORDTOK termorder { printf("not implemented: %s order\n", $2); FREE($2); }
     | SETVARSTOK '{' vars '}' { /* update nvars and var_lst */ }
-    | F4TOK '(' expression_list ')' { printf("F4!!!\n"); } // here comes a set
+    | F4TOK '(' expression_list ')' { printf("F4!!!\n"); set_print($3); } // here comes a set
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

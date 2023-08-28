@@ -136,7 +136,7 @@ rbtree_t * rbtree_create(cmpfux_t * cfux, allocfux_t * afux, freefux_t * ffux) {
 
     rbt->sz = 0;
 
-    return NULL;
+    return rbt;
 }
 
 
@@ -567,7 +567,7 @@ void * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src) {
             memcpy(
                 trav->stack, 
                 (const void *) src->stack, 
-                sizof(*trav->stack) * trav->h
+                sizeof(*trav->stack) * trav->h
             );
         }
     }
@@ -664,6 +664,7 @@ void * rbtree_trav_curr(rbt_trav_t * trav) {
 
     return trav->node != NULL ? trav->node->d : NULL;
 }
+
 void * rbtree_trav_repl(rbt_trav_t * trav, void * new) {
     void * old;
     assert(trav != NULL && trav->node != NULL & new != NULL);

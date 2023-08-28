@@ -10,10 +10,13 @@ int nvars;
 char ** var_lst;
 u64 * var_cntr;
 aapol_t * aux_pol;
+cmpfux_t * cfux;
 
 int main(int argc, char * argv[]) {
     nvars = 4;
+    cfux  = aapol_monomial_cmp;
     var_cntr = calloc(nvars, sizeof(*var_cntr));
+    
     printf("Creating symbol table...");
     st = st_create(SYM_TABLE_SZ);
     printf("done!\n");
