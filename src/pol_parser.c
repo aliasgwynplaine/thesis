@@ -206,7 +206,7 @@ void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
         pol = (aapol_t *)d->v;
     }
 
-    rbtree_insert(rbt, pol);
+    rbtree_probe(rbt, pol);
 
     // todo: llpol
 }
