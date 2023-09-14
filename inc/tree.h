@@ -3,7 +3,8 @@
 
 #include "outils.h"
 
-#define MAX_HEIGHT 32
+#define MAX_HEIGHT 48
+#define sz(t) (((size_t) (t)->sz))
 
 typedef struct bnode_t            bnode_t; // binary node
 typedef struct tnode_t            tnode_t; // ternary node
@@ -13,6 +14,28 @@ typedef struct rbtree_t          rbtree_t;
 typedef struct avltree_t        avltree_t;
 typedef struct setoint_t        setoint_t;
 typedef struct rbt_traverser_t rbt_trav_t;
+
+typedef int    rbt_cmpfux_t(const void *rbt_a, const void *rbt_b, void *rbt_param);
+typedef void   rbt_item_fux_t(void * rbt_item, void * rbt_param);
+typedef void * rbt_cpy_fux_t(void * rbt_item, void * rbt_param);
+
+
+#ifndef TREE_ALLOCATOR
+#define TREE_ALLOCATOR
+/* Memory allocator for trees */
+
+struct tree_allocator_t {
+    void * (* tree_malloc) (struct tree_allocator_t *, size_t sz);
+    void   (* tree_free)   (struct tree_allocator_t *, void * block);
+};
+
+typedef struct tree_allocator_t tree_allocator_t;
+
+#endif
+
+extern tree_allocator_t rbt_allocator_default;
+void * rbt_malloc(tree_allocator_t *, size_t);
+void   rbt_free(tree_allocator_t *, void *);
 
 typedef enum ORDER ORDER;
 typedef enum RB_COLOR RB_COLOR;
@@ -70,12 +93,12 @@ struct rbnode_t {
 };
 
 struct rbtree_t {
-    rbnode_t   *     root;
-    cmpfux_t   *      cmp;
-    allocfux_t *    alloc; // alloc for the nodes
-    freefux_t  *     free;
-    size_t             sz;
-    u32               gen;
+    rbnode_t         *  root;
+    rbt_cmpfux_t      *   cmp; // todo change to make everything else compatible
+    tree_allocator_t * alloc; // alloc for the nodes
+    void             * param;
+    size_t                sz;
+    u32                  gen;
 };
 
 struct rbt_traverser_t {
@@ -90,7 +113,7 @@ struct rbt_traverser_t {
 bnode_t   * bnode_create();
 void        bnode_free(bnode_t *, freefux_t *);
 
-rbnode_t  * rbnode_create(enum RB_COLOR);
+rbnode_t  * rbnode_create(rbtree_t *, enum RB_COLOR);
 void        rbnode_free(rbnode_t *, freefux_t *);
 
 bstree_t  * bstree_create(cmpfux_t *, allocfux_t * , freefux_t *);
@@ -111,11 +134,17 @@ void        avltree_inorderwalk(bnode_t *);                        // todo
 void        avltree_preorderwalk(bnode_t *);                       // todo 
 void        avltree_postorderwalk(bnode_t *);                      // todo 
 
-rbtree_t  * rbtree_create(cmpfux_t *, allocfux_t *, freefux_t *); 
+rbtree_t  * rbtree_create(rbt_cmpfux_t *, void *, tree_allocator_t *); 
+rbtree_t  * rbtree_cpy(const rbtree_t *, rbt_cpy_fux_t *, rbt_item_fux_t *, tree_allocator_t *); //todo
+void        rbtree_destroy(rbtree_t *, rbt_item_fux_t *);
 void        rbtree_free(rbtree_t *);
-void      * rbtree_search(const rbtree_t *, const void * data);
-void     ** rbtree_insert(rbtree_t *, void * data);
+void      * rbtree_find(const rbtree_t *, const void * data);
+void      * rbtree_insert(rbtree_t *, void *);
+void     ** rbtree_probe(rbtree_t *, void * data);
+void      * rbtree_repl(rbtree_t *, void *);
 void      * rbtree_delete(rbtree_t *, void * data);
+void        rbtree_assert_insert(rbtree_t *, void *);
+void      * rbtree_assert_delete(rbtree_t *, void *);
 void        rbtree_walk(rbtree_t *, ORDER);                        // todo 
 void        rbtree_inorderwalk(rbtree_t *);                        // todo 
 void        rbtree_preorderwalk(rbtree_t *);                       // todo 

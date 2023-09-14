@@ -29,13 +29,13 @@ void bnode_free(bnode_t * root, freefux_t * freefux) {
 }
 
 
-rbnode_t * rbnode_create(enum RB_COLOR c) {
-    rbnode_t * node = malloc(sizeof(*node));
+rbnode_t * rbnode_create(rbtree_t * rbt, enum RB_COLOR c) {
+    rbnode_t * node = rbt->alloc->tree_malloc(rbt->alloc, sizeof(*node));
     CHECKPTR(node);
     node->c = c;
     node->l = NULL;
     node->r = NULL;
-    node->d =NULL;
+    node->d = NULL;
     
     return node;
 }
@@ -121,29 +121,26 @@ int bstree_insert(bstree_t * tree, void * d) {
 }
 
 
-rbtree_t * rbtree_create(cmpfux_t * cfux, allocfux_t * afux, freefux_t * ffux) {
-    rbtree_t * rbt = malloc(sizeof(*rbt));
-    rbt->root =NULL;
+rbtree_t * rbtree_create(rbt_cmpfux_t * cfux, void * param, tree_allocator_t * alloc) {
+    rbtree_t * rbt;
+    assert(cfux != NULL);
 
-    if (cfux == NULL) SAYNEXITWERROR("cfux is null");
-    else rbt->cmp = cfux;
+    if (alloc == NULL) alloc = &rbt_allocator_default;
     
-    if (afux != NULL) rbt->alloc = afux;
-    else rbt->alloc = default_malloc;
+    rbt = alloc->tree_malloc(alloc, sizeof(*rbt));
 
-    if (ffux != NULL) rbt->free = ffux;
-    else rbt->free = default_free;
-
-    rbt->sz = 0;
+    if (rbt == NULL) return NULL;
+    
+    rbt->root  = NULL;
+    rbt->cmp   = cfux;
+    rbt->param = param;
+    rbt->alloc = alloc;
+    rbt->sz    = 0;
+    rbt->gen   = 0;
 
     return rbt;
 }
 
-
-void rbtree_free(rbtree_t * rbt) {
-    rbnode_free(rbt->root, rbt->free);
-    FREE(rbt);
-}
 
 /**
  * @brief 
@@ -152,12 +149,12 @@ void rbtree_free(rbtree_t * rbt) {
  * @param data the value we're searching
  * @return NULL if value is not found. The pointer to the datum
  */
-void * rbtree_search(const rbtree_t * rbt, const void * data) {
+void * rbtree_find(const rbtree_t * rbt, const void * data) {
     if (rbt == NULL || data == NULL) SAYNEXITWERROR("rbt or data is null");
     const rbnode_t * p;
 
     for (p = rbt->root; p != NULL; /* empty */) {
-        int cmp = rbt->cmp(data, p->d);
+        int cmp = rbt->cmp(data, p->d, rbt->param);
 
         if (cmp < 0) p = p->l;
         else if (cmp > 0) p = p->r;
@@ -168,19 +165,20 @@ void * rbtree_search(const rbtree_t * rbt, const void * data) {
 }
 
 
-void ** rbtree_insert(rbtree_t * rbt, void * data) {
+void ** rbtree_probe(rbtree_t * rbt, void * data) {
+    assert(rbt != NULL && data != NULL);
     rbnode_t * p = NULL;
     rbnode_t * n = NULL;
-    rbnode_t * stack[rbt->sz + 1];
-    unsigned char dir[rbt->sz + 1];
+    rbnode_t * stack[rbt->sz + 1];  // be careful
+    unsigned char dir[rbt->sz + 1]; // be careful
     int k = 0;
 
     stack[k] = (rbnode_t *)&rbt->root; // look up
     dir[k++] = 0;
 
     for (p = rbt->root; p != NULL; /* empty */) {
-        int cmp = rbt->cmp(data, p->d);
-        if (cmp == 0) return 0;
+        int cmp = rbt->cmp(data, p->d, rbt->param);
+        if (cmp == 0) return &p->d;
 
         stack[k] = p;
         dir[k++] = cmp > 0;
@@ -189,11 +187,12 @@ void ** rbtree_insert(rbtree_t * rbt, void * data) {
         else p = p->r;
     }
 
-    if (dir[k - 1] == 0) n = stack[k - 1]->l = rbnode_create(red);
-    else n = stack[k - 1]->r = rbnode_create(red);
-
+    if (dir[k - 1] == 0) n = stack[k - 1]->l = rbnode_create(rbt, red);
+    else n = stack[k - 1]->r = rbnode_create(rbt, red);
+    
     n->d = data;
     rbt->sz++;
+    rbt->gen++;
 
     while (k <= 3 && stack[k - 1]->c == red) {
         if (dir[k - 2] == 0) {
@@ -201,7 +200,7 @@ void ** rbtree_insert(rbtree_t * rbt, void * data) {
 
             if (y != NULL && y->c == red) {
                 stack[--k]->c = y->c = black;
-                stack[--k]->c = red; 
+                stack[--k]->c = red;
             } else {
                 rbnode_t * x;
 
@@ -265,20 +264,40 @@ void ** rbtree_insert(rbtree_t * rbt, void * data) {
 }
 
 
+void * rbtree_insert(rbtree_t * rbt, void * data) {
+    void ** p = rbtree_probe(rbt, data);
+    return p == NULL || *p == data ? NULL : *p;
+}
+
+
+void * rbtree_repl(rbtree_t * rbt, void * data) {
+    void ** p = rbt_probe(rbt, data);
+    if (p == NULL || *p == data) return NULL;
+    else {
+        void * r = *p;
+        *p = data;
+        return r;
+    }
+}
+
+
 void * rbtree_delete(rbtree_t * rbt, void * data) {
-    rbnode_t * stack[rbt->sz];
-    uchar dir[rbt->sz];
+    if (rbt == NULL || data == NULL) SAYNEXITWERROR("rbt or data equals null");
+    rbnode_t * stack[rbt->sz + 1]; // be careful
+    uchar dir[rbt->sz];            // be careful
     rbnode_t * p;
     int cmp;
     int k = 0;
 
-    if (rbt == NULL || data == NULL) SAYNEXITWERROR("rbt or data equals null");
-
     p = (rbnode_t *)&rbt->root;
     
-    for (cmp = -1; cmp != 0; cmp = rbt->cmp(p->d, data)) {
+    for (cmp = -1; cmp != 0; cmp = rbt->cmp(p->d, data, rbt->param)) {
+        int d  = cmp > 0;
         stack[k] = p;
-        dir[k++] = cmp > 0;
+        dir[k++] = d;
+
+        if (d == 0) p = p->l;
+        else p = p->r;
 
         if (p == NULL) return NULL;
     }
@@ -287,7 +306,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
     
     if (p->r == NULL) {
         if (dir[k - 1] == 0) stack[k - 1]->l = p->l;
-        else stack[k - 1]->r = p->r;
+        else stack[k - 1]->r = p->l;
     } else {
         RB_COLOR t;
         rbnode_t * r = p->r;
@@ -298,7 +317,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
             r->c = p->c;
             p->c = t;
 
-            if (dir[k - 1] == 0) stack[k - 1]->l = r;
+            if (dir[k - 1] == 0) stack[k - 1]->l = p->r;
             else stack[k - 1]->r = r;
 
             dir[k] = 1;
@@ -306,6 +325,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
         } else {
             rbnode_t * s;
             int j = k++;
+
             for (;;) {
                 dir[k] = 0;
                 stack[k++] = r;
@@ -333,7 +353,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
 
     if (p->c == black) {
         for (;;) {
-            rbnode_t * x = dir[k - 1] == 0? stack[k - 1]->l : stack[k-1]->r;
+            rbnode_t * x = dir[k - 1] == 0 ? stack[k - 1]->l : stack[k-1]->r;
 
             if (x != NULL && x->c == red) {
                 x->c = black;
@@ -353,12 +373,12 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
                     
                     if (dir[k - 2] == 0) stack[k - 2]->l = w;
                     else stack[k - 2]->r = w;
+                    
                     stack[k] = stack[k - 1];
                     dir[k] = 0;
                     stack[k - 1] = w;
                     k++;
                     w = stack[k - 1]->r;
-
                 }
 
                 if ((w->l == NULL || w->l->c == black) && (w->r == NULL || w->r->c == black)) {
@@ -372,6 +392,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
                         y->r = w;
                         w = stack[k - 1]->r = y;
                     }
+
                     w->c = stack[k - 1]->c;
                     stack[k - 1]->c = black;
                     w->r->c = black;
@@ -384,7 +405,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
                     break;
                 }
             } else { //right side balancing
-                rbnode_t * w = stack[k - 1]->r;
+                rbnode_t * w = stack[k - 1]->l;
 
                 if (w->c == red) {
                     w->c = black;
@@ -399,18 +420,18 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
                     dir[k]   = 1;
                     stack[k - 1] = w;
                     k++;
-                    w = stack[k - 1]->r;
+                    w = stack[k - 1]->l;
                 }
 
                 if ((w->l == NULL || w->l->c == black) && (w->r == NULL || w->r->c == black)) {
                     w->c = red;
                 } else {
-                    if (w->l == NULL | w->l->c == black) {
+                    if (w->l == NULL || w->l->c == black) {
                         rbnode_t * y = w->r;
                         y->c = black;
                         w->c = red;
                         w->r = y->l;
-                        y->r = w;
+                        y->l = w;
                         w = stack[k - 1]->l = y;
                     }
 
@@ -426,11 +447,13 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
                     break;
                 }
             }
+            k--;
         }
     }
 
-    rbt->free(p); // check
+    rbt->alloc->tree_free(rbt->alloc, p); // check
     rbt->sz--;
+    rbt->gen++;
 
     return (void *) data;
 
@@ -439,19 +462,21 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
 
 void rbtree_trav_refresh(rbt_trav_t * trav) {
     assert(trav != NULL);
+    trav->gen = trav->tree->gen;
 
     if (trav->node != NULL) {
-        cmpfux_t * cmp = trav->tree->cmp;
+        rbt_cmpfux_t * cmp = trav->tree->cmp;
+        void * param = trav->tree->param;
         rbnode_t * node = trav->node;
         rbnode_t * i;
         trav->h = 0;
 
-        for (i = trav->tree->root; i != node; ) {
+        for (i = trav->tree->root; i != node; /* empty */) {
             assert(trav->h < MAX_HEIGHT);
             assert(i != NULL);
             trav->stack[trav->h++] = i;
             
-            if (cmp(node->d, i->d) > 0) i = i->r;
+            if (cmp(node->d, i->d, param) > 0) i = i->r;
             else i = i->l;
         }
     }
@@ -461,16 +486,15 @@ void rbtree_trav_init(rbt_trav_t * trav, rbtree_t * tree) {
     trav->tree = tree;
     trav->node = NULL;
     trav->h    = 0;
-    trav->gen  = 0; // todo: gen
+    trav->gen  = tree->gen;
 }
 
 void * rbtree_trav_first(rbt_trav_t * trav, rbtree_t * tree) {
-    rbnode_t * x;
     assert(tree != NULL && trav != NULL);
+    rbnode_t * x;
     trav->tree = tree;
     trav->h    = 0;
-    trav->gen  = 0; // todo: gen
-    
+    trav->gen  = tree->gen;
     x = tree->root;
 
     if (x != NULL) {
@@ -487,12 +511,11 @@ void * rbtree_trav_first(rbt_trav_t * trav, rbtree_t * tree) {
 }
 
 void * rbtree_trav_last(rbt_trav_t * trav, rbtree_t * tree) {
-    rbnode_t * x;
     assert(tree != NULL && trav != NULL);
+    rbnode_t * x;
     trav->tree = tree;
     trav->h    = 0;
-    trav->gen  = 0; // todo: gen
-    
+    trav->gen  = tree->gen;
     x = tree->root;
 
     if (x != NULL) {
@@ -509,14 +532,14 @@ void * rbtree_trav_last(rbt_trav_t * trav, rbtree_t * tree) {
 }
 
 void * rbtree_trav_find(rbt_trav_t * trav, rbtree_t * tree, void * d) {
-    rbnode_t * p, * q;
     assert(tree != NULL && trav != NULL);
+    rbnode_t * p, * q;
     trav->tree = tree;
     trav->h    = 0;
-    trav->gen  = 0; // todo: gen
+    trav->gen  = tree->gen;
 
     for (p = tree->root; p!= NULL; p = q) {
-        int cmp = tree->cmp(d, p->d);
+        int cmp = tree->cmp(d, p->d, tree->param);
         
         if (cmp < 0) q = p->r;
         else if (cmp > 0) q = p->l;
@@ -537,15 +560,16 @@ void * rbtree_trav_find(rbt_trav_t * trav, rbtree_t * tree, void * d) {
 
 
 void * rbtree_trav_insert(rbt_trav_t * trav, rbtree_t * rbt, void * d) {
-    void ** p;
     assert(trav != NULL && rbt != NULL && d != NULL);
+    void ** p;
     
-    p = rbtree_insert(rbt, d);
+    p = rbtree_probe(rbt, d);
 
     if (p != NULL) {
         trav->tree = rbt;
         trav->node = (rbtree_t *) ((char *)p - offsetof(rbnode_t, d));
-        trav->gen = 0; // todo
+        trav->gen = rbt->gen - 1;
+
         return *p;
     } else {
         rbtree_trav_init(trav, rbt);
@@ -562,7 +586,7 @@ void * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src) {
         trav->node = src->node;
         trav->gen  = src->gen;
         
-        if (trav->gen == 0 /*trav->tree->gen*/) { // todo
+        if (trav->gen == trav->tree->gen) { // todo
             trav->h = src->h;
             memcpy(
                 trav->stack, 
@@ -577,10 +601,10 @@ void * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src) {
 
 
 void * rbtree_trav_next(rbt_trav_t * trav) {
-    rbnode_t * x;
     assert(trav != NULL);
+    rbnode_t * x;
 
-    if (trav->gen != 0 /*trav->tree->gen */) {
+    if (trav->gen != trav->tree->gen) {
         rbtree_trav_refresh(trav);
     }
 
@@ -604,6 +628,7 @@ void * rbtree_trav_next(rbt_trav_t * trav) {
         do {
             if (trav->h == 0) {
                 trav->node = NULL;
+
                 return NULL;
             }
 
@@ -621,7 +646,7 @@ void * rbtree_trav_prev(rbt_trav_t * trav) {
     rbnode_t * x;
     assert(trav != NULL);
 
-    if (trav->gen != 0 /*trav->tree->gen */) {
+    if (trav->gen != trav->tree->gen) {
         rbtree_trav_refresh(trav);
     }
 
@@ -645,6 +670,7 @@ void * rbtree_trav_prev(rbt_trav_t * trav) {
         do {
             if (trav->h == 0) {
                 trav->node = NULL;
+
                 return NULL;
             }
 
@@ -672,4 +698,52 @@ void * rbtree_trav_repl(rbt_trav_t * trav, void * new) {
     trav->node->d = new;
 
     return old;
+}
+
+
+void rbt_destroy(rbtree_t * rbt, rbt_item_fux_t * destroy) {
+    assert(rbt != NULL);
+    rbnode_t * p, * q;
+
+    for (p = rbt->root; p != NULL; p = q) {
+        if (p->l == NULL) {
+            q = p->r;
+
+            if (destroy != NULL && p->d != NULL) destroy(p->d, rbt->param);
+
+            rbt->alloc->tree_free(rbt->alloc, p);
+        } else {
+            q = p->l;
+            p->l = q->r;
+            q->r = p;
+        }
+        rbt->alloc->tree_free(rbt->alloc, rbt);
+    }
+}
+
+
+void * rbt_malloc(tree_allocator_t * allocator, size_t sz) {
+    assert(allocator != NULL && sz > 0);
+    return malloc(sz);
+}
+
+void rbt_free(tree_allocator_t * allocator, void * blck) {
+    assert(allocator != NULL && blck != NULL);
+    free(blck);
+}
+
+tree_allocator_t rbt_allocator_default = {rbt_malloc, rbt_free};
+
+#undef NDEBUG
+#include <assert.h>
+
+void (rbtree_assert_insert) (rbtree_t * rbt, void * data) {
+    void ** p = rbtree_probe(rbt, data);
+    assert(p != NULL && * p == data);
+}
+
+void * (rbtree_assert_delete) (rbtree_t * rbt, void * data) {
+    void * p = rbtree_delete(rbt, data);
+    assert(p != NULL);
+    return p;
 }
