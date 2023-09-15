@@ -8,7 +8,7 @@
 
 typedef struct polynomial_parser_ctx_t pol_parser_ctx_t;
 typedef struct expr_entry_t ee_t;
-typedef rbtree_t set_t; // this can be change.
+typedef rbtree_t set_t; // this can be changed.
 
 struct expr_entry_t {
         char * t;
@@ -33,6 +33,7 @@ void ee_print(ee_t * ee);
 int  str_varlist_lookup(char * , char **, int );
 void generate_term(void * , COEFTYPE , u64 * , char ** , int );
 rbtree_t * create_set_for_expr_l();
+void destroy_set_for_expr_l(set_t *);
 void set_insert(rbtree_t * rbt, ee_t * d, u8 n);
 
 void print_var(sym_table_t *, char *);

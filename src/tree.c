@@ -271,7 +271,7 @@ void * rbtree_insert(rbtree_t * rbt, void * data) {
 
 
 void * rbtree_repl(rbtree_t * rbt, void * data) {
-    void ** p = rbt_probe(rbt, data);
+    void ** p = rbtree_probe(rbt, data);
     if (p == NULL || *p == data) return NULL;
     else {
         void * r = *p;
@@ -701,7 +701,7 @@ void * rbtree_trav_repl(rbt_trav_t * trav, void * new) {
 }
 
 
-void rbt_destroy(rbtree_t * rbt, rbt_item_fux_t * destroy) {
+void rbtree_destroy(rbtree_t * rbt, rbt_item_fux_t * destroy) {
     assert(rbt != NULL);
     rbnode_t * p, * q;
 

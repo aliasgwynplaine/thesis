@@ -187,13 +187,22 @@ void ee_print(ee_t * ee) {
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
 
+int aapol_monomial_cmp_wrap(const void * a, const void * b, void * param) {
+    return aapol_monomial_cmp((aapol_t *)a, (aapol_t *)b);
+}
+
 rbtree_t * create_set_for_expr_l() {
-    rbtree_t * set = rbtree_create(aapol_monomial_cmp, NULL, aapol_free);
+    rbtree_t * set = rbtree_create(aapol_monomial_cmp_wrap, NULL, NULL);
 
     return set;
 }
+
+void destroy_set_for_expr_l(set_t * s) {
+    rbtree_destroy(s, NULL);
+}
+
 void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
-    if(rbt == NULL)SAYNEXITWERROR("geee");
+    if(rbt == NULL) SAYNEXITWERROR("geee");
     if(d == NULL) SAYNEXITWERROR("gaa");
     aapol_t * pol;
 
