@@ -19,7 +19,7 @@ void st_destroy(sym_table_t * st) {
     for (int i = 0; i < st->sz, c != st->c; i++) {
         if (st->e[i].h != -1) {
             if (strcmp("aapol",st->e[i].t) == 0) aapol_free(st->e[i].v);
-            if (strcmp("llpol", st->e[i].t) == 0) llpol_free(st->e[i].v);
+            if (strcmp("llpol", st->e[i].t) == 0) btpol_free(st->e[i].v);
             if (strcmp("number", st->e[i].t) == 0) FREE(st->e[i].v);
             FREE(st->e[i].t);
             FREE(st->e[i].n);
@@ -46,7 +46,7 @@ void * st_insert(sym_table_t * st, char * n, void * v, char * t/*, freefux_t * f
     while (st->e[h].h != -1) {
         if (strcmp(n, st->e[h].n) == 0) {
             if (strcmp("aapol",st->e[h].t) == 0) aapol_free(st->e[h].v);
-            if (strcmp("llpol", st->e[h].t) == 0) llpol_free(st->e[h].v);
+            if (strcmp("llpol", st->e[h].t) == 0) btpol_free(st->e[h].v);
             if (strcmp("number", st->e[h].t) == 0) FREE(st->e[h].v);
             FREE(st->e[h].t);
             FREE(st->e[h].n);

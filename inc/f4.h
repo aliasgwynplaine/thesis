@@ -15,7 +15,7 @@ struct paire_critique_t {
 };
 
 pair_critique_t * aapol2paircritique(aapol_t * f1, aapol_t * f2);
-pair_critique_t * llpol2paircritique(llpol_t * f1, llpol_t * f2);
+pair_critique_t * btpol2paircritique(btpol_t * f1, btpol_t * f2);
 
 
 rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo);

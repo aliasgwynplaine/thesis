@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <math.h>
-#include "unittest_engine.h"
 #include "pol.h"
 #include "matrix.h"
 #include "tree.h"
 #include "sym_table.h"
+#include "unittest_engine.h"
 
 int tests_run    = 0;
 int failed_tests = 0;
@@ -122,111 +122,111 @@ static char * test_aapol_addterm_different_minor() {
 }
 
 
-static char * test_llpol_free_empty() {
+static char * test_btpol_free_empty() {
     int n = 4;
-    llpol_t * test = llpol_create(n);
-    llpol_free(test);
+    btpol_t * test = btpol_create(n);
+    btpol_free(test);
 
     return 0;
 }
 
 
-static char * test_llpol_addterm_equals() {
+static char * test_btpol_addterm_equals() {
     u8 n = 4;
-    llpol_t * llpol = llpol_create(n);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 1);
-    llpol = llpol_addterm(llpol, 1, 2);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, -1, 7);
+    btpol_t * btpol = btpol_create(n);
+    btpol = btpol_addterm(btpol, 1, 3);
+    btpol = btpol_addterm(btpol, 1, 3);
+    btpol = btpol_addterm(btpol, 1, 1);
+    btpol = btpol_addterm(btpol, 1, 2);
+    btpol = btpol_addterm(btpol, 1, 3);
+    btpol = btpol_addterm(btpol, 1, 7);
+    btpol = btpol_addterm(btpol, 1, 7);
+    btpol = btpol_addterm(btpol, -1, 7);
 
-    llpol_t * expectec_llpol = llpol_create(n);
-    llpol_addterm(expectec_llpol, 3, 3);
-    llpol_addterm(expectec_llpol, 1, 7);
-    llpol_addterm(expectec_llpol, 1, 2);
-    llpol_addterm(expectec_llpol, 1, 1);
+    btpol_t * expectec_btpol = btpol_create(n);
+    btpol_addterm(expectec_btpol, 3, 3);
+    btpol_addterm(expectec_btpol, 1, 7);
+    btpol_addterm(expectec_btpol, 1, 2);
+    btpol_addterm(expectec_btpol, 1, 1);
 
-    assert(llpol_hard_cmp(llpol, expectec_llpol) == 0, "llpol_addterm function is failing!");
+    assert(btpol_hard_cmp(btpol, expectec_btpol) == 0, "btpol_addterm function is failing!");
 
-    llpol_free(llpol);
-    llpol_free(expectec_llpol);
+    btpol_free(btpol);
+    btpol_free(expectec_btpol);
     return 0;
 }
 
 
-static char * test_llpol_addterm_different_major() {
+static char * test_btpol_addterm_different_major() {
     u8 n = 4;
-    llpol_t * llpol = llpol_create(n);
-    llpol = llpol_addterm(llpol, 1, 4);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 1);
-    llpol = llpol_addterm(llpol, 1, 2);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, -1, 7);
+    btpol_t * btpol = btpol_create(n);
+    btpol = btpol_addterm(btpol, 1, 4);
+    btpol = btpol_addterm(btpol, 1, 3);
+    btpol = btpol_addterm(btpol, 1, 1);
+    btpol = btpol_addterm(btpol, 1, 2);
+    btpol = btpol_addterm(btpol, 1, 3);
+    btpol = btpol_addterm(btpol, 1, 7);
+    btpol = btpol_addterm(btpol, 1, 7);
+    btpol = btpol_addterm(btpol, -1, 7);
 
-    llpol_t * other_llpol = llpol_create(n);
-    llpol_addterm(other_llpol, 3, 3);
-    llpol_addterm(other_llpol, 1, 7);
-    llpol_addterm(other_llpol, 1, 2);
-    llpol_addterm(other_llpol, 1, 1);
+    btpol_t * other_btpol = btpol_create(n);
+    btpol_addterm(other_btpol, 3, 3);
+    btpol_addterm(other_btpol, 1, 7);
+    btpol_addterm(other_btpol, 1, 2);
+    btpol_addterm(other_btpol, 1, 1);
 
-    assert(llpol_monomial_cmp(llpol, other_llpol) > 0, "llpol_addterm function is failing!");
+    assert(btpol_monomial_cmp(btpol, other_btpol) > 0, "btpol_addterm function is failing!");
 
-    llpol_free(llpol);
-    llpol_free(other_llpol);
+    btpol_free(btpol);
+    btpol_free(other_btpol);
     return 0;
 }
 
 
-static char * test_llpol_addterm_different_minor() {
+static char * test_btpol_addterm_different_minor() {
     u8 n = 4;
-    llpol_t * llpol = llpol_create(n);
-    llpol = llpol_addterm(llpol, 1, 4);
-    llpol = llpol_addterm(llpol, 1, 5);
-    llpol = llpol_addterm(llpol, 1, 1);
-    llpol = llpol_addterm(llpol, 1, 2);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, -1, 7);
+    btpol_t * btpol = btpol_create(n);
+    btpol = btpol_addterm(btpol, 1, 4);
+    btpol = btpol_addterm(btpol, 1, 5);
+    btpol = btpol_addterm(btpol, 1, 1);
+    btpol = btpol_addterm(btpol, 1, 2);
+    btpol = btpol_addterm(btpol, 1, 3);
+    btpol = btpol_addterm(btpol, 1, 7);
+    btpol = btpol_addterm(btpol, 1, 7);
+    btpol = btpol_addterm(btpol, -1, 7);
 
-    llpol_t * other_llpol = llpol_create(n);
-    llpol_addterm(other_llpol, 3, 10);
-    llpol_addterm(other_llpol, 1, 7);
-    llpol_addterm(other_llpol, 1, 2);
-    llpol_addterm(other_llpol, 1, 1);
+    btpol_t * other_btpol = btpol_create(n);
+    btpol_addterm(other_btpol, 3, 10);
+    btpol_addterm(other_btpol, 1, 7);
+    btpol_addterm(other_btpol, 1, 2);
+    btpol_addterm(other_btpol, 1, 1);
 
-    assert(llpol_monomial_cmp(llpol, other_llpol) < 0, "llpol_addterm function is failing!");
+    assert(btpol_monomial_cmp(btpol, other_btpol) < 0, "btpol_addterm function is failing!");
 
-    llpol_free(llpol);
-    llpol_free(other_llpol);
+    btpol_free(btpol);
+    btpol_free(other_btpol);
     return 0;
 }
 
 
-static char * test_llpol_cpy() {
+static char * test_btpol_cpy() {
     u8 n = 4;
-    llpol_t * llpol = llpol_create(n);
-    llpol = llpol_addterm(llpol, 100, 4);
-    llpol = llpol_addterm(llpol, 111, 5);
-    llpol = llpol_addterm(llpol, 423, 1);
-    llpol = llpol_addterm(llpol, 244, 2);
-    llpol = llpol_addterm(llpol, 533, 3);
-    llpol = llpol_addterm(llpol, 467, 7);
-    llpol = llpol_addterm(llpol, 123, 7);
+    btpol_t * btpol = btpol_create(n);
+    btpol = btpol_addterm(btpol, 100, 4);
+    btpol = btpol_addterm(btpol, 111, 5);
+    btpol = btpol_addterm(btpol, 423, 1);
+    btpol = btpol_addterm(btpol, 244, 2);
+    btpol = btpol_addterm(btpol, 533, 3);
+    btpol = btpol_addterm(btpol, 467, 7);
+    btpol = btpol_addterm(btpol, 123, 7);
 
-    llpol_t * cpyollpol = llpol_create(n);
-    llpol_cpy(cpyollpol, llpol);
+    btpol_t * cpyobtpol = btpol_create(n);
+    btpol_cpy(cpyobtpol, btpol);
 
-    assert(llpol_hard_cmp(cpyollpol, llpol) == 0, "original and copy must be equal!");
+    assert(btpol_hard_cmp(cpyobtpol, btpol) == 0, "original and copy must be equal!");
 
-    llpol_free(llpol);
-    llpol_free(cpyollpol);
+    btpol_free(btpol);
+    btpol_free(cpyobtpol);
 
     return 0;
 }
@@ -261,66 +261,66 @@ static char * test_aapol_cpy() {
 }
 
 
-static char * test_llpol_inplace_coef_multiply() {
+static char * test_btpol_inplace_coef_multiply() {
     u8 n = 7;
-    llpol_t * llpol = llpol_create(n);
-    llpol_addterm(llpol, 100, 4);
-    llpol_addterm(llpol, 111, 5);
-    llpol_addterm(llpol, 423, 1);
-    llpol_addterm(llpol, 244, 2);
-    llpol_addterm(llpol, 533, 3);
-    llpol_addterm(llpol, 467, 7);
-    llpol_addterm(llpol, 123, 7);
+    btpol_t * btpol = btpol_create(n);
+    btpol_addterm(btpol, 100, 4);
+    btpol_addterm(btpol, 111, 5);
+    btpol_addterm(btpol, 423, 1);
+    btpol_addterm(btpol, 244, 2);
+    btpol_addterm(btpol, 533, 3);
+    btpol_addterm(btpol, 467, 7);
+    btpol_addterm(btpol, 123, 7);
 
-    llpol_t * expected_llpol = llpol_create(n);
-    llpol_addterm(expected_llpol, 53.5 * 100, 4);
-    llpol_addterm(expected_llpol, 53.5 * 111, 5);
-    llpol_addterm(expected_llpol, 53.5 * 423, 1);
-    llpol_addterm(expected_llpol, 53.5 * 244, 2);
-    llpol_addterm(expected_llpol, 53.5 * 533, 3);
-    llpol_addterm(expected_llpol, 53.5 * 467, 7);
-    llpol_addterm(expected_llpol, 53.5 * 123, 7);
+    btpol_t * expected_btpol = btpol_create(n);
+    btpol_addterm(expected_btpol, 53.5 * 100, 4);
+    btpol_addterm(expected_btpol, 53.5 * 111, 5);
+    btpol_addterm(expected_btpol, 53.5 * 423, 1);
+    btpol_addterm(expected_btpol, 53.5 * 244, 2);
+    btpol_addterm(expected_btpol, 53.5 * 533, 3);
+    btpol_addterm(expected_btpol, 53.5 * 467, 7);
+    btpol_addterm(expected_btpol, 53.5 * 123, 7);
 
-    llpol_inplace_coef_multiply(llpol, 53.5);
-    assert(llpol_hard_cmp(llpol, expected_llpol) == 0, "llpol and expected pol must be equal!");
+    btpol_inplace_coef_multiply(btpol, 53.5);
+    assert(btpol_hard_cmp(btpol, expected_btpol) == 0, "btpol and expected pol must be equal!");
 
-    llpol_inplace_coef_multiply(llpol, 0.5);
-    assert(llpol_hard_cmp(llpol, expected_llpol) != 0, "llpol and expected pol must be different!");
+    btpol_inplace_coef_multiply(btpol, 0.5);
+    assert(btpol_hard_cmp(btpol, expected_btpol) != 0, "btpol and expected pol must be different!");
 
-    llpol_free(llpol);
-    llpol_free(expected_llpol);
+    btpol_free(btpol);
+    btpol_free(expected_btpol);
 
     return 0;
 }
 
 
-static char * test_llpol_coef_multiply() {
+static char * test_btpol_coef_multiply() {
     u8 n = 7;
-    llpol_t * llpol = llpol_create(n);
-    llpol_addterm(llpol, 100, 4);
-    llpol_addterm(llpol, 111, 5);
-    llpol_addterm(llpol, 423, 1);
-    llpol_addterm(llpol, 244, 2);
-    llpol_addterm(llpol, 533, 3);
-    llpol_addterm(llpol, 467, 7);
-    llpol_addterm(llpol, 123, 7);
+    btpol_t * btpol = btpol_create(n);
+    btpol_addterm(btpol, 100, 4);
+    btpol_addterm(btpol, 111, 5);
+    btpol_addterm(btpol, 423, 1);
+    btpol_addterm(btpol, 244, 2);
+    btpol_addterm(btpol, 533, 3);
+    btpol_addterm(btpol, 467, 7);
+    btpol_addterm(btpol, 123, 7);
 
-    llpol_t * expected_llpol = llpol_create(n);
-    llpol_addterm(expected_llpol, 23.5 * 100, 4);
-    llpol_addterm(expected_llpol, 23.5 * 111, 5);
-    llpol_addterm(expected_llpol, 23.5 * 423, 1);
-    llpol_addterm(expected_llpol, 23.5 * 244, 2);
-    llpol_addterm(expected_llpol, 23.5 * 533, 3);
-    llpol_addterm(expected_llpol, 23.5 * 467, 7);
-    llpol_addterm(expected_llpol, 23.5 * 123, 7);
+    btpol_t * expected_btpol = btpol_create(n);
+    btpol_addterm(expected_btpol, 23.5 * 100, 4);
+    btpol_addterm(expected_btpol, 23.5 * 111, 5);
+    btpol_addterm(expected_btpol, 23.5 * 423, 1);
+    btpol_addterm(expected_btpol, 23.5 * 244, 2);
+    btpol_addterm(expected_btpol, 23.5 * 533, 3);
+    btpol_addterm(expected_btpol, 23.5 * 467, 7);
+    btpol_addterm(expected_btpol, 23.5 * 123, 7);
 
-    llpol_t * result = llpol_coef_multiply(llpol, 23.5);
+    btpol_t * result = btpol_coef_multiply(btpol, 23.5);
 
-    assert(llpol_hard_cmp(result, expected_llpol) == 0, "llpol_coef_multiply is failing!");
+    assert(btpol_hard_cmp(result, expected_btpol) == 0, "btpol_coef_multiply is failing!");
 
-    llpol_free(llpol);
-    llpol_free(expected_llpol);
-    llpol_free(result);
+    btpol_free(btpol);
+    btpol_free(expected_btpol);
+    btpol_free(result);
 
     return 0;
 }
@@ -628,27 +628,27 @@ static char * test_aapol_list_sort() {
 }
 
 
-static char * test_llpol_list_sort() {
+static char * test_btpol_list_sort() {
     assert(1!=1, "todo");
     return 0;
 }
 
 
-static char * test_str2llpol() {
+static char * test_str2btpol() {
     int n = 4;
     char * var_lst[] = {"x", "y", "z", "w"};
-    llpol_t * result = str2llpol("x^3 - 23 * x^2*y - 2 *x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
-    llpol_t * expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 1, 844424930131968);
-    llpol_addterm(expected_result, -23, 562954248388608);
-    llpol_addterm(expected_result, -2, 281479271874560);
-    llpol_addterm(expected_result, 5, 281474976710656);
-    llpol_addterm(expected_result, 1, 5);
-    llpol_addterm(expected_result, 10, 0);
-    assert(llpol_hard_cmp(result, expected_result) == 0, "str2llpol is not parsing well");
+    btpol_t * result = str2btpol("x^3 - 23 * x^2*y - 2 *x*y*z^3 + 5*x + 10 + w^5", var_lst, n);
+    btpol_t * expected_result = btpol_create(n);
+    btpol_addterm(expected_result, 1, 844424930131968);
+    btpol_addterm(expected_result, -23, 562954248388608);
+    btpol_addterm(expected_result, -2, 281479271874560);
+    btpol_addterm(expected_result, 5, 281474976710656);
+    btpol_addterm(expected_result, 1, 5);
+    btpol_addterm(expected_result, 10, 0);
+    assert(btpol_hard_cmp(result, expected_result) == 0, "str2btpol is not parsing well");
 
-    llpol_free(result);
-    llpol_free(expected_result);
+    btpol_free(result);
+    btpol_free(expected_result);
 
     return 0;
 }
@@ -909,16 +909,16 @@ static char * test_sym_table_insert() {
     sym_table_t * st = st_create(127);
     char * var_lst[] = {"x", "y", "z", "w"};
     aapol_t * a = str2aapol("x^3 - 23.01 * x^2*y - 2*x*y*z^3 + 5*x + 171.0 + w^5", var_lst, n);
-    llpol_t * b = str2llpol("x^3 - 23.01 * x^2*y - 2*x*y*z^3 + 5*x + 171.0 + w^5", var_lst, n);
+    btpol_t * b = str2btpol("x^3 - 23.01 * x^2*y - 2*x*y*z^3 + 5*x + 171.0 + w^5", var_lst, n);
     float * c = malloc(sizeof(*b));
     *c = 4.0;
     st_insert(st, "a", (void *)a, "aapol");
-    st_insert(st, "b", (void *)b, "llpol");
+    st_insert(st, "b", (void *)b, "btpol");
     st_insert(st, "c", (void *)c, "number");
     print_sym_table(st);
     st_destroy(st);
     aapol_free(a);
-    llpol_free(b);
+    btpol_free(b);
     FREE(c);
 
     return 0;
@@ -982,14 +982,14 @@ static void all_tests() {
     run_unittest(test_packexp_with_zero);
     run_unittest(test_aapol_addterm_equals);
     run_unittest(test_aapol_addterm_different_minor);
-    run_unittest(test_llpol_free_empty);
-    run_unittest(test_llpol_addterm_equals);
-    run_unittest(test_llpol_addterm_different_major);
-    run_unittest(test_llpol_addterm_different_minor);
+    run_unittest(test_btpol_free_empty);
+    run_unittest(test_btpol_addterm_equals);
+    run_unittest(test_btpol_addterm_different_major);
+    run_unittest(test_btpol_addterm_different_minor);
     run_unittest(test_aapol_cpy);
-    run_unittest(test_llpol_cpy);
-    run_unittest(test_llpol_inplace_coef_multiply);
-    run_unittest(test_llpol_coef_multiply);
+    run_unittest(test_btpol_cpy);
+    run_unittest(test_btpol_inplace_coef_multiply);
+    run_unittest(test_btpol_coef_multiply);
     run_unittest(test_aapol_coef_multiply);
     run_unittest(test_aapol_inplace_coef_multiply);
     //run_unittest(test_list_o_aapol2smatrix_transformation);
@@ -999,7 +999,7 @@ static void all_tests() {
     run_unittest(test_aapol_multiply);
     run_unittest(test_exp_norm);
     //run_unittest(test_csr_load);
-    run_unittest(test_str2llpol);
+    run_unittest(test_str2btpol);
     //run_unittest(test_str2aapol);
     run_unittest(test_str2aapol_name_error);
     run_unittest(test_str2aapol_syntax_error);

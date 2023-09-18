@@ -5,7 +5,7 @@ void ee_free(ee_t * ee) {
     if (ee) {
         if (ee->v) {
             if (strcmp(ee->t, "aapol") == 0) aapol_free(ee->v);
-            else if (strcmp(ee->t, "llpol") == 0) llpol_free(ee->v);
+            else if (strcmp(ee->t, "llpol") == 0) btpol_free(ee->v);
             else FREE(ee->v);
         }
         
@@ -38,7 +38,7 @@ void print_var(sym_table_t * st, char * var) {
     if (!entry) printf("undefined variable: %s\n", var);
     else {
         if (strcmp(entry->t, "aapol") == 0) aapol_print((aapol_t *)entry->v);
-        if (strcmp(entry->t, "llpol") == 0) llpol_print((llpol_t *)entry->v);
+        if (strcmp(entry->t, "llpol") == 0) btpol_print((btpol_t *)entry->v);
         if (strcmp(entry->t, "number") == 0) printf("%f\n", *(float *)entry->v);
     } 
 }
@@ -54,8 +54,8 @@ ee_t * resolve_var_as_expression(sym_table_t * st, char * var) {
         ee->t = strdup(entry->t);
         
         if (strcmp(ee->t, "llpol") == 0) {
-            ee->v = llpol_create(((aapol_t *)entry->v)->nvar);
-            llpol_cpy(ee->v, entry->v);
+            ee->v = btpol_create(((aapol_t *)entry->v)->nvar);
+            btpol_cpy(ee->v, entry->v);
         } else if (strcmp(ee->t, "aapol") == 0) {
             ee->v = aapol_create(((aapol_t *)entry->v)->nvar);
             aapol_cpy(ee->v, entry->v);
@@ -183,7 +183,7 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
 
 void ee_print(ee_t * ee) {
     if (strcmp("number", ee->t) == 0) printf("%f\n", *(float *)ee->v);
-    if (strcmp("llpol", ee->t) == 0) llpol_print(ee->v);
+    if (strcmp("llpol", ee->t) == 0) btpol_print(ee->v);
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
 

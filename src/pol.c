@@ -146,15 +146,15 @@ void aapol_sort(aapol_t * aapol) {
 }
 
 
-int llpol_quicksort_partition(llpol_t ** lollpol, int p, int r) {
+int llpol_quicksort_partition(btpol_t ** lollpol, int p, int r) {
     int i, cmp;
-    llpol_t * x = lollpol[r];
-    llpol_t * aux;
+    btpol_t * x = lollpol[r];
+    btpol_t * aux;
     i = p - 1;
 
     for (int j = p; j < r; j++) {
         //cmp = exp_cmp(lollpol[j]->root->exp, x->root->exp, x->nvar);
-        cmp = llpol_monomial_cmp(lollpol[j], x);
+        cmp = btpol_monomial_cmp(lollpol[j], x);
         if (cmp <= 0) { // todo: implement other comparition methods
             i++;
             aux = lollpol[i];
@@ -170,7 +170,7 @@ int llpol_quicksort_partition(llpol_t ** lollpol, int p, int r) {
     return i + 1;
 }
 
-void llpol_list_quicksort(llpol_t ** lollpol, int p, int r) {
+void llpol_list_quicksort(btpol_t ** lollpol, int p, int r) {
     if (p < r) {
         int q = llpol_quicksort_partition(lollpol, p, r);
         llpol_list_quicksort(lollpol, p, q - 1);
@@ -180,7 +180,7 @@ void llpol_list_quicksort(llpol_t ** lollpol, int p, int r) {
 
 
 
-void llpol_list_sort(llpol_t ** lollpol, int sz) {
+void btpol_list_sort(btpol_t ** lollpol, int sz) {
     llpol_list_quicksort(lollpol, 0, sz - 1);
 }
 
@@ -526,17 +526,17 @@ term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo) {
 }
 
 
-int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
+int btpol_monomial_cmp(btpol_t * a, btpol_t * b) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot cmp polynomials of different nvar");
 
-    lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
+    bpol_t ** stacka = malloc(sizeof(bpol_t *) * a->sz);
     CHECKPTR(stacka);
-    lpol_t ** stackb = malloc(sizeof(lpol_t *) * b->sz);
+    bpol_t ** stackb = malloc(sizeof(bpol_t *) * b->sz);
     CHECKPTR(stackb);
     int ha = 0;
     int hb = 0;
-    lpol_t * nodea = a->root;
-    lpol_t * nodeb = b->root;
+    bpol_t * nodea = a->root;
+    bpol_t * nodeb = b->root;
     int cmp;
 
     while(1) {
@@ -572,19 +572,19 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b) {
     return ha - hb;
 }
 
-int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
+int btpol_hard_cmp(btpol_t * a, btpol_t * b) {
     if (a == NULL || b == NULL) return 1;
     if (a->nvar != b->nvar) return 1;
     if (a->sz != b->sz) return 1;
 
-    lpol_t ** stacka = malloc(sizeof(lpol_t *) * a->sz);
+    bpol_t ** stacka = malloc(sizeof(bpol_t *) * a->sz);
     CHECKPTR(stacka);
-    lpol_t ** stackb = malloc(sizeof(lpol_t *) * b->sz);
+    bpol_t ** stackb = malloc(sizeof(bpol_t *) * b->sz);
     CHECKPTR(stackb);
     int ha = 0;
     int hb = 0;
-    lpol_t * nodea = a->root;
-    lpol_t * nodeb = b->root;
+    bpol_t * nodea = a->root;
+    bpol_t * nodeb = b->root;
     int cmp;
 
     while(1) {
@@ -662,8 +662,8 @@ term_t * term_malloc(size_t sz) {
  * and the first pointed l and r will 
  * be set to NULL
 */
-lpol_t * lpol_malloc(size_t sz) {
-    lpol_t * lpol = malloc(sz);
+bpol_t * bpol_malloc(size_t sz) {
+    bpol_t * lpol = malloc(sz);
     lpol->coef = 0;
     lpol->exp  = 0;
     lpol->l    = NULL;
@@ -678,12 +678,12 @@ lpol_t * lpol_malloc(size_t sz) {
  * the end. 
  * 
  * @param n number of variables
- * @return llpol_t* pointer with head pointing
+ * @return btpol_t* pointer with head pointing
  * to NULL, nvars equals n and sz equals to 0
  */
-llpol_t * llpol_create(u8 n) {
+btpol_t * btpol_create(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
-    llpol_t * llpol = malloc(sizeof(llpol_t));
+    btpol_t * llpol = malloc(sizeof(btpol_t));
     CHECKPTR(llpol);
     llpol->root = NULL;
     llpol->nvar = n;
@@ -693,9 +693,9 @@ llpol_t * llpol_create(u8 n) {
 }
 
 
-term_t * llpol_head(llpol_t * llpol) {
+term_t * btpol_head(btpol_t * llpol) {
     term_t * term = term_malloc(sizeof(term_t));
-    lpol_t * x = llpol->root;
+    bpol_t * x = llpol->root;
 
     while (x->r != NULL) x = x->r;
 
@@ -718,7 +718,7 @@ term_t * llpol_head(llpol_t * llpol) {
  * term of polynomial
  */
 
-llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
+btpol_t * btpol_addterm(btpol_t * llpol, COEFTYPE coef, u64 exp) {
     if (!llpol) {
         dbgerr("pol is null");
         exit(EXIT_FAILURE);
@@ -726,9 +726,9 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     
     if (coef == 0) return llpol;
 
-    lpol_t * curr = llpol->root;
-    lpol_t * aux  = NULL;
-    lpol_t * newterm;
+    bpol_t * curr = llpol->root;
+    bpol_t * aux  = NULL;
+    bpol_t * newterm;
 
     while (curr != NULL) {
         aux = curr;
@@ -737,7 +737,7 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
         else curr = curr->r;
     }
 
-    newterm = lpol_malloc(sizeof(lpol_t));
+    newterm = bpol_malloc(sizeof(bpol_t));
     CHECKPTR(newterm);
     newterm->coef = coef;
     newterm->exp  = exp;
@@ -756,29 +756,39 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
 }
 
 
-llpol_t  * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
+btpol_t  * btpol_add(btpol_t * a, COEFTYPE alpha, btpol_t * b, COEFTYPE betha) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot add polynomials of different nvar");
     
     
     if (alpha == 0 && betha != 0) {
-        return llpol_coef_multiply(b, betha);
+        return btpol_coef_multiply(b, betha);
     }
 
     if (betha == 0 && alpha != 0) {
-        return llpol_coef_multiply(a, alpha);
+        return btpol_coef_multiply(a, alpha);
     }
 
-    llpol_t * res = llpol_create(a->nvar);
-    /* todo */
+    btpol_t * res = btpol_create(a->nvar);
+    int i, j, k; i = j = k = 0;
+
+    bpol_t * pa = a->root;
+    bpol_t * pb = b->root;
+
+    while (pa != NULL && pb != NULL) {
+        if (exp_cmp(pa->exp, pb->exp, a->nvar, lex) < 0) {
+            btpol_addterm(res, pa->coef, pa->exp);
+        }
+    }
+
     return res;
 }
 
 
-llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
-    llpol_t * res = llpol_create(a->nvar);
-    lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
+btpol_t * btpol_coef_multiply(btpol_t *a, COEFTYPE alpha) {
+    btpol_t * res = btpol_create(a->nvar);
+    bpol_t ** stack = malloc(sizeof(bpol_t) * a->sz);
     CHECKPTR(stack);
-    lpol_t * node = a->root;
+    bpol_t * node = a->root;
     int h = 0;
 
     while (1) {
@@ -790,7 +800,7 @@ llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
         if (h == 0) break;
 
         node = stack[--h];
-        llpol_addterm(res, alpha * node->coef, node->exp);
+        btpol_addterm(res, alpha * node->coef, node->exp);
         node = node->l;
     }
 
@@ -800,10 +810,10 @@ llpol_t * llpol_coef_multiply(llpol_t *a, COEFTYPE alpha) {
 }
 
 
-llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
-    lpol_t ** stack = malloc(sizeof(lpol_t) * a->sz);
+btpol_t * btpol_inplace_coef_multiply(btpol_t * a, COEFTYPE alpha) {
+    bpol_t ** stack = malloc(sizeof(bpol_t) * a->sz);
     CHECKPTR(stack);
-    lpol_t * node = a->root;
+    bpol_t * node = a->root;
     int h = 0;
 
     while (1) {
@@ -824,7 +834,7 @@ llpol_t * llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
     return a;
 }
 
-llpol_t * llpol_multiply(llpol_t *a, llpol_t *b) {
+btpol_t * btpol_multiply(btpol_t *a, btpol_t *b) {
     return NULL;
 }
 
@@ -832,10 +842,10 @@ llpol_t * llpol_multiply(llpol_t *a, llpol_t *b) {
 /// @param dst pointer to the dest llpol.
 /// @param src pointer to the src llpol.
 /// @return pointer to the dest llpol
-llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
-    lpol_t ** stack = malloc(sizeof(lpol_t *) * src->sz);
+btpol_t * btpol_cpy(btpol_t * dst, btpol_t * src) {
+    bpol_t ** stack = malloc(sizeof(bpol_t *) * src->sz);
     CHECKPTR(stack);
-    lpol_t * node = src->root;
+    bpol_t * node = src->root;
     int h = 0;
     
     while (1) {
@@ -847,7 +857,7 @@ llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
         if (h == 0) break;
 
         node = stack[--h];
-        llpol_addterm(dst, node->coef, node->exp);
+        btpol_addterm(dst, node->coef, node->exp);
         node = node->l;
     }
     
@@ -855,7 +865,7 @@ llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
     return dst;
 }
 
-void printlpol(lpol_t * lpol, u8 nvar) {
+void printlpol(bpol_t * lpol, u8 nvar) {
     u64 * e = exp_unpack(lpol->exp, nvar);
     if (lpol->coef >= 0) printf("+ ");
     if (lpol->exp == 0) {
@@ -873,12 +883,12 @@ void printlpol(lpol_t * lpol, u8 nvar) {
     FREE(e);
 }
 
-void inorderprintllpol(lpol_t * root, u8 nvar) {
+void inorderprintbtpol(bpol_t * root, u8 nvar) {
     if (root == NULL) return;
     
-    inorderprintllpol(root->r, nvar);
+    inorderprintbtpol(root->r, nvar);
     printlpol(root, nvar);
-    inorderprintllpol(root->l, nvar);
+    inorderprintbtpol(root->l, nvar);
     
 }
 
@@ -1029,11 +1039,11 @@ static term_t * accept_term(parser_ctx_t * ctx) {
     return term;
 }
 
-llpol_t * str2llpol(const char * llpol_str, char ** var_lst, u8 nvar) {
-    llpol_t * llpol;
+btpol_t * str2btpol(const char * llpol_str, char ** var_lst, u8 nvar) {
+    btpol_t * llpol;
     term_t  * term;
     parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
-    llpol        = llpol_create(nvar);
+    llpol        = btpol_create(nvar);
     ctx->nvar    = nvar;
     ctx->pol_str_head = llpol_str;
     ctx->pol_str = llpol_str;
@@ -1046,18 +1056,18 @@ llpol_t * str2llpol(const char * llpol_str, char ** var_lst, u8 nvar) {
         if (ctx->status == NameError) {
             FREE(ctx);
             FREE(term);
-            llpol_free(llpol);
+            btpol_free(llpol);
             return NULL;
         }
 
         if (ctx->status == SyntaxError) {
             FREE(ctx);
             FREE(term);
-            llpol_free(llpol);
+            btpol_free(llpol);
             return NULL;
         }
 
-        llpol_addterm(llpol, term->coef, term->exp);
+        btpol_addterm(llpol, term->coef, term->exp);
         FREE(term);
     }
 
@@ -1119,14 +1129,14 @@ void term_print(term_t * pol) {
     printf("coef: %f exp: %ld\n", pol->coef, pol->exp);
 }
 
-void llpol_print(llpol_t * llpol) {
+void btpol_print(btpol_t * llpol) {
     //debug("checking if pol is null");
     if (llpol == NULL) {
         printf("pol is  empty!\n");
         return;
     }
 
-    inorderprintllpol(llpol->root, llpol->nvar);
+    inorderprintbtpol(llpol->root, llpol->nvar);
     printf("\n");
 }
 
@@ -1160,7 +1170,7 @@ void aapol_print(aapol_t * aapol) {
     printf("\n");
 }
 
-char * llpol_repr(llpol_t * llpol) {
+char * btpol_repr(btpol_t * llpol) {
     char * repr = malloc(REPR_MAX_SZ * sizeof(*repr));
 
 }
@@ -1236,14 +1246,14 @@ char * aapol_repr(aapol_t * aapol) {
  * 
  * @param pol head of the ll
  */
-void lpol_free(lpol_t * pol) {
-    if (pol->l != NULL) lpol_free(pol->l);
-    if (pol->r != NULL) lpol_free(pol->r);
+void bpol_free(bpol_t * pol) {
+    if (pol->l != NULL) bpol_free(pol->l);
+    if (pol->r != NULL) bpol_free(pol->r);
     FREE(pol);
 }
 
-void llpol_free(llpol_t * llpol) {
-    if (llpol->root != NULL) lpol_free(llpol->root);
+void btpol_free(btpol_t * llpol) {
+    if (llpol->root != NULL) bpol_free(llpol->root);
     FREE(llpol);
 }
 
