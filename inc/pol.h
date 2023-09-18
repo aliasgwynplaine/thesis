@@ -14,8 +14,12 @@
 
 typedef struct term_t term_t;
 typedef struct bpol_t bpol_t;
+typedef struct lpol_t lpol_t;
 /* from brandt's. */
 typedef struct aapol_t aapol_t; // alternated array
+typedef struct llpol_t llpol_t; // linked list pol
+
+/* experimental */
 typedef struct btpol_t btpol_t; // tree-like pol struct
 
 
@@ -30,6 +34,18 @@ enum MONOMIAL_ORDER {
 struct term_t {
     COEFTYPE  coef; // could be an AP num
     u64       exp;  // packed exponent
+};
+
+struct lpol_t {
+    COEFTYPE coef;
+    u64      exp;
+    lpol_t * nxt;
+};
+
+struct llpol_t {
+    u8         nvar;
+    u16          sz;
+    lpol_t  * first;
 };
 
 struct bpol_t {   // pol type as btree
@@ -54,13 +70,16 @@ struct btpol_t {
 
 
 /* memory handling */
-term_t  *  term_malloc(size_t sz);
+term_t  * term_malloc(size_t);
 
-/**
- * @brief
-*/
+lpol_t  * lpol_malloc(size_t);
+void      lpol_free(lpol_t *);
+
 bpol_t  * bpol_malloc(size_t sz);
 void      bpol_free(bpol_t *);
+
+llpol_t * llpol_create(u8);
+void      llpol_free(llpol_t *);
 
 btpol_t * btpol_create(u8 n);
 void      btpol_free(btpol_t *);
@@ -92,13 +111,28 @@ aapol_t  * str2aapol(const char *, char **, u8);
 
 /* pretty printing */
 
-void term_print(term_t * pol);
-void btpol_print(btpol_t * btpol);
-void aapol_print(aapol_t * aapol);
-char * btpol_repr(btpol_t * btpol);
-char * aapol_repr(aapol_t * aapol);
+void term_print(term_t *);
+void llpol_print(llpol_t *); // todo
+void btpol_print(btpol_t *);
+void aapol_print(aapol_t *);
+char * llpol_repr(llpol_t *); // todo
+char * btpol_repr(btpol_t *);
+char * aapol_repr(aapol_t *);
 
 /* define polynomial operations here */
+
+lpol_t  * llpol_head(llpol_t *); 
+llpol_t * llpol_addterm(llpol_t *, COEFTYPE, u64); // todo: test
+llpol_t * llpol_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE); // todo: test
+void      llpol_inplace_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE); // todo
+llpol_t * llpol_coef_multiply(llpol_t *, COEFTYPE); // todo
+void      llpol_inplace_coef_multiply(llpol_t *, COEFTYPE); // todo
+llpol_t * llpol_multiply(llpol_t * , llpol_t *); // todo
+llpol_t * llpol_inplace_multiply(llpol_t *, llpol_t *); // todo
+int       llpol_hard_cmp(llpol_t * a, llpol_t * b); // todo
+llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src); // todo: test
+lpol_t  * llpol_head_lcm(llpol_t * l1, llpol_t * l2, enum MONOMIAL_ORDER mo); // todo
+
 
 term_t   * btpol_head(btpol_t *);
 btpol_t  * btpol_addterm(btpol_t * btpol, COEFTYPE coef, u64 exp);

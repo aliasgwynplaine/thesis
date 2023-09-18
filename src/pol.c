@@ -146,42 +146,42 @@ void aapol_sort(aapol_t * aapol) {
 }
 
 
-int llpol_quicksort_partition(btpol_t ** lollpol, int p, int r) {
+int btpol_quicksort_partition(btpol_t ** lobtpol, int p, int r) {
     int i, cmp;
-    btpol_t * x = lollpol[r];
+    btpol_t * x = lobtpol[r];
     btpol_t * aux;
     i = p - 1;
 
     for (int j = p; j < r; j++) {
-        //cmp = exp_cmp(lollpol[j]->root->exp, x->root->exp, x->nvar);
-        cmp = btpol_monomial_cmp(lollpol[j], x);
+        //cmp = exp_cmp(lobtpol[j]->root->exp, x->root->exp, x->nvar);
+        cmp = btpol_monomial_cmp(lobtpol[j], x);
         if (cmp <= 0) { // todo: implement other comparition methods
             i++;
-            aux = lollpol[i];
-            lollpol[i] = lollpol[j];
-            lollpol[j] = aux;
+            aux = lobtpol[i];
+            lobtpol[i] = lobtpol[j];
+            lobtpol[j] = aux;
         }
     }
 
-    aux = lollpol[i + 1];
-    lollpol[i + 1] = lollpol[r];
-    lollpol[r] = aux;
+    aux = lobtpol[i + 1];
+    lobtpol[i + 1] = lobtpol[r];
+    lobtpol[r] = aux;
 
     return i + 1;
 }
 
-void llpol_list_quicksort(btpol_t ** lollpol, int p, int r) {
+void btpol_list_quicksort(btpol_t ** lobtpol, int p, int r) {
     if (p < r) {
-        int q = llpol_quicksort_partition(lollpol, p, r);
-        llpol_list_quicksort(lollpol, p, q - 1);
-        llpol_list_quicksort(lollpol, q + 1, r);
+        int q = btpol_quicksort_partition(lobtpol, p, r);
+        btpol_list_quicksort(lobtpol, p, q - 1);
+        btpol_list_quicksort(lobtpol, q + 1, r);
     }
 }
 
 
 
-void btpol_list_sort(btpol_t ** lollpol, int sz) {
-    llpol_list_quicksort(lollpol, 0, sz - 1);
+void btpol_list_sort(btpol_t ** lobtpol, int sz) {
+    btpol_list_quicksort(lobtpol, 0, sz - 1);
 }
 
 
@@ -646,6 +646,23 @@ term_t * term_malloc(size_t sz) {
     return term;
 }
 
+lpol_t * lpol_malloc(size_t) {
+    lpol_t * lpol;
+    lpol = malloc(sizeof(*lpol));
+    CHECKPTR(lpol);
+    lpol->coef = 0;
+    lpol->exp  = 0;
+    lpol->nxt  = NULL;
+
+    return lpol;
+}
+
+
+void lpol_free(lpol_t * lpol) {
+    if (lpol->nxt != NULL) lpol_free(lpol->nxt);
+    FREE(lpol);
+}
+
 /**
  * @brief works as malloc but sets 
  * first coef and exp to 0 and, l and
@@ -672,9 +689,26 @@ bpol_t * bpol_malloc(size_t sz) {
     return lpol;
 }
 
+
+llpol_t * llpol_create(u8 n) {
+    llpol_t * llpol = malloc(sizeof(*llpol));
+    CHECKPTR(llpol);
+    llpol->first = NULL;
+    llpol->nvar  = n;
+    llpol->sz    = 0;
+
+    return llpol;
+}
+
+void llpol_free(llpol_t * llpol) {
+    if (llpol->first != NULL) lpol_free(llpol->first);
+    FREE(llpol);
+}
+
+
 /**
  * @brief creates a tree like pol struct in n
- * vars. It's necesary to call freellpol_t at
+ * vars. It's necesary to call freebtpol_t at
  * the end. 
  * 
  * @param n number of variables
@@ -683,19 +717,152 @@ bpol_t * bpol_malloc(size_t sz) {
  */
 btpol_t * btpol_create(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
-    btpol_t * llpol = malloc(sizeof(btpol_t));
-    CHECKPTR(llpol);
-    llpol->root = NULL;
-    llpol->nvar = n;
-    llpol->sz   = 0;
+    btpol_t * btpol = malloc(sizeof(btpol_t));
+    CHECKPTR(btpol);
+    btpol->root = NULL;
+    btpol->nvar = n;
+    btpol->sz   = 0;
+
+    return btpol;
+}
+
+
+lpol_t  * llpol_head(llpol_t * llpol) {
+    return llpol->first;
+}
+
+
+llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
+    
+    lpol_t ** indirect = &(llpol->first);
+    lpol_t *  newterm;
+
+    while ((*indirect) != NULL) {
+        int cmp = exp_lex_cmp((*indirect)->exp, exp, llpol->nvar);
+
+        if (cmp < 0) {
+            newterm = lpol_malloc(sizeof(*newterm));
+            newterm->coef = coef;
+            newterm->exp  = exp;
+            newterm->nxt  = (*indirect);
+            (*indirect)   = newterm;
+            llpol->sz++;
+
+            return llpol;
+        } else if (cmp > 0) {
+            indirect = &(*indirect)->nxt;
+        } else {
+            (*indirect)->coef += coef;
+
+            return llpol;
+        }
+    }
+    
+    *indirect = lpol_malloc(sizeof(*newterm));
+    (*indirect)->coef = coef;
+    (*indirect)->exp  = exp;
+    llpol->sz++;
 
     return llpol;
 }
 
 
-term_t * btpol_head(btpol_t * llpol) {
+
+llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
+    if (a->nvar != b->nvar) SAYNEXITWERROR("pols with diferent nvars");
+
+    if (a == NULL || b == NULL) SAYNEXITWERROR("NULL pointer received!");
+
+    if (a->sz == 0 || alpha == 0) 
+        return llpol_cpy(a, llpol_coef_multiply(b, betha));
+
+    if (b->sz == 0 || betha == 0) 
+        return llpol_cpy(b, llpol_coef_multiply(a, alpha));
+
+    llpol_t * c = llpol_create(a->nvar);
+    lpol_t * pa = a->first;
+    lpol_t * pb = b->first;
+    lpol_t ** indirect = &c->first;
+
+    while (pa != NULL && pb != NULL) {
+        int cmp = exp_lex_cmp(pa->exp, pb->exp, a->nvar);
+        *indirect = lpol_malloc(sizeof(**indirect));
+
+        if (cmp < 0) {
+            (*indirect)->coef = pb->coef;
+            (*indirect)->exp  = pb->exp;
+            pb = pb->nxt;
+        } else if (cmp > 0) {
+            (*indirect)->coef = pa->coef;
+            (*indirect)->exp  = pa->exp;
+            pa = pa->nxt;
+        } else {
+            (*indirect)->coef = pa->coef + pb->coef;
+            (*indirect)->exp  = pa->exp;
+            pa = pa->nxt;
+            pb = pb->nxt;
+        }
+
+        *indirect = &(*indirect)->nxt;
+    }
+
+    while (pa != NULL) {
+        *indirect = lpol_malloc(sizeof(**indirect));
+        (*indirect)->coef = pa->coef;
+        (*indirect)->exp  = pa->exp;
+        *indirect = &(*indirect)->nxt;
+        pa = pa->nxt;
+        
+    }
+
+    while (pb != NULL) {
+        *indirect = lpol_malloc(sizeof(**indirect));
+        (*indirect)->coef = pb->coef;
+        (*indirect)->exp  = pb->exp;
+        *indirect = &(*indirect)->nxt;
+        pb = pb->nxt;
+        
+    }
+
+    return c;
+}
+
+
+llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
+    if (a == NULL) SAYNEXITWERROR("null pol received");
+
+    llpol_t * llpol = llpol_create(a->nvar);
+
+    if (alpha != 0) {
+        lpol_t *  ps = a->first;
+        lpol_t ** pd = &llpol->first;
+        
+        while (ps != NULL) {
+            *pd = lpol_malloc(sizeof(**pd));
+            (*pd)->coef = alpha * ps->coef;
+            (*pd)->exp  = ps->exp;
+            ps = ps->nxt;
+            pd = &(*pd)->nxt;
+    }
+    }
+
+    return llpol;
+}
+
+
+llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
+    if (src == NULL) SAYNEXITWERROR("src is null");
+    if (src->first != NULL) lpol_free(src->first);
+
+    dst = llpol_coef_multiply(src, 1);
+
+    return dst;
+}
+
+
+term_t * btpol_head(btpol_t * btpol) {
     term_t * term = term_malloc(sizeof(term_t));
-    bpol_t * x = llpol->root;
+    bpol_t * x = btpol->root;
 
     while (x->r != NULL) x = x->r;
 
@@ -718,15 +885,15 @@ term_t * btpol_head(btpol_t * llpol) {
  * term of polynomial
  */
 
-btpol_t * btpol_addterm(btpol_t * llpol, COEFTYPE coef, u64 exp) {
-    if (!llpol) {
+btpol_t * btpol_addterm(btpol_t * btpol, COEFTYPE coef, u64 exp) {
+    if (!btpol) {
         dbgerr("pol is null");
         exit(EXIT_FAILURE);
     }
     
-    if (coef == 0) return llpol;
+    if (coef == 0) return btpol;
 
-    bpol_t * curr = llpol->root;
+    bpol_t * curr = btpol->root;
     bpol_t * aux  = NULL;
     bpol_t * newterm;
 
@@ -741,18 +908,18 @@ btpol_t * btpol_addterm(btpol_t * llpol, COEFTYPE coef, u64 exp) {
     CHECKPTR(newterm);
     newterm->coef = coef;
     newterm->exp  = exp;
-    llpol->sz++;
+    btpol->sz++;
 
-    if (aux == NULL) llpol->root = newterm;
+    if (aux == NULL) btpol->root = newterm;
     else if (exp < aux->exp) aux->l = newterm;
     else if (exp > aux->exp) aux->r = newterm;
     else {
         aux->coef += coef;
         FREE(newterm);
-        llpol->sz--;
+        btpol->sz--;
     }
 
-    return llpol;
+    return btpol;
 }
 
 
@@ -838,10 +1005,10 @@ btpol_t * btpol_multiply(btpol_t *a, btpol_t *b) {
     return NULL;
 }
 
-/// @brief make a copy of an llpol
-/// @param dst pointer to the dest llpol.
-/// @param src pointer to the src llpol.
-/// @return pointer to the dest llpol
+/// @brief make a copy of an btpol
+/// @param dst pointer to the dest btpol.
+/// @param src pointer to the src btpol.
+/// @return pointer to the dest btpol
 btpol_t * btpol_cpy(btpol_t * dst, btpol_t * src) {
     bpol_t ** stack = malloc(sizeof(bpol_t *) * src->sz);
     CHECKPTR(stack);
@@ -1039,14 +1206,14 @@ static term_t * accept_term(parser_ctx_t * ctx) {
     return term;
 }
 
-btpol_t * str2btpol(const char * llpol_str, char ** var_lst, u8 nvar) {
-    btpol_t * llpol;
+btpol_t * str2btpol(const char * btpol_str, char ** var_lst, u8 nvar) {
+    btpol_t * btpol;
     term_t  * term;
     parser_ctx_t * ctx = malloc(sizeof(parser_ctx_t));
-    llpol        = btpol_create(nvar);
+    btpol        = btpol_create(nvar);
     ctx->nvar    = nvar;
-    ctx->pol_str_head = llpol_str;
-    ctx->pol_str = llpol_str;
+    ctx->pol_str_head = btpol_str;
+    ctx->pol_str = btpol_str;
     ctx->var_lst = var_lst;
     ctx->status  = 0;
 
@@ -1056,24 +1223,24 @@ btpol_t * str2btpol(const char * llpol_str, char ** var_lst, u8 nvar) {
         if (ctx->status == NameError) {
             FREE(ctx);
             FREE(term);
-            btpol_free(llpol);
+            btpol_free(btpol);
             return NULL;
         }
 
         if (ctx->status == SyntaxError) {
             FREE(ctx);
             FREE(term);
-            btpol_free(llpol);
+            btpol_free(btpol);
             return NULL;
         }
 
-        btpol_addterm(llpol, term->coef, term->exp);
+        btpol_addterm(btpol, term->coef, term->exp);
         FREE(term);
     }
 
     FREE(ctx);
 
-    return llpol;
+    return btpol;
 }
 
 
@@ -1129,14 +1296,14 @@ void term_print(term_t * pol) {
     printf("coef: %f exp: %ld\n", pol->coef, pol->exp);
 }
 
-void btpol_print(btpol_t * llpol) {
+void btpol_print(btpol_t * btpol) {
     //debug("checking if pol is null");
-    if (llpol == NULL) {
+    if (btpol == NULL) {
         printf("pol is  empty!\n");
         return;
     }
 
-    inorderprintbtpol(llpol->root, llpol->nvar);
+    inorderprintbtpol(btpol->root, btpol->nvar);
     printf("\n");
 }
 
@@ -1170,7 +1337,7 @@ void aapol_print(aapol_t * aapol) {
     printf("\n");
 }
 
-char * btpol_repr(btpol_t * llpol) {
+char * btpol_repr(btpol_t * btpol) {
     char * repr = malloc(REPR_MAX_SZ * sizeof(*repr));
 
 }
@@ -1252,9 +1419,9 @@ void bpol_free(bpol_t * pol) {
     FREE(pol);
 }
 
-void btpol_free(btpol_t * llpol) {
-    if (llpol->root != NULL) bpol_free(llpol->root);
-    FREE(llpol);
+void btpol_free(btpol_t * btpol) {
+    if (btpol->root != NULL) bpol_free(btpol->root);
+    FREE(btpol);
 }
 
 
