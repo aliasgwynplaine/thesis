@@ -112,7 +112,7 @@ aapol_t  * str2aapol(const char *, char **, u8);
 /* pretty printing */
 
 void term_print(term_t *);
-void llpol_print(llpol_t *); // todo
+void llpol_print(llpol_t *);
 void btpol_print(btpol_t *);
 void aapol_print(aapol_t *);
 char * llpol_repr(llpol_t *); // todo

@@ -122,6 +122,35 @@ static char * test_aapol_addterm_different_minor() {
 }
 
 
+static char * test_llpol_addterm() {
+    u8 n = 4;
+    llpol_t * llpol = llpol_create(n);
+    llpol = llpol_addterm(llpol, 1, 3);
+    llpol = llpol_addterm(llpol, 1, 3);
+    llpol = llpol_addterm(llpol, 1, 1);
+    llpol = llpol_addterm(llpol, 1, 2);
+    llpol = llpol_addterm(llpol, 1, 3);
+    llpol = llpol_addterm(llpol, 1, 7);
+    llpol = llpol_addterm(llpol, 1, 7);
+    llpol = llpol_addterm(llpol, -1, 7);
+
+    llpol_t * expectec_llpol = llpol_create(n);
+    llpol_addterm(expectec_llpol, 3, 3);
+    llpol_addterm(expectec_llpol, 1, 7);
+    llpol_addterm(expectec_llpol, 1, 2);
+    llpol_addterm(expectec_llpol, 1, 1);
+
+    assert(llpol_hard_cmp(llpol, expectec_llpol) == 0, "llpol_addterm function is failing!");
+    //llpol_print(llpol);
+    //llpol_print(expectec_llpol);
+
+    llpol_free(llpol);
+    llpol_free(expectec_llpol);
+
+    return 0;
+}
+
+
 static char * test_btpol_free_empty() {
     int n = 4;
     btpol_t * test = btpol_create(n);
@@ -982,6 +1011,7 @@ static void all_tests() {
     run_unittest(test_packexp_with_zero);
     run_unittest(test_aapol_addterm_equals);
     run_unittest(test_aapol_addterm_different_minor);
+    run_unittest(test_llpol_addterm);
     run_unittest(test_btpol_free_empty);
     run_unittest(test_btpol_addterm_equals);
     run_unittest(test_btpol_addterm_different_major);

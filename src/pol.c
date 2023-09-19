@@ -615,8 +615,10 @@ int btpol_hard_cmp(btpol_t * a, btpol_t * b) {
         nodea = nodea->l;
         nodeb = nodeb->l;
     }
+
     FREE(stackb);
     FREE(stacka);
+
     return ha - hb;
 }
 
@@ -895,6 +897,27 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
     }
 
     return llpol;
+}
+
+
+int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
+    if (a == NULL || b == NULL) SAYNEXITWERROR("cannot compare null llpol");
+
+    if (a->nvar != b->nvar) SAYNEXITWERROR("cannot compare. nvar diff");
+
+    if (a->sz != b->sz) return 1;
+
+    lpol_t * pa = a->first;
+    lpol_t * pb = b->first;
+
+    while (pa && pb) {
+        if (pa->exp != pb->exp) return 1;
+        if (pa->coef != pb->coef) return 1;
+        pa = pa->nxt;
+        pb = pb->nxt;
+    }
+
+    return 0;
 }
 
 
@@ -1343,6 +1366,35 @@ aapol_t  * str2aapol(const char * aapol_str, char ** var_lst, u8 nvar) {
 void term_print(term_t * pol) {
     printf("coef: %f exp: %ld\n", pol->coef, pol->exp);
 }
+
+
+void llpol_print(llpol_t * llpol) {
+    lpol_t * p = llpol->first;
+    u64 * e;
+
+    while (p) {
+        if (p->coef >= 0) printf("+ ");
+        if (p->exp == 0) {
+            printf("%f", p->coef);
+            continue;
+        }
+
+        e = exp_unpack(p->exp, llpol->nvar);
+        printf("%0.1f*x^(", p->coef);
+
+        for (int i = 0; i < llpol->nvar - 1; i++) {
+            printf("%ld, ", *(e + i));
+        }
+
+        printf("%ld) ", *(e + llpol->nvar - 1));
+        FREE(e);
+
+        p = p->nxt;
+    }
+
+    printf("\n");
+}
+
 
 void btpol_print(btpol_t * btpol) {
     //debug("checking if pol is null");
