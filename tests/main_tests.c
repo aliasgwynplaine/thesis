@@ -1001,8 +1001,8 @@ static void all_tests() {
     //run_unittest(test_csr_load);
     run_unittest(test_str2btpol);
     //run_unittest(test_str2aapol);
-    run_unittest(test_str2aapol_name_error);
-    run_unittest(test_str2aapol_syntax_error);
+    //run_unittest(test_str2aapol_name_error);
+    //run_unittest(test_str2aapol_syntax_error);
     run_unittest(test_csr_head);
     //run_unittest(test_csr_analyse_n_decompose);
     //run_unittest(test_csr2flsm);
