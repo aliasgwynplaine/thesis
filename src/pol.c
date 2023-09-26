@@ -366,6 +366,8 @@ aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
 
 
 aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
+    if (a == NULL) SAYNEXITWERROR("aapol is null");
+    
     aapol_t * res = aapol_create(a->nvar);
     res->sz = a->sz;
     res->cap = res->sz;
@@ -735,6 +737,9 @@ lpol_t  * llpol_head(llpol_t * llpol) {
 
 
 llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
+    if (llpol == NULL) SAYNEXITWERROR("llpol is null");
+
+    if (coef == 0) return llpol;
     
     lpol_t ** indirect = &(llpol->first);
     lpol_t *  newterm;
@@ -791,15 +796,15 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
         *indirect = lpol_malloc(sizeof(**indirect));
 
         if (cmp < 0) {
-            (*indirect)->coef = pb->coef;
+            (*indirect)->coef = betha * pb->coef;
             (*indirect)->exp  = pb->exp;
             pb = pb->nxt;
         } else if (cmp > 0) {
-            (*indirect)->coef = pa->coef;
+            (*indirect)->coef = alpha * pa->coef;
             (*indirect)->exp  = pa->exp;
             pa = pa->nxt;
         } else {
-            (*indirect)->coef = pa->coef + pb->coef;
+            (*indirect)->coef = alpha * pa->coef + betha * pb->coef;
             (*indirect)->exp  = pa->exp;
             pa = pa->nxt;
             pb = pb->nxt;
@@ -894,7 +899,7 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
             ps = ps->nxt;
             pd = &(*pd)->nxt;
         }
-    }
+    } else llpol->first = lpol_malloc(sizeof(*llpol->first));
 
     return llpol;
 }
@@ -1376,6 +1381,7 @@ void llpol_print(llpol_t * llpol) {
         if (p->coef >= 0) printf("+ ");
         if (p->exp == 0) {
             printf("%f", p->coef);
+            p = p->nxt;
             continue;
         }
 

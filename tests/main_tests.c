@@ -545,6 +545,118 @@ static char * test_aapol_add() {
 }
 
 
+static char * test_llpol_add() {
+    int n = 8;
+    llpol_t * a = llpol_create(n);
+    llpol_addterm(a, 1,                  0);
+    llpol_addterm(a, 1,  72340172838076673);
+    llpol_addterm(a, 1, 217020518514230019);
+    llpol_addterm(a, 1, 144680345676153346);
+
+    llpol_t * b = llpol_create(n);
+    llpol_addterm(b, 1,                  0);
+    llpol_addterm(b, 1,  72340172838076673);
+    llpol_addterm(b, 1, 217020518514230019);
+    llpol_addterm(b, 1, 144680345676153346);
+
+    llpol_t * expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 2,                  0);
+    llpol_addterm(expected_result, 2,  72340172838076673);
+    llpol_addterm(expected_result, 2, 217020518514230019);
+    llpol_addterm(expected_result, 2, 144680345676153346);
+
+    llpol_t * result = llpol_add(a, 1, b, 1);
+
+    // printf("\n");
+    // llpol_print(a);
+    // llpol_print(b);
+    // printf("\n");
+    // llpol_print(result);
+    // llpol_print(expected_result);
+    // printf("\n");
+
+    assert(llpol_hard_cmp(result, expected_result) == 0, "llpols must be equals.");
+
+    llpol_free(a);
+    llpol_free(b);
+    llpol_free(result);
+    llpol_free(expected_result);
+
+    a = llpol_create(n);
+    
+    llpol_addterm(a, 1,                  0);
+    llpol_addterm(a, 1,  72340172838076673);
+    llpol_addterm(a, 1, 217020518514230019);
+    llpol_addterm(a, 1, 144680345676153346);
+    llpol_addterm(a, 1,         8589934594);
+
+    b = llpol_create(n);
+    llpol_addterm(b, 1,                   0);
+    llpol_addterm(b, 1,   72340172838076673);
+    llpol_addterm(b, 1,  217020518514230019);
+    llpol_addterm(b, 1,  144680345676153346);
+    llpol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 5,   72340172838076673);
+    llpol_addterm(expected_result, 5,  217020518514230019);
+    llpol_addterm(expected_result, 5,  144680345676153346);
+    llpol_addterm(expected_result, 2,          8589934594);
+    llpol_addterm(expected_result, 3, 2305878202712596482);
+    llpol_addterm(expected_result, 5,                   0);
+
+    result = llpol_add(a, 2, b, 3);
+    // printf("\n");
+    // llpol_print(a);
+    // llpol_print(b);
+    // printf("\n");
+    // llpol_print(result);
+    // llpol_print(expected_result);
+
+    assert(llpol_hard_cmp(result, expected_result) == 0, "llpols must be equals.");
+
+    llpol_free(a);
+    llpol_free(b);
+    llpol_free(result);
+    llpol_free(expected_result);
+
+    a = llpol_create(n);
+    
+    llpol_addterm(a, 1,                  0);
+    llpol_addterm(a, 1,  72340172838076673);
+    llpol_addterm(a, 1, 217020518514230019);
+    llpol_addterm(a, 1, 144680345676153346);
+    llpol_addterm(a, 1,         8589934594);
+
+    b = llpol_create(n);
+    llpol_addterm(b, 1,                   0);
+    llpol_addterm(b, 1,   72340172838076673);
+    llpol_addterm(b, 1,  217020518514230019);
+    llpol_addterm(b, 1,  144680345676153346);
+    llpol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 0,   72340172838076673);
+    
+    result = llpol_add(a, 0, b, 0);
+    // printf("***************\n");
+    // llpol_print(a);
+    // llpol_print(b);
+    // printf("\n");
+    // llpol_print(result);
+    // llpol_print(expected_result);
+    // printf("\n");
+    assert(llpol_hard_cmp(result, expected_result) == 0, "llpols must be equals and equal to zero");
+
+    llpol_free(a);
+    llpol_free(b);
+    llpol_free(result);
+    llpol_free(expected_result);
+
+    return 0;
+}
+
+
 static char * test_int_max() {
     int a[] = {1,4,52,2,6,213,6,7,-123,213,5634,52,5,742,5,2,6,72345};
     int expectec_result = 72345;
@@ -1024,6 +1136,7 @@ static void all_tests() {
     run_unittest(test_aapol_inplace_coef_multiply);
     //run_unittest(test_list_o_aapol2smatrix_transformation);
     run_unittest(test_aapol_add);
+    run_unittest(test_llpol_add);
     run_unittest(test_int_max);
     run_unittest(test_int_max_idx);
     run_unittest(test_aapol_multiply);
