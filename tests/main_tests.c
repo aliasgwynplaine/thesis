@@ -401,6 +401,56 @@ static char * test_aapol_coef_multiply() {
 }
 
 
+static char * test_llpol_coef_multiply() {
+    u8 n = 5;
+    llpol_t * llpol = llpol_create(n);
+    llpol_addterm(llpol, 11, 31564275);
+    llpol_addterm(llpol, 14, 61364473);
+    llpol_addterm(llpol, 16, 11264475);
+    llpol_addterm(llpol, 17, 21764275);
+    llpol_addterm(llpol, 31, 31964677);
+    llpol_addterm(llpol, 57, 71264374);
+    llpol_addterm(llpol, 81, 11464577);
+    llpol_addterm(llpol, 65, 51164773);
+    llpol_addterm(llpol, 13, 41264477);
+    llpol_addterm(llpol, 76, 61764272);
+    llpol_addterm(llpol, 34, 11664274);
+    llpol_addterm(llpol, -5, 71564274);
+    llpol_addterm(llpol, -1, 61764274);
+    llpol_addterm(llpol, -7, 21464076);
+
+    llpol_t * result = llpol_coef_multiply(llpol, 78.5);
+
+    llpol_t * expected_llpol = llpol_create(n);
+    llpol_addterm(expected_llpol, 78.5 * 11, 31564275);
+    llpol_addterm(expected_llpol, 78.5 * 14, 61364473);
+    llpol_addterm(expected_llpol, 78.5 * 16, 11264475);
+    llpol_addterm(expected_llpol, 78.5 * 17, 21764275);
+    llpol_addterm(expected_llpol, 78.5 * 31, 31964677);
+    llpol_addterm(expected_llpol, 78.5 * 57, 71264374);
+    llpol_addterm(expected_llpol, 78.5 * 81, 11464577);
+    llpol_addterm(expected_llpol, 78.5 * 65, 51164773);
+    llpol_addterm(expected_llpol, 78.5 * 13, 41264477);
+    llpol_addterm(expected_llpol, 78.5 * 76, 61764272);
+    llpol_addterm(expected_llpol, 78.5 * 34, 11664274);
+    llpol_addterm(expected_llpol, 78.5 * -5, 71564274);
+    llpol_addterm(expected_llpol, 78.5 * -1, 61764274);
+    llpol_addterm(expected_llpol, 78.5 * -7, 21464076);
+    // printf("\n");
+    // printf("%d - %d\n", result->sz, expected_llpol->sz);
+    // llpol_print(result);
+    // llpol_print(expected_llpol);
+
+    assert(llpol_hard_cmp(result, expected_llpol) == 0, "result and expected llpol are not equal.");
+    
+    llpol_free(llpol);
+    llpol_free(result);
+    llpol_free(expected_llpol);
+
+    return 0;
+}
+
+
 static char * test_aapol_inplace_coef_multiply() {
     u8 n = 5;
     aapol_t * aapol = aapol_create(n);
@@ -1133,6 +1183,7 @@ static void all_tests() {
     run_unittest(test_btpol_inplace_coef_multiply);
     run_unittest(test_btpol_coef_multiply);
     run_unittest(test_aapol_coef_multiply);
+    run_unittest(test_llpol_coef_multiply);
     run_unittest(test_aapol_inplace_coef_multiply);
     //run_unittest(test_list_o_aapol2smatrix_transformation);
     run_unittest(test_aapol_add);

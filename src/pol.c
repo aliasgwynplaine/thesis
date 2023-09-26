@@ -898,6 +898,7 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
             (*pd)->exp  = ps->exp;
             ps = ps->nxt;
             pd = &(*pd)->nxt;
+            llpol->sz++;
         }
     } else llpol->first = lpol_malloc(sizeof(*llpol->first));
 
