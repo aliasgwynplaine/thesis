@@ -906,6 +906,23 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
 }
 
 
+void llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
+    if (a == NULL) SAYNEXITWERROR("null pol received");
+
+    if (alpha != 0) {
+        lpol_t *  ps = a->first;
+        
+        while (ps != NULL) {
+            ps->coef = alpha * ps->coef;
+            ps = ps->nxt;
+        }
+    } else {
+        lpol_free(a->first);
+        a->sz = 0;
+    }
+}
+
+
 int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
     if (a == NULL || b == NULL) SAYNEXITWERROR("cannot compare null llpol");
 
