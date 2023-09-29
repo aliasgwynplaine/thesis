@@ -122,30 +122,276 @@ static char * test_aapol_addterm_different_minor() {
 }
 
 
-static char * test_llpol_addterm() {
-    u8 n = 4;
-    llpol_t * llpol = llpol_create(n);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 1);
-    llpol = llpol_addterm(llpol, 1, 2);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, -1, 7);
+static char * test_aapol_add() {
+    int n = 8;
+    aapol_t * a = aapol_create(n);
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673);
+    aapol_addterm(a, 1, 217020518514230019);
+    aapol_addterm(a, 1, 144680345676153346);
 
-    llpol_t * expectec_llpol = llpol_create(n);
-    llpol_addterm(expectec_llpol, 3, 3);
-    llpol_addterm(expectec_llpol, 1, 7);
-    llpol_addterm(expectec_llpol, 1, 2);
-    llpol_addterm(expectec_llpol, 1, 1);
+    aapol_t * b = aapol_create(n);
+    aapol_addterm(b, 1,                  0);
+    aapol_addterm(b, 1,  72340172838076673);
+    aapol_addterm(b, 1, 217020518514230019);
+    aapol_addterm(b, 1, 144680345676153346);
 
-    assert(llpol_hard_cmp(llpol, expectec_llpol) == 0, "llpol_addterm function is failing!");
-    //llpol_print(llpol);
-    //llpol_print(expectec_llpol);
+    aapol_t * expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 2,                  0);
+    aapol_addterm(expected_result, 2,  72340172838076673);
+    aapol_addterm(expected_result, 2, 217020518514230019);
+    aapol_addterm(expected_result, 2, 144680345676153346);
 
-    llpol_free(llpol);
-    llpol_free(expectec_llpol);
+    aapol_t * result = aapol_add(a, 1, b, 1);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    a = aapol_create(n);
+    
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673);
+    aapol_addterm(a, 1, 217020518514230019);
+    aapol_addterm(a, 1, 144680345676153346);
+    aapol_addterm(a, 1,         8589934594);
+
+    b = aapol_create(n);
+    aapol_addterm(b, 1,                   0);
+    aapol_addterm(b, 1,   72340172838076673);
+    aapol_addterm(b, 1,  217020518514230019);
+    aapol_addterm(b, 1,  144680345676153346);
+    aapol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 5,   72340172838076673);
+    aapol_addterm(expected_result, 5,  217020518514230019);
+    aapol_addterm(expected_result, 5,  144680345676153346);
+    aapol_addterm(expected_result, 2,          8589934594);
+    aapol_addterm(expected_result, 3, 2305878202712596482);
+    aapol_addterm(expected_result, 5,                   0);
+
+    result = aapol_add(a, 2, b, 3);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    a = aapol_create(n);
+    
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673);
+    aapol_addterm(a, 1, 217020518514230019);
+    aapol_addterm(a, 1, 144680345676153346);
+    aapol_addterm(a, 1,         8589934594);
+
+    b = aapol_create(n);
+    aapol_addterm(b, 1,                   0);
+    aapol_addterm(b, 1,   72340172838076673);
+    aapol_addterm(b, 1,  217020518514230019);
+    aapol_addterm(b, 1,  144680345676153346);
+    aapol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 0,   72340172838076673);
+    
+    result = aapol_add(a, 0, b, 0);
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals and equal to zero");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    return 0;
+}
+
+
+static char * test_aapol_cpy() {
+    u8 n = 6;
+    aapol_t * aapol = aapol_create(n);
+    aapol_addterm(aapol, 11, 3525);
+    aapol_addterm(aapol, 14, 6343);
+    aapol_addterm(aapol, 16, 1245);
+    aapol_addterm(aapol, 17, 2725);
+    aapol_addterm(aapol, 31, 3967);
+    aapol_addterm(aapol, 57, 7234);
+    aapol_addterm(aapol, 81, 1457);
+    aapol_addterm(aapol, 65, 5173);
+    aapol_addterm(aapol, 13, 4247);
+    aapol_addterm(aapol, 76, 6722);
+    aapol_addterm(aapol, 34, 1624);
+    aapol_addterm(aapol, -5, 7524);
+    aapol_addterm(aapol, -1, 6724);
+    aapol_addterm(aapol, -7, 2406);
+
+    aapol_t * cpyoaapol = aapol_create(aapol->nvar);
+    aapol_cpy(cpyoaapol, aapol);
+
+    assert(aapol_hard_cmp(cpyoaapol, aapol) == 0, "aapol_cpy function is failing!");
+
+    aapol_free(aapol);
+    aapol_free(cpyoaapol);
+    return 0;
+}
+
+
+static char * test_aapol_coef_multiply() {
+    u8 n = 5;
+    aapol_t * aapol = aapol_create(n);
+    aapol_addterm(aapol, 11, 31564275);
+    aapol_addterm(aapol, 14, 61364473);
+    aapol_addterm(aapol, 16, 11264475);
+    aapol_addterm(aapol, 17, 21764275);
+    aapol_addterm(aapol, 31, 31964677);
+    aapol_addterm(aapol, 57, 71264374);
+    aapol_addterm(aapol, 81, 11464577);
+    aapol_addterm(aapol, 65, 51164773);
+    aapol_addterm(aapol, 13, 41264477);
+    aapol_addterm(aapol, 76, 61764272);
+    aapol_addterm(aapol, 34, 11664274);
+    aapol_addterm(aapol, -5, 71564274);
+    aapol_addterm(aapol, -1, 61764274);
+    aapol_addterm(aapol, -7, 21464076);
+
+    aapol_t * result = aapol_coef_multiply(aapol, 78.5);
+
+    aapol_t * expected_aapol = aapol_create(n);
+    aapol_addterm(expected_aapol, 78.5 * 11, 31564275);
+    aapol_addterm(expected_aapol, 78.5 * 14, 61364473);
+    aapol_addterm(expected_aapol, 78.5 * 16, 11264475);
+    aapol_addterm(expected_aapol, 78.5 * 17, 21764275);
+    aapol_addterm(expected_aapol, 78.5 * 31, 31964677);
+    aapol_addterm(expected_aapol, 78.5 * 57, 71264374);
+    aapol_addterm(expected_aapol, 78.5 * 81, 11464577);
+    aapol_addterm(expected_aapol, 78.5 * 65, 51164773);
+    aapol_addterm(expected_aapol, 78.5 * 13, 41264477);
+    aapol_addterm(expected_aapol, 78.5 * 76, 61764272);
+    aapol_addterm(expected_aapol, 78.5 * 34, 11664274);
+    aapol_addterm(expected_aapol, 78.5 * -5, 71564274);
+    aapol_addterm(expected_aapol, 78.5 * -1, 61764274);
+    aapol_addterm(expected_aapol, 78.5 * -7, 21464076);
+
+    assert(aapol_hard_cmp(result, expected_aapol) == 0, "result and expected aapol are not equal.");
+    
+    aapol_free(aapol);
+    aapol_free(result);
+    aapol_free(expected_aapol);
+
+    return 0;
+}
+
+
+static char * test_aapol_inplace_coef_multiply() {
+    u8 n = 5;
+    aapol_t * aapol = aapol_create(n);
+    aapol_addterm(aapol, 1816, 31564275);
+    aapol_addterm(aapol, 1846, 61364473);
+    aapol_addterm(aapol, 1866, 11264475);
+    aapol_addterm(aapol, 1876, 21764275);
+    aapol_addterm(aapol, 3816, 31964677);
+    aapol_addterm(aapol, 5876, 71264374);
+    aapol_addterm(aapol, 8816, 11464577);
+    aapol_addterm(aapol, 6856, 51164773);
+    aapol_addterm(aapol, 1836, 41264477);
+    aapol_addterm(aapol, 7866, 61764272);
+    aapol_addterm(aapol, 3846, 11664274);
+    aapol_addterm(aapol, -856, 71564274);
+    aapol_addterm(aapol, -816, 61764274);
+    aapol_addterm(aapol, -876, 21464076);
+
+    aapol_inplace_coef_multiply(aapol, 18.5);
+
+    aapol_t * expected_aapol = aapol_create(n);
+    aapol_addterm(expected_aapol, 18.5 * 1816, 31564275);
+    aapol_addterm(expected_aapol, 18.5 * 1846, 61364473);
+    aapol_addterm(expected_aapol, 18.5 * 1866, 11264475);
+    aapol_addterm(expected_aapol, 18.5 * 1876, 21764275);
+    aapol_addterm(expected_aapol, 18.5 * 3816, 31964677);
+    aapol_addterm(expected_aapol, 18.5 * 5876, 71264374);
+    aapol_addterm(expected_aapol, 18.5 * 8816, 11464577);
+    aapol_addterm(expected_aapol, 18.5 * 6856, 51164773);
+    aapol_addterm(expected_aapol, 18.5 * 1836, 41264477);
+    aapol_addterm(expected_aapol, 18.5 * 7866, 61764272);
+    aapol_addterm(expected_aapol, 18.5 * 3846, 11664274);
+    aapol_addterm(expected_aapol, 18.5 * -856, 71564274);
+    aapol_addterm(expected_aapol, 18.5 * -816, 61764274);
+    aapol_addterm(expected_aapol, 18.5 * -876, 21464076);
+
+    assert(aapol_hard_cmp(aapol, expected_aapol) == 0, "result and expected aapol are not equal.");
+    
+    aapol_free(aapol);
+    aapol_free(expected_aapol);
+    return 0;
+}
+
+
+static char * test_aapol_repr() {
+    int n = 4;
+    char * var_lst[] = {"x", "y", "z", "w"};
+    aapol_t * result = str2aapol("x^3 - 23.0123 * x^2*y - 2.97641*x*y*z^3 + 5*x + 171030.8037 + w^5", var_lst, n);
+    char * repr = aapol_repr(result);
+    printf("aapol_repr: %s\n", repr);
+    FREE(repr);
+    aapol_free(result);
+
+    return 0;
+}
+
+
+static char * test_aapol_multiply() {
+    int n = 8;
+    aapol_t * a = aapol_create(n);
+    aapol_addterm(a, 1,                  0);
+    aapol_addterm(a, 1,  72340172838076673); // (1,1,1,1,1,1,1,1)
+    //aapol_addterm(a, 1, 217020518514230019); // (3,3,3,3,3,3,3,3)
+    //aapol_addterm(a, 1, 144680345676153346); // (2,2,2,2,2,2,2,2)
+
+    aapol_t * b = aapol_create(n);
+    aapol_addterm(b, 1,                  0);
+    aapol_addterm(b, 1,  72340172838076673); // (1,1,1,1,1,1,1,1)
+    //aapol_addterm(b, 1, 217020518514230019); // (3,3,3,3,3,3,3,3)
+    //aapol_addterm(b, 1, 144680345676153346); // (2,2,2,2,2,2,2,2)
+
+    aapol_t * expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 1,                  0);
+    aapol_addterm(expected_result, 2,  72340172838076673);
+    aapol_addterm(expected_result, 1, 144680345676153346);
+
+    aapol_t * result = aapol_multiply(a, b);
+    //printf("\nresult: "); aapol_print(result);
+    //printf("expected_result: "); aapol_print(expected_result);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
+
+    a = aapol_create(n);
+    aapol_addterm(a, 1, 72340172838076673);
+    b = aapol_create(n);
+    aapol_addterm(b, 1,                  0);
+    aapol_addterm(b, 1,  72340172838076673);
+    expected_result = aapol_create(n);
+    aapol_addterm(expected_result, 1,  72340172838076673);
+    aapol_addterm(expected_result, 1, 144680345676153346);
+
+    result = aapol_multiply(a, b);
+
+    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
+
+    aapol_free(a);
+    aapol_free(b);
+    aapol_free(result);
+    aapol_free(expected_result);
 
     return 0;
 }
@@ -261,35 +507,6 @@ static char * test_btpol_cpy() {
 }
 
 
-static char * test_aapol_cpy() {
-    u8 n = 6;
-    aapol_t * aapol = aapol_create(n);
-    aapol_addterm(aapol, 11, 3525);
-    aapol_addterm(aapol, 14, 6343);
-    aapol_addterm(aapol, 16, 1245);
-    aapol_addterm(aapol, 17, 2725);
-    aapol_addterm(aapol, 31, 3967);
-    aapol_addterm(aapol, 57, 7234);
-    aapol_addterm(aapol, 81, 1457);
-    aapol_addterm(aapol, 65, 5173);
-    aapol_addterm(aapol, 13, 4247);
-    aapol_addterm(aapol, 76, 6722);
-    aapol_addterm(aapol, 34, 1624);
-    aapol_addterm(aapol, -5, 7524);
-    aapol_addterm(aapol, -1, 6724);
-    aapol_addterm(aapol, -7, 2406);
-
-    aapol_t * cpyoaapol = aapol_create(aapol->nvar);
-    aapol_cpy(cpyoaapol, aapol);
-
-    assert(aapol_hard_cmp(cpyoaapol, aapol) == 0, "aapol_cpy function is failing!");
-
-    aapol_free(aapol);
-    aapol_free(cpyoaapol);
-    return 0;
-}
-
-
 static char * test_btpol_inplace_coef_multiply() {
     u8 n = 7;
     btpol_t * btpol = btpol_create(n);
@@ -355,47 +572,30 @@ static char * test_btpol_coef_multiply() {
 }
 
 
-static char * test_aapol_coef_multiply() {
-    u8 n = 5;
-    aapol_t * aapol = aapol_create(n);
-    aapol_addterm(aapol, 11, 31564275);
-    aapol_addterm(aapol, 14, 61364473);
-    aapol_addterm(aapol, 16, 11264475);
-    aapol_addterm(aapol, 17, 21764275);
-    aapol_addterm(aapol, 31, 31964677);
-    aapol_addterm(aapol, 57, 71264374);
-    aapol_addterm(aapol, 81, 11464577);
-    aapol_addterm(aapol, 65, 51164773);
-    aapol_addterm(aapol, 13, 41264477);
-    aapol_addterm(aapol, 76, 61764272);
-    aapol_addterm(aapol, 34, 11664274);
-    aapol_addterm(aapol, -5, 71564274);
-    aapol_addterm(aapol, -1, 61764274);
-    aapol_addterm(aapol, -7, 21464076);
+static char * test_llpol_addterm() {
+    u8 n = 4;
+    llpol_t * llpol = llpol_create(n);
+    llpol = llpol_addterm(llpol, 1, 3);
+    llpol = llpol_addterm(llpol, 1, 3);
+    llpol = llpol_addterm(llpol, 1, 1);
+    llpol = llpol_addterm(llpol, 1, 2);
+    llpol = llpol_addterm(llpol, 1, 3);
+    llpol = llpol_addterm(llpol, 1, 7);
+    llpol = llpol_addterm(llpol, 1, 7);
+    llpol = llpol_addterm(llpol, -1, 7);
 
-    aapol_t * result = aapol_coef_multiply(aapol, 78.5);
+    llpol_t * expectec_llpol = llpol_create(n);
+    llpol_addterm(expectec_llpol, 3, 3);
+    llpol_addterm(expectec_llpol, 1, 7);
+    llpol_addterm(expectec_llpol, 1, 2);
+    llpol_addterm(expectec_llpol, 1, 1);
 
-    aapol_t * expected_aapol = aapol_create(n);
-    aapol_addterm(expected_aapol, 78.5 * 11, 31564275);
-    aapol_addterm(expected_aapol, 78.5 * 14, 61364473);
-    aapol_addterm(expected_aapol, 78.5 * 16, 11264475);
-    aapol_addterm(expected_aapol, 78.5 * 17, 21764275);
-    aapol_addterm(expected_aapol, 78.5 * 31, 31964677);
-    aapol_addterm(expected_aapol, 78.5 * 57, 71264374);
-    aapol_addterm(expected_aapol, 78.5 * 81, 11464577);
-    aapol_addterm(expected_aapol, 78.5 * 65, 51164773);
-    aapol_addterm(expected_aapol, 78.5 * 13, 41264477);
-    aapol_addterm(expected_aapol, 78.5 * 76, 61764272);
-    aapol_addterm(expected_aapol, 78.5 * 34, 11664274);
-    aapol_addterm(expected_aapol, 78.5 * -5, 71564274);
-    aapol_addterm(expected_aapol, 78.5 * -1, 61764274);
-    aapol_addterm(expected_aapol, 78.5 * -7, 21464076);
+    assert(llpol_hard_cmp(llpol, expectec_llpol) == 0, "llpol_addterm function is failing!");
+    //llpol_print(llpol);
+    //llpol_print(expectec_llpol);
 
-    assert(aapol_hard_cmp(result, expected_aapol) == 0, "result and expected aapol are not equal.");
-    
-    aapol_free(aapol);
-    aapol_free(result);
-    aapol_free(expected_aapol);
+    llpol_free(llpol);
+    llpol_free(expectec_llpol);
 
     return 0;
 }
@@ -446,150 +646,6 @@ static char * test_llpol_coef_multiply() {
     llpol_free(llpol);
     llpol_free(result);
     llpol_free(expected_llpol);
-
-    return 0;
-}
-
-
-static char * test_aapol_inplace_coef_multiply() {
-    u8 n = 5;
-    aapol_t * aapol = aapol_create(n);
-    aapol_addterm(aapol, 1816, 31564275);
-    aapol_addterm(aapol, 1846, 61364473);
-    aapol_addterm(aapol, 1866, 11264475);
-    aapol_addterm(aapol, 1876, 21764275);
-    aapol_addterm(aapol, 3816, 31964677);
-    aapol_addterm(aapol, 5876, 71264374);
-    aapol_addterm(aapol, 8816, 11464577);
-    aapol_addterm(aapol, 6856, 51164773);
-    aapol_addterm(aapol, 1836, 41264477);
-    aapol_addterm(aapol, 7866, 61764272);
-    aapol_addterm(aapol, 3846, 11664274);
-    aapol_addterm(aapol, -856, 71564274);
-    aapol_addterm(aapol, -816, 61764274);
-    aapol_addterm(aapol, -876, 21464076);
-
-    aapol_inplace_coef_multiply(aapol, 18.5);
-
-    aapol_t * expected_aapol = aapol_create(n);
-    aapol_addterm(expected_aapol, 18.5 * 1816, 31564275);
-    aapol_addterm(expected_aapol, 18.5 * 1846, 61364473);
-    aapol_addterm(expected_aapol, 18.5 * 1866, 11264475);
-    aapol_addterm(expected_aapol, 18.5 * 1876, 21764275);
-    aapol_addterm(expected_aapol, 18.5 * 3816, 31964677);
-    aapol_addterm(expected_aapol, 18.5 * 5876, 71264374);
-    aapol_addterm(expected_aapol, 18.5 * 8816, 11464577);
-    aapol_addterm(expected_aapol, 18.5 * 6856, 51164773);
-    aapol_addterm(expected_aapol, 18.5 * 1836, 41264477);
-    aapol_addterm(expected_aapol, 18.5 * 7866, 61764272);
-    aapol_addterm(expected_aapol, 18.5 * 3846, 11664274);
-    aapol_addterm(expected_aapol, 18.5 * -856, 71564274);
-    aapol_addterm(expected_aapol, 18.5 * -816, 61764274);
-    aapol_addterm(expected_aapol, 18.5 * -876, 21464076);
-
-    assert(aapol_hard_cmp(aapol, expected_aapol) == 0, "result and expected aapol are not equal.");
-    
-    aapol_free(aapol);
-    aapol_free(expected_aapol);
-    return 0;
-}
-
-
-static char * test_list_o_aapol2smatrix_transformation() { //todo
-    //bstree_t * s = bstree_create(aapol_monomial_cmp, aapol_create, aapol_free);
-    
-    assert(0, "this test is missing!");
-
-    return 0;
-}
-
-
-static char * test_aapol_add() {
-    int n = 8;
-    aapol_t * a = aapol_create(n);
-    aapol_addterm(a, 1,                  0);
-    aapol_addterm(a, 1,  72340172838076673);
-    aapol_addterm(a, 1, 217020518514230019);
-    aapol_addterm(a, 1, 144680345676153346);
-
-    aapol_t * b = aapol_create(n);
-    aapol_addterm(b, 1,                  0);
-    aapol_addterm(b, 1,  72340172838076673);
-    aapol_addterm(b, 1, 217020518514230019);
-    aapol_addterm(b, 1, 144680345676153346);
-
-    aapol_t * expected_result = aapol_create(n);
-    aapol_addterm(expected_result, 2,                  0);
-    aapol_addterm(expected_result, 2,  72340172838076673);
-    aapol_addterm(expected_result, 2, 217020518514230019);
-    aapol_addterm(expected_result, 2, 144680345676153346);
-
-    aapol_t * result = aapol_add(a, 1, b, 1);
-
-    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
-
-    aapol_free(a);
-    aapol_free(b);
-    aapol_free(result);
-    aapol_free(expected_result);
-
-    a = aapol_create(n);
-    
-    aapol_addterm(a, 1,                  0);
-    aapol_addterm(a, 1,  72340172838076673);
-    aapol_addterm(a, 1, 217020518514230019);
-    aapol_addterm(a, 1, 144680345676153346);
-    aapol_addterm(a, 1,         8589934594);
-
-    b = aapol_create(n);
-    aapol_addterm(b, 1,                   0);
-    aapol_addterm(b, 1,   72340172838076673);
-    aapol_addterm(b, 1,  217020518514230019);
-    aapol_addterm(b, 1,  144680345676153346);
-    aapol_addterm(b, 1, 2305878202712596482);
-
-    expected_result = aapol_create(n);
-    aapol_addterm(expected_result, 5,   72340172838076673);
-    aapol_addterm(expected_result, 5,  217020518514230019);
-    aapol_addterm(expected_result, 5,  144680345676153346);
-    aapol_addterm(expected_result, 2,          8589934594);
-    aapol_addterm(expected_result, 3, 2305878202712596482);
-    aapol_addterm(expected_result, 5,                   0);
-
-    result = aapol_add(a, 2, b, 3);
-
-    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
-
-    aapol_free(a);
-    aapol_free(b);
-    aapol_free(result);
-    aapol_free(expected_result);
-
-    a = aapol_create(n);
-    
-    aapol_addterm(a, 1,                  0);
-    aapol_addterm(a, 1,  72340172838076673);
-    aapol_addterm(a, 1, 217020518514230019);
-    aapol_addterm(a, 1, 144680345676153346);
-    aapol_addterm(a, 1,         8589934594);
-
-    b = aapol_create(n);
-    aapol_addterm(b, 1,                   0);
-    aapol_addterm(b, 1,   72340172838076673);
-    aapol_addterm(b, 1,  217020518514230019);
-    aapol_addterm(b, 1,  144680345676153346);
-    aapol_addterm(b, 1, 2305878202712596482);
-
-    expected_result = aapol_create(n);
-    aapol_addterm(expected_result, 0,   72340172838076673);
-    
-    result = aapol_add(a, 0, b, 0);
-    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals and equal to zero");
-
-    aapol_free(a);
-    aapol_free(b);
-    aapol_free(result);
-    aapol_free(expected_result);
 
     return 0;
 }
@@ -707,6 +763,15 @@ static char * test_llpol_add() {
 }
 
 
+static char * test_list_o_aapol2smatrix_transformation() { //todo
+    //bstree_t * s = bstree_create(aapol_monomial_cmp, aapol_create, aapol_free);
+    
+    assert(0, "this test is missing!");
+
+    return 0;
+}
+
+
 static char * test_int_max() {
     int a[] = {1,4,52,2,6,213,6,7,-123,213,5634,52,5,742,5,2,6,72345};
     int expectec_result = 72345;
@@ -734,58 +799,6 @@ static char * test_int_max_idx() {
     expectec_result = 2;
 
     assert(expectec_result == result, "int_max function is failing!");
-
-    return 0;
-}
-
-
-static char * test_aapol_multiply() {
-    int n = 8;
-    aapol_t * a = aapol_create(n);
-    aapol_addterm(a, 1,                  0);
-    aapol_addterm(a, 1,  72340172838076673); // (1,1,1,1,1,1,1,1)
-    //aapol_addterm(a, 1, 217020518514230019); // (3,3,3,3,3,3,3,3)
-    //aapol_addterm(a, 1, 144680345676153346); // (2,2,2,2,2,2,2,2)
-
-    aapol_t * b = aapol_create(n);
-    aapol_addterm(b, 1,                  0);
-    aapol_addterm(b, 1,  72340172838076673); // (1,1,1,1,1,1,1,1)
-    //aapol_addterm(b, 1, 217020518514230019); // (3,3,3,3,3,3,3,3)
-    //aapol_addterm(b, 1, 144680345676153346); // (2,2,2,2,2,2,2,2)
-
-    aapol_t * expected_result = aapol_create(n);
-    aapol_addterm(expected_result, 1,                  0);
-    aapol_addterm(expected_result, 2,  72340172838076673);
-    aapol_addterm(expected_result, 1, 144680345676153346);
-
-    aapol_t * result = aapol_multiply(a, b);
-    //printf("\nresult: "); aapol_print(result);
-    //printf("expected_result: "); aapol_print(expected_result);
-
-    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
-
-    aapol_free(a);
-    aapol_free(b);
-    aapol_free(result);
-    aapol_free(expected_result);
-
-    a = aapol_create(n);
-    aapol_addterm(a, 1, 72340172838076673);
-    b = aapol_create(n);
-    aapol_addterm(b, 1,                  0);
-    aapol_addterm(b, 1,  72340172838076673);
-    expected_result = aapol_create(n);
-    aapol_addterm(expected_result, 1,  72340172838076673);
-    aapol_addterm(expected_result, 1, 144680345676153346);
-
-    result = aapol_multiply(a, b);
-
-    assert(aapol_hard_cmp(result, expected_result) == 0, "aapols must be equals.");
-
-    aapol_free(a);
-    aapol_free(b);
-    aapol_free(result);
-    aapol_free(expected_result);
 
     return 0;
 }
@@ -1082,18 +1095,6 @@ static char * test_sparse2dense() {
     return 0;
 }
 
-static char * test_aapol_repr() {
-    int n = 4;
-    char * var_lst[] = {"x", "y", "z", "w"};
-    aapol_t * result = str2aapol("x^3 - 23.0123 * x^2*y - 2.97641*x*y*z^3 + 5*x + 171030.8037 + w^5", var_lst, n);
-    char * repr = aapol_repr(result);
-    printf("aapol_repr: %s\n", repr);
-    FREE(repr);
-    aapol_free(result);
-
-    return 0;
-}
-
 
 static char * test_sym_table_insert() {
     int n = 4;
@@ -1173,24 +1174,24 @@ static void all_tests() {
     run_unittest(test_packexp_with_zero);
     run_unittest(test_aapol_addterm_equals);
     run_unittest(test_aapol_addterm_different_minor);
-    run_unittest(test_llpol_addterm);
+    run_unittest(test_aapol_coef_multiply);
+    run_unittest(test_aapol_cpy);
+    run_unittest(test_aapol_add);
+    run_unittest(test_aapol_multiply);
+    run_unittest(test_aapol_inplace_coef_multiply);
     run_unittest(test_btpol_free_empty);
     run_unittest(test_btpol_addterm_equals);
     run_unittest(test_btpol_addterm_different_major);
     run_unittest(test_btpol_addterm_different_minor);
-    run_unittest(test_aapol_cpy);
     run_unittest(test_btpol_cpy);
     run_unittest(test_btpol_inplace_coef_multiply);
     run_unittest(test_btpol_coef_multiply);
-    run_unittest(test_aapol_coef_multiply);
-    run_unittest(test_llpol_coef_multiply);
-    run_unittest(test_aapol_inplace_coef_multiply);
-    //run_unittest(test_list_o_aapol2smatrix_transformation);
-    run_unittest(test_aapol_add);
+    run_unittest(test_llpol_addterm);
     run_unittest(test_llpol_add);
+    run_unittest(test_llpol_coef_multiply);
+    //run_unittest(test_list_o_aapol2smatrix_transformation);
     run_unittest(test_int_max);
     run_unittest(test_int_max_idx);
-    run_unittest(test_aapol_multiply);
     run_unittest(test_exp_norm);
     //run_unittest(test_csr_load);
     run_unittest(test_str2btpol);
