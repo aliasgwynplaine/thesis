@@ -124,9 +124,9 @@ char * aapol_repr(aapol_t *);
 lpol_t  * llpol_head(llpol_t *); 
 llpol_t * llpol_addterm(llpol_t *, COEFTYPE, u64); 
 llpol_t * llpol_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE);
-void      llpol_inplace_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE); // todo: test
+void      llpol_inplace_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE);
 llpol_t * llpol_coef_multiply(llpol_t *, COEFTYPE);
-void      llpol_inplace_coef_multiply(llpol_t *, COEFTYPE); // todo
+void      llpol_inplace_coef_multiply(llpol_t *, COEFTYPE);
 llpol_t * llpol_multiply(llpol_t * , llpol_t *); // todo
 llpol_t * llpol_inplace_multiply(llpol_t *, llpol_t *); // todo
 int       llpol_hard_cmp(llpol_t * a, llpol_t * b); // todo

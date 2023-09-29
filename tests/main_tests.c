@@ -817,6 +817,118 @@ static char * test_llpol_add() {
     return 0;
 }
 
+static char * test_llpol_inplace_add() {
+    int n = 8;
+    llpol_t * a = llpol_create(n);
+    llpol_addterm(a, 1,                  0);
+    llpol_addterm(a, 1,  72340172838076673);
+    llpol_addterm(a, 1, 217020518514230019);
+    llpol_addterm(a, 1, 144680345676153346);
+
+    llpol_t * b = llpol_create(n);
+    llpol_addterm(b, 1,                  0);
+    llpol_addterm(b, 1,  72340172838076673);
+    llpol_addterm(b, 1, 217020518514230019);
+    llpol_addterm(b, 1, 144680345676153346);
+
+    llpol_t * expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 2,                  0);
+    llpol_addterm(expected_result, 2,  72340172838076673);
+    llpol_addterm(expected_result, 2, 217020518514230019);
+    llpol_addterm(expected_result, 2, 144680345676153346);
+    // printf("\n");
+    // printf("sz: %d", a->sz);
+    // llpol_print(a);
+    // printf("sz: %d", a->sz); llpol_print(b);
+    llpol_inplace_add(a, 1, b, 1);
+
+    // printf("\n");
+    // printf("sz: %d", a->sz);
+    // llpol_print(a);
+    // printf("sz: %d", a->sz); llpol_print(b);
+    // printf("\n+++++++++\n");
+    // llpol_print(a);
+    // llpol_print(expected_result);
+    // printf("\n");
+
+    assert(llpol_hard_cmp(a, expected_result) == 0, "llpols must be equals.");
+    assert(a->sz == expected_result->sz, "llpols have different numbers of terms");
+
+    llpol_free(a);
+    llpol_free(b);
+    llpol_free(expected_result);
+
+    a = llpol_create(n);
+    
+    llpol_addterm(a, 1,                  0);
+    llpol_addterm(a, 1,  72340172838076673);
+    llpol_addterm(a, 1, 217020518514230019);
+    llpol_addterm(a, 1, 144680345676153346);
+    llpol_addterm(a, 1,         8589934594);
+
+    b = llpol_create(n);
+    llpol_addterm(b, 1,                   0);
+    llpol_addterm(b, 1,   72340172838076673);
+    llpol_addterm(b, 1,  217020518514230019);
+    llpol_addterm(b, 1,  144680345676153346);
+    llpol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 5,   72340172838076673);
+    llpol_addterm(expected_result, 5,  217020518514230019);
+    llpol_addterm(expected_result, 5,  144680345676153346);
+    llpol_addterm(expected_result, 2,          8589934594);
+    llpol_addterm(expected_result, 3, 2305878202712596482);
+    llpol_addterm(expected_result, 5,                   0);
+
+    llpol_inplace_add(a, 2, b, 3);
+    // printf("\n");
+    // llpol_print(a);
+    // llpol_print(b);
+    // printf("\n");
+    // llpol_print(result);
+    // llpol_print(expected_result);
+    // printf("\n");
+    // llpol_print(a);
+    // llpol_print(expected_result);
+
+    assert(llpol_hard_cmp(a, expected_result) == 0, "llpols must be equals.");
+    assert(a->sz == expected_result->sz, "llpols have different numbers of terms");
+
+    llpol_free(a);
+    llpol_free(b);
+    llpol_free(expected_result);
+
+    a = llpol_create(n);
+    
+    llpol_addterm(a, 1,                  0);
+    llpol_addterm(a, 1,  72340172838076673);
+    llpol_addterm(a, 1, 217020518514230019);
+    llpol_addterm(a, 1, 144680345676153346);
+    llpol_addterm(a, 1,         8589934594);
+
+    b = llpol_create(n);
+    llpol_addterm(b, 1,                   0);
+    llpol_addterm(b, 1,   72340172838076673);
+    llpol_addterm(b, 1,  217020518514230019);
+    llpol_addterm(b, 1,  144680345676153346);
+    llpol_addterm(b, 1, 2305878202712596482);
+
+    expected_result = llpol_create(n);
+    llpol_addterm(expected_result, 0,   72340172838076673);
+    
+    llpol_inplace_add(a, 0, b, 0);
+
+    assert(llpol_hard_cmp(a, expected_result) == 0, "llpols must be equals and equal to zero");
+    assert(a->sz == expected_result->sz, "llpols have different numbers of terms");
+
+    llpol_free(a);
+    llpol_free(b);
+    llpol_free(expected_result);
+
+    return 0;
+}
+
 
 static char * test_list_o_aapol2smatrix_transformation() { //todo
     //bstree_t * s = bstree_create(aapol_monomial_cmp, aapol_create, aapol_free);
@@ -1243,6 +1355,7 @@ static void all_tests() {
     run_unittest(test_btpol_coef_multiply);
     run_unittest(test_llpol_addterm);
     run_unittest(test_llpol_add);
+    run_unittest(test_llpol_inplace_add);
     run_unittest(test_llpol_coef_multiply);
     run_unittest(test_llpol_inplace_coef_multiply);
     //run_unittest(test_list_o_aapol2smatrix_transformation);

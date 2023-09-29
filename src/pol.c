@@ -841,12 +841,22 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha)
 
     if (a == NULL || b == NULL) SAYNEXITWERROR("NULL pointer received!");
 
-    if (a->sz == 0 || alpha == 0) 
-        llpol_cpy(a, llpol_coef_multiply(b, betha));
+    if (a->sz == 0 || alpha == 0) {
+        if (a->first != NULL) lpol_free(a->first);
+        llpol_t * aux = llpol_coef_multiply(b, betha);
+        a->first = aux->first;
+        a->sz = aux->sz;
+        FREE(aux);
 
-    if (b->sz == 0 || betha == 0) 
-        llpol_cpy(b, llpol_coef_multiply(a, alpha));
+        return;
+    }
+    
+    if (b->sz == 0 || betha == 0) {
+        llpol_inplace_coef_multiply(a, alpha);
 
+        return;
+    }
+    
     lpol_t * newterm;
     lpol_t * pb = b->first;
     lpol_t ** indirect = &a->first;
@@ -856,32 +866,37 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha)
 
         if (cmp < 0) {
             newterm = lpol_malloc(sizeof(*newterm));
-            newterm->coef = pb->coef;
+            newterm->coef = betha * pb->coef;
             newterm->exp  = pb->exp;
             newterm->nxt  = *indirect;
             *indirect     = newterm;
+            indirect = &(*indirect)->nxt;
+            pb = pb->nxt;
             a->sz++;
         } else if (cmp > 0) {
-
+            (*indirect)->coef *= alpha;
+            indirect = &(*indirect)->nxt;
         } else {
-            (*indirect)->coef += pb->coef;
+            (*indirect)->coef = alpha * (*indirect)->coef + betha * pb->coef;
+            indirect = &(*indirect)->nxt;
+            pb = pb->nxt;
         }
 
-        indirect = &(*indirect)->nxt;
     }
+
 
     while ((*indirect) != NULL) {
         indirect = &(*indirect)->nxt;
     }
-
     while (pb != NULL) {
         (*indirect) = lpol_malloc(sizeof(**indirect));
-        (*indirect)->coef = pb->coef;
+        (*indirect)->coef = betha * pb->coef;
         (*indirect)->exp  = pb->exp;
         indirect = &(*indirect)->nxt;
         pb = pb->nxt;
     }
 }
+
 
 llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
     if (a == NULL) SAYNEXITWERROR("null pol received");
@@ -900,7 +915,7 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
             pd = &(*pd)->nxt;
             llpol->sz++;
         }
-    } else llpol->first = lpol_malloc(sizeof(*llpol->first));
+    } else { /* empty */}
 
     return llpol;
 }
@@ -917,7 +932,8 @@ void llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
             ps = ps->nxt;
         }
     } else {
-        lpol_free(a->first);
+        if (a->first != NULL) lpol_free(a->first);
+        a->first = NULL;
         a->sz = 0;
     }
 }
@@ -1392,6 +1408,7 @@ void term_print(term_t * pol) {
 
 
 void llpol_print(llpol_t * llpol) {
+    if (llpol == NULL) SAYNEXITWERROR("llpol is null");
     lpol_t * p = llpol->first;
     u64 * e;
 
