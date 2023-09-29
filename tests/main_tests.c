@@ -697,7 +697,6 @@ static char * test_llpol_inplace_coef_multiply() {
     assert(llpol->sz == expected_llpol->sz, "llpols have different numbers of terms");
     
     llpol_free(llpol);
-    llpol_free(llpol);
     llpol_free(expected_llpol);
 
     return 0;
@@ -1245,6 +1244,7 @@ static void all_tests() {
     run_unittest(test_llpol_addterm);
     run_unittest(test_llpol_add);
     run_unittest(test_llpol_coef_multiply);
+    run_unittest(test_llpol_inplace_coef_multiply);
     //run_unittest(test_list_o_aapol2smatrix_transformation);
     run_unittest(test_int_max);
     run_unittest(test_int_max_idx);
