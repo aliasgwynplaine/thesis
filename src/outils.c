@@ -45,12 +45,11 @@ void print_lstrb(char ** lstr)  {
  */
 void print_lstr(char ** lstr)  {
     if (!lstr) {printf("NULLL");return;}
-    printf("not null\n");
 
     int pos = 0;
     char ** ptr = lstr;
 
-    while (*(ptr + pos) != NULL) {
+    while (*(ptr + pos)) {
         printf("%s ", *(ptr+pos));
         pos++;
     }

@@ -29,7 +29,9 @@ extern cmpfux_t * cfux;
 }
 
 
-%token AAPOLTOK LLPOLTOK SYMTABTOK SETORDTOK SETVARSTOK F4TOK NEWLINE QUIT
+%token AAPOLTOK LLPOLTOK 
+%token SYMTABTOK GETVARSTOK SETORDTOK SETVARSTOK F4TOK 
+%token NEWLINE QUIT
 %token <str_val>   LEX GLEX GRLEX RLEX;
 %token <float_val> FLOATING
 %token <int_val>   INTEGER
@@ -69,9 +71,9 @@ assignment: VAR '=' expression
     ;
 
 expression_list
-    : expression { $$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); ee_free($1); }
+    : expression { $$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); FREE($1->t); FREE($1); }
     | expression_list ',' expression 
-        { $$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); ee_free($3); }
+        { $$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); FREE($3->t); FREE($3); }
     ;
 
 expression
@@ -91,6 +93,7 @@ aapol_expr: AAPOLTOK '(' pol ')' {
         $$->t = strdup("aapol"); 
         $$->v = (void *)aux_pol; 
         aux_pol = aapol_create(nvars);
+        //st_insert(st, "auxpol", aux_pol, "aapol");
     }
     ;
 
@@ -99,6 +102,7 @@ llpol_expr: LLPOLTOK '(' pol ')' {
         $$->t = strdup("aapol");  // todo: finish llpol implementation
         $$->v = (void *)aux_pol; 
         aux_pol = aapol_create(nvars);
+        //st_insert(st, "auxpol", aux_pol, "aapol");
     }
     ;
 
@@ -136,6 +140,7 @@ sign: '+' { $$ =  1; }
     ;
 
 directive: SYMTABTOK { print_sym_table(st); }
+    | GETVARSTOK { printf("vars: "); print_lstr(var_lst); }
     | SETORDTOK termorder { printf("not implemented: %s order\n", $2); FREE($2); }
     | SETVARSTOK '{' vars '}' { /* update nvars and var_lst */ }
     | F4TOK '(' expression_list ')' { printf("F4!!!\n"); set_print($3); } // here comes a set

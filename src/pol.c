@@ -1495,6 +1495,12 @@ char * aapol_repr(aapol_t * aapol) {
     int p = REPR_MAX_SZ; // space left in repr
     char buff[32];
     char * repr = calloc(REPR_MAX_SZ, sizeof(*repr));
+
+    if (aapol == NULL) {
+        strncat(repr, "NULL", p);
+        return repr;
+    }
+
     for (int i = 0; i < aapol->sz; i++) {
         if (aapol->terms[i].coef >= 0) {
             p = p - 3;

@@ -567,7 +567,7 @@ void * rbtree_trav_insert(rbt_trav_t * trav, rbtree_t * rbt, void * d) {
 
     if (p != NULL) {
         trav->tree = rbt;
-        trav->node = (rbtree_t *) ((char *)p - offsetof(rbnode_t, d));
+        trav->node = (rbnode_t *) ((char *)p - offsetof(rbnode_t, d));
         trav->gen = rbt->gen - 1;
 
         return *p;
