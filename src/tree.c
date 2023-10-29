@@ -238,20 +238,20 @@ void ** rbtree_probe(rbtree_t * rbt, void * data) {
                 if (dir[k - 1] == 1) {
                     y = stack[k - 1];
                 } else {
-                    x = stack[k - 2];
-                    x->c = red;
-                    y->c = black;
-                    x->r = y->l;
-                    y->l = x;
-                    if (dir[k - 3] == 0) stack[k - 3]->l = y;
-                    else stack[k - 3]->r = y;
+                    x = stack[k - 1];
+                    y = x->l;
+                    x->l = y->r;
+                    y->r = x;
+                    stack[k - 2]->r = y;
                 }
 
-                x = stack[k - 1];
-                y = x->l;
-                x->l = y->r;
-                y->r = x;
-                stack[k - 2]->r = y;
+                x = stack[k - 2];
+                x->c = red;
+                y->c = black;
+                x->r = y->l;
+                y->l = x;
+                if (dir[k - 3] == 0) stack[k - 3]->l = y;
+                else stack[k - 3]->r = y;
 
                 break;
             }

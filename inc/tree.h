@@ -156,10 +156,10 @@ void      * rbtree_trav_last(rbt_trav_t * trav, rbtree_t * tree);
 void      * rbtree_trav_find(rbt_trav_t * trav, rbtree_t * tree, void * data);
 void      * rbtree_trav_insert(rbt_trav_t * trav, rbtree_t * tree, void * data);
 void      * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src);
-void      * rbtree_trav_next(rbt_trav_t * trav); 
-void      * rbtree_trav_prev(rbt_trav_t * trav);
-void      * rbtree_trav_curr(rbt_trav_t * trav);
-void      * rbtree_trav_repl(rbt_trav_t * trav, void * new);
+void      * rbtree_trav_next(rbt_trav_t * ); 
+void      * rbtree_trav_prev(rbt_trav_t * );
+void      * rbtree_trav_curr(rbt_trav_t * );
+void      * rbtree_trav_repl(rbt_trav_t *, void *);
 
 
 
