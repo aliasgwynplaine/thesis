@@ -6,29 +6,36 @@
 int yyparse();
 
 sym_table_t * st;
+pp_ctx_t * ctx;
 int nvars;
 char ** var_lst;
 u64 * var_cntr;
 aapol_t * aux_pol;
+set_t * _pol_acc_in;
+set_t * _pol_acc_out;
 rbt_cmpfux_t * cfux;
 extern rbt_cmpfux_t aapol_monomial_cmp_wrap;
 
 int main(int argc, char * argv[]) {
-    nvars = 4;
+    ctx = malloc(sizeof(*ctx));
+    ctx->nvars = 4;
+    ctx->var_cntr = calloc(ctx->nvars, sizeof(*var_cntr));
     cfux  = aapol_monomial_cmp_wrap;
-    var_cntr = calloc(nvars, sizeof(*var_cntr));
     
     printf("Creating symbol table...");
+    _pol_acc_in  = rbtree_create(aapol_monomial_cmp_wrap, NULL, NULL);
+    _pol_acc_out = rbtree_create(aapol_monomial_cmp_wrap, NULL, NULL);
     st = st_create(SYM_TABLE_SZ);
     printf("done!\n");
-    var_lst = malloc((nvars+1) * sizeof(*var_lst));
-    var_lst[0] = "a"; //var_lst[0] = strdup("x");
-    var_lst[1] = "b";
-    var_lst[2] = "c";
-    var_lst[3] = "d";
-    var_lst[4] = NULL;
-    aux_pol = aapol_create(nvars);
-    //st_insert(st, strdup("auxpol"), aux_pol, strdup("aapol"));
+    ctx->var_lst = malloc((ctx->nvars + 1) * sizeof(*(ctx->var_lst)));
+    ctx->var_lst[0] = "a"; //var_lst[0] = strdup("x");
+    ctx->var_lst[1] = "b";
+    ctx->var_lst[2] = "c";
+    ctx->var_lst[3] = "d";
+    ctx->var_lst[4] = NULL;
+    aux_pol = aapol_create(ctx->nvars);
+    st_insert(st, strdup("_pol_acc_in"), _pol_acc_in, strdup("acc"));
+    st_insert(st, strdup("_pol_acc_out"), _pol_acc_out, strdup("acc"));
     printf("auxpol before: %p\n", aux_pol);
     printf("setvars = {a, b, c, d}\n");
     printf("prelude> ");
@@ -38,8 +45,9 @@ int main(int argc, char * argv[]) {
     //print_sym_table(st);
     st_destroy(st);
     aapol_free(aux_pol);
-    FREE(var_cntr);
-    FREE(var_lst);
+    free(ctx->var_cntr);
+    free(ctx->var_lst);
+    free(ctx);
 
     return 0;
 }

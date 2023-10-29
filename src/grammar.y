@@ -9,6 +9,7 @@ int yydebug = 1;
 #endif
 
 extern sym_table_t * st;
+extern pp_ctx_t   * ctx;
 extern int nvars;
 extern char ** var_lst;
 extern u64 * var_cntr;
@@ -55,7 +56,7 @@ extern cmpfux_t * cfux;
 %%
 
 stmts: stmts stmt NEWLINE { printf("prelude> "); }
-    | stmts NEWLINE
+    | stmts NEWLINE { printf("prelude> "); }
     | /* empty */
     | error NEWLINE { yyerror("Error!"); printf("prelude> "); yyerrok; }
     ;
@@ -111,10 +112,10 @@ pol: pol term
     | /* empty */
     ;
 
-term: number '*' mvar { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
-    | mvar '*' number { generate_term(aux_pol, $3, var_cntr, var_lst, nvars); }
-    | sign mvar       { generate_term(aux_pol, $1, var_cntr, var_lst, nvars); }
-    | mvar            { generate_term(aux_pol,  1, var_cntr, var_lst, nvars); }
+term: number '*' mvar { generate_term(aux_pol, $1, ctx); }
+    | mvar '*' number { generate_term(aux_pol, $3, ctx); }
+    | sign mvar       { generate_term(aux_pol, $1, ctx); }
+    | mvar            { generate_term(aux_pol,  1, ctx); }
     | number          { aapol_addterm(aux_pol, $1, 0);}
     ;
 
@@ -128,8 +129,8 @@ mvar: mvar '*' varx
     | varx
     ;
 
-varx: VAR     { var_cntr[str_varlist_lookup($1, var_lst, nvars)]++; FREE($1); }
-    | VAR exp { var_cntr[str_varlist_lookup($1, var_lst, nvars)]+= $2; FREE($1); }
+varx: VAR     { ctx->var_cntr[str_varlist_lookup($1, ctx->var_lst, ctx->nvars)]++; FREE($1); }
+    | VAR exp { ctx->var_cntr[str_varlist_lookup($1, ctx->var_lst, ctx->nvars)]+= $2; FREE($1); }
     ;
 
 exp: '^' INTEGER { $$ = $2; }
@@ -140,10 +141,10 @@ sign: '+' { $$ =  1; }
     ;
 
 directive: SYMTABTOK { print_sym_table(st); }
-    | GETVARSTOK { printf("vars: "); print_lstr(var_lst); }
+    | GETVARSTOK { printf("vars: "); print_lstr(ctx->var_lst); }
     | SETORDTOK termorder { printf("not implemented: %s order\n", $2); FREE($2); }
-    | SETVARSTOK '{' vars '}' { /* update nvars and var_lst */ }
-    | F4TOK '(' expression_list ')' { printf("F4!!!\n"); set_print($3); } // here comes a set
+    | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
+    | F4TOK '(' expression_list ')' { printf("F4!!!\n"); /* set_print($3);*/} // here comes a set
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

@@ -24,12 +24,11 @@ int str_varlist_lookup(char * str, char **var_lst, int n) {
 }
 
 
-void generate_term(void * aux_pol, COEFTYPE coef, u64 * var_cntr, 
-                    char ** var_lst, int nvars) {
-    u64 exp = exp_pack(var_cntr, nvars);
+void generate_term(void * aux_pol, COEFTYPE coef, pp_ctx_t * ctx) {
+    u64 exp = exp_pack(ctx->var_cntr, ctx->nvars);
     aapol_addterm(aux_pol, coef, exp);
 
-    for (int i = 0; i < nvars; i++) var_cntr[i]=0;
+    for (int i = 0; i < ctx->nvars; i++) ctx->var_cntr[i]=0;
 }
 
 void print_var(sym_table_t * st, char * var) {

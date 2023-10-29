@@ -21,6 +21,7 @@ void st_destroy(sym_table_t * st) {
             if (strcmp("aapol",st->e[i].t) == 0) aapol_free(st->e[i].v);
             if (strcmp("llpol", st->e[i].t) == 0) btpol_free(st->e[i].v);
             if (strcmp("number", st->e[i].t) == 0) FREE(st->e[i].v);
+            if (strcmp("acc", st->e[i].t) == 0) rbtree_destroy(st->e[i].v, NULL); // todo change
             FREE(st->e[i].t);
             FREE(st->e[i].n);
             c++;
@@ -126,6 +127,10 @@ int print_sym_table(sym_table_t * st) {
                 str = strdup("NOT IMPLEMENTED... yet!");
             if (strcmp(st->e[i].t, "number") == 0) {
                 snprintf(buff, enough, "%.2f",  *((float*)st->e[i].v));
+                str = strdup(buff);
+            }
+            if (strcmp(st->e[i].t, "acc") == 0) {
+                snprintf(buff, enough, "%ld", ((rbtree_t *)st->e[i].v)->sz);
                 str = strdup(buff);
             }
             printf(
