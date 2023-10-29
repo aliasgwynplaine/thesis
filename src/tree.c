@@ -717,8 +717,8 @@ void rbtree_destroy(rbtree_t * rbt, rbt_item_fux_t * destroy) {
             p->l = q->r;
             q->r = p;
         }
-        rbt->alloc->tree_free(rbt->alloc, rbt);
     }
+    rbt->alloc->tree_free(rbt->alloc, rbt);
 }
 
 
