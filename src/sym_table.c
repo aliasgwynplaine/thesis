@@ -13,6 +13,9 @@ sym_table_t * st_create(u64 size) {
     return st;
 }
 
+void destroy_pol(void * pol, void * param) { // todo: make smarter
+    aapol_free((aapol_t *) pol); 
+}
 
 void st_destroy(sym_table_t * st) {
     int c = 0;
@@ -21,15 +24,15 @@ void st_destroy(sym_table_t * st) {
             if (strcmp("aapol",st->e[i].t) == 0) aapol_free(st->e[i].v);
             if (strcmp("llpol", st->e[i].t) == 0) btpol_free(st->e[i].v);
             if (strcmp("number", st->e[i].t) == 0) FREE(st->e[i].v);
-            if (strcmp("acc", st->e[i].t) == 0) rbtree_destroy(st->e[i].v, NULL); // todo change
-            FREE(st->e[i].t);
-            FREE(st->e[i].n);
+            if (strcmp("acc", st->e[i].t) == 0) rbtree_destroy(st->e[i].v, destroy_pol);
+            free(st->e[i].t);
+            free(st->e[i].n);
             c++;
         }
     }
 
-    FREE(st->e);
-    FREE(st);
+    free(st->e);
+    free(st);
 }
 
 
@@ -117,7 +120,7 @@ int print_sym_table(sym_table_t * st) {
     int enough = 20;
     char * str;
     char buff[enough];
-    printf("\n| %5s | %10s | %6s | %64s |\n", "hash", "name", "type", "repr");
+    printf("\n| %5s | %15s | %6s | %64s |\n", "hash", "name", "type", "repr");
 
     for (int i = 0; i < st->sz; i++) {
         if (st->e[i].h != -1) {
@@ -134,10 +137,10 @@ int print_sym_table(sym_table_t * st) {
                 str = strdup(buff);
             }
             printf(
-                "| %5ld | %10s | %6s | %64s |\n", 
+                "| %5ld | %15s | %6s | %64s |\n", 
                 st->e[i].h, st->e[i].n, st->e[i].t, str
             );
-            FREE(str);
+            free(str);
         }
     }
 

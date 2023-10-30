@@ -1,6 +1,7 @@
 %{
 
 #include "sym_table.h"
+#include "tree.h"
 #include "pol_parser.h"
 #include "pol.h"
 
@@ -15,6 +16,8 @@ extern char ** var_lst;
 extern u64 * var_cntr;
 extern aapol_t * aux_pol;
 extern cmpfux_t * cfux;
+extern set_t * _pol_acc_in;
+extern set_t * _pol_acc_out;
 // %token <str_val>   STRING
 
 %}
@@ -37,7 +40,8 @@ extern cmpfux_t * cfux;
 %token <float_val> FLOATING
 %token <int_val>   INTEGER
 %token <str_val>   VAR
-%type <expr_l_val> expression_list; 
+//%type <expr_l_val> expression_list;
+%type <expr_val>   expression_list
 %type <expr_val>   expression
 %type <expr_val>   aapol_expr
 %type <expr_val>   llpol_expr
@@ -72,9 +76,28 @@ assignment: VAR '=' expression
     ;
 
 expression_list
-    : expression { $$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); FREE($1->t); FREE($1); }
-    | expression_list ',' expression 
-        { $$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); FREE($3->t); FREE($3); }
+    : expression { 
+        //$$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); FREE($1->t); FREE($1);
+        if (strcmp($1->t, "aapol") == 0) rbtree_probe(_pol_acc_in, $1->v); 
+        if (strcmp($1->t, "number") == 0) {
+            aapol_t * pol = aapol_create(ctx->nvars);
+            aapol_addterm(pol, *(float*)$1->v, 0);
+            rbtree_probe(_pol_acc_in, pol);
+            free($1->v);
+        }
+        free($1->t); free($1);
+    }
+    | expression_list ',' expression { 
+        //$$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); FREE($3->t); FREE($3);
+        if (strcmp($3->t, "aapol") == 0) rbtree_probe(_pol_acc_in, $3->v);
+        if (strcmp($3->t, "number") == 0) {
+            aapol_t * pol = aapol_create(ctx->nvars);
+            aapol_addterm(pol, *(float*)$3->v, 0);
+            rbtree_probe(_pol_acc_in, pol);
+            free($3->v);
+        }
+        free($3->t); free($3);
+    }
     ;
 
 expression
@@ -93,7 +116,7 @@ aapol_expr: AAPOLTOK '(' pol ')' {
         $$ = malloc(sizeof(*$$)); 
         $$->t = strdup("aapol"); 
         $$->v = (void *)aux_pol; 
-        aux_pol = aapol_create(nvars);
+        aux_pol = aapol_create(ctx->nvars);
         //st_insert(st, "auxpol", aux_pol, "aapol");
     }
     ;
@@ -102,7 +125,7 @@ llpol_expr: LLPOLTOK '(' pol ')' {
         $$ = malloc(sizeof(*$$)); 
         $$->t = strdup("aapol");  // todo: finish llpol implementation
         $$->v = (void *)aux_pol; 
-        aux_pol = aapol_create(nvars);
+        aux_pol = aapol_create(ctx->nvars);
         //st_insert(st, "auxpol", aux_pol, "aapol");
     }
     ;
@@ -144,7 +167,7 @@ directive: SYMTABTOK { print_sym_table(st); }
     | GETVARSTOK { printf("vars: "); print_lstr(ctx->var_lst); }
     | SETORDTOK termorder { printf("not implemented: %s order\n", $2); FREE($2); }
     | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
-    | F4TOK '(' expression_list ')' { printf("F4!!!\n"); /* set_print($3);*/} // here comes a set
+    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out); set_print(_pol_acc_out); } // here comes a set
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

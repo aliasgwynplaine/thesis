@@ -187,7 +187,14 @@ void ee_print(ee_t * ee) {
 }
 
 int aapol_monomial_cmp_wrap(const void * a, const void * b, void * param) {
-    return aapol_monomial_cmp((aapol_t *)a, (aapol_t *)b);
+    int cmp = aapol_monomial_cmp((aapol_t *)a, (aapol_t *)b);
+
+    if (cmp == 0) {
+        if (AAPOL_HEAD_COEF((aapol_t *)a) < AAPOL_HEAD_COEF((aapol_t *)b)) return -1;
+        else if (AAPOL_HEAD_COEF((aapol_t *)a) > AAPOL_HEAD_COEF((aapol_t *)b)) return 1;
+        else return 0;
+    }
+    else return cmp;
 }
 
 rbtree_t * create_set_for_expr_l() {
@@ -217,6 +224,16 @@ void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
     rbtree_probe(rbt, pol);
 
     // todo: llpol
+}
+
+void f4_wrapper(rbtree_t * in, rbtree_t * out) {
+    rbt_trav_t trav;
+    aapol_t * pol;
+
+    for (pol = rbtree_trav_first(&trav, in); pol != NULL; pol = rbtree_trav_next(&trav)) {
+        aapol_t * newpol = aapol_add(pol, 1, pol, 1);
+        rbtree_probe(out, newpol);
+    }
 }
 
 void set_print(rbtree_t * rbt) {

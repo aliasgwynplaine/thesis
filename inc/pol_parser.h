@@ -36,6 +36,7 @@ void generate_term(void * , COEFTYPE, pp_ctx_t *);
 rbtree_t * create_set_for_expr_l();
 void destroy_set_for_expr_l(set_t *);
 void set_insert(rbtree_t * rbt, ee_t * d, u8 n);
+void f4_wrapper(rbtree_t * in, rbtree_t * out);
 
 void print_var(sym_table_t *, char *);
 ee_t * resolve_var_as_expression(sym_table_t * , char * );
