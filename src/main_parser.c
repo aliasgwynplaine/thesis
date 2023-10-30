@@ -7,20 +7,15 @@ int yyparse();
 
 sym_table_t * st;
 pp_ctx_t * ctx;
-int nvars;
-char ** var_lst;
-u64 * var_cntr;
 aapol_t * aux_pol;
 set_t * _pol_acc_in;
 set_t * _pol_acc_out;
-rbt_cmpfux_t * cfux;
 extern rbt_cmpfux_t aapol_monomial_cmp_wrap;
 
 int main(int argc, char * argv[]) {
     ctx = malloc(sizeof(*ctx));
     ctx->nvars = 4;
-    ctx->var_cntr = calloc(ctx->nvars, sizeof(*var_cntr));
-    cfux  = aapol_monomial_cmp_wrap;
+    ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
     
     printf("Creating symbol table...");
     _pol_acc_in  = rbtree_create(aapol_monomial_cmp_wrap, NULL, NULL);

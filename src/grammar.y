@@ -11,11 +11,7 @@ int yydebug = 1;
 
 extern sym_table_t * st;
 extern pp_ctx_t   * ctx;
-extern int nvars;
-extern char ** var_lst;
-extern u64 * var_cntr;
 extern aapol_t * aux_pol;
-extern cmpfux_t * cfux;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
 // %token <str_val>   STRING
