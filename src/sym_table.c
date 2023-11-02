@@ -21,7 +21,7 @@ void st_destroy(sym_table_t * st) {
     int c = 0;
     for (int i = 0; i < st->sz, c != st->c; i++) {
         if (st->e[i].h != -1) {
-            if (strcmp("aapol",st->e[i].t) == 0) aapol_free(st->e[i].v);
+            if (strcmp("aapol", st->e[i].t) == 0) aapol_free(st->e[i].v);
             if (strcmp("llpol", st->e[i].t) == 0) btpol_free(st->e[i].v);
             if (strcmp("number", st->e[i].t) == 0) FREE(st->e[i].v);
             if (strcmp("acc", st->e[i].t) == 0) rbtree_destroy(st->e[i].v, destroy_pol);

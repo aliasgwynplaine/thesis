@@ -208,8 +208,8 @@ void destroy_set_for_expr_l(set_t * s) {
 }
 
 void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
-    if(rbt == NULL) SAYNEXITWERROR("geee");
-    if(d == NULL) SAYNEXITWERROR("gaa");
+    if(rbt == NULL) SAYNEXITWERROR("set is null");
+    if(d == NULL) SAYNEXITWERROR("d is null");
     aapol_t * pol;
 
     if (strcmp(d->t, "number") == 0) {
