@@ -52,12 +52,35 @@ ee_t * resolve_var_as_expression(sym_table_t * st, char * var) {
         ee = malloc(sizeof(*ee));
         ee->t = strdup(entry->t);
         
-        if (strcmp(ee->t, "llpol") == 0) {
+        if (strcmp(ee->t, "btpol") == 0) {
             ee->v = btpol_create(((aapol_t *)entry->v)->nvar);
             btpol_cpy(ee->v, entry->v);
         } else if (strcmp(ee->t, "aapol") == 0) {
             ee->v = aapol_create(((aapol_t *)entry->v)->nvar);
             aapol_cpy(ee->v, entry->v);
+        } else {
+            ee->v = malloc(sizeof(float));
+            *(float *)ee->v = *(float *) entry->v;
+        }
+    }
+
+    return ee;
+}
+
+ee_t * get_object_from_var(sym_table_t * st, char * var) {
+    ee_t * ee = NULL;
+    ste_t * entry = st_probe(st, var);
+    if (!entry) {
+        fprintf(stderr, "undefined variable: %s\n", var); 
+        return NULL;
+    } else {
+        ee = malloc(sizeof(*ee));
+        ee->t = strdup(entry->t);
+        
+        if (strcmp(ee->t, "btpol") == 0) {
+            ee->v = (aapol_t *)entry->v;
+        } else if (strcmp(ee->t, "aapol") == 0) {
+            ee->v = (aapol_t *)entry->v;
         } else {
             ee->v = malloc(sizeof(float));
             *(float *)ee->v = *(float *) entry->v;
@@ -179,6 +202,16 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
 
     return ee;
 }
+
+
+void change_mon_order(pp_ctx_t * ctx, char * order) {
+    if (strcmp("lex", order) == 0) ctx->order = lex;
+    else if (strcmp("glex", order) == 0) ctx->order = glex;
+    else if (strcmp("revlex", order) == 0) ctx->order = revlex;
+    else if (strcmp("grevlex", order) == 0) ctx->order = grevlex;
+    else printf("not implemented: %s order\n", order);
+}
+
 
 void ee_print(ee_t * ee) {
     if (strcmp("number", ee->t) == 0) printf("%f\n", *(float *)ee->v);

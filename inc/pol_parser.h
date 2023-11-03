@@ -26,6 +26,7 @@ struct pol_parser_ctx_t {
     char ** var_lst;  // ordered list of vars
     u64  *  var_cntr; // var counters
     enum parser_ctx_status status;
+    enum MONOMIAL_ORDER order;
 };
 
 
@@ -40,8 +41,9 @@ void f4_wrapper(rbtree_t * in, rbtree_t * out);
 
 void print_var(sym_table_t *, char *);
 ee_t * resolve_var_as_expression(sym_table_t * , char * );
+ee_t * get_object_from_var(sym_table_t * st, char * var);
 ee_t * resolve_number_as_expression(sym_table_t * , float );
 ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *);
-void   change_pol_order(char *);
+void   change_mon_order(pp_ctx_t*, char *);
 
 #endif

@@ -30,7 +30,7 @@ extern set_t * _pol_acc_out;
 
 
 %token AAPOLTOK LLPOLTOK 
-%token SYMTABTOK GETVARSTOK SETORDTOK SETVARSTOK F4TOK 
+%token SYMTABTOK MONORDTOK GETVARSTOK SETORDTOK SETVARSTOK F4TOK SORTTOK
 %token NEWLINE QUIT
 %token <str_val>   LEX GLEX GRLEX RLEX;
 %token <float_val> FLOATING
@@ -160,17 +160,19 @@ sign: '+' { $$ =  1; }
     ;
 
 directive: SYMTABTOK { print_sym_table(st); }
+    | MONORDTOK { printf("%d\n", ctx->order); }
     | GETVARSTOK { printf("vars: "); print_lstr(ctx->var_lst); }
-    | SETORDTOK termorder { printf("not implemented: %s order\n", $2); FREE($2); }
+    | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); }
     | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
+    | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
     | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out); set_print(_pol_acc_out); } // here comes a set
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 
 termorder: LEX   { $$ = strdup("lex"); }
     | GLEX  { $$ = strdup("glex"); }
-    | RLEX  { $$ = strdup("rlex"); }
-    | GRLEX { $$ = strdup("grlex"); }
+    | RLEX  { $$ = strdup("revlex"); }
+    | GRLEX { $$ = strdup("grevlex"); }
     ;
 
 vars: vars ',' VAR

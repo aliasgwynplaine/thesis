@@ -13,6 +13,9 @@
 
 #define AAPOL_HEAD_COEF(pol) ((pol)->terms[0].coef)
 
+#define LLPOL_HEAD(pol) ((pol)->first)
+#define LLPOL_HEAD_COEF(pol) ((pol)->first->coef)
+
 typedef struct term_t term_t;
 typedef struct bpol_t bpol_t;
 typedef struct lpol_t lpol_t;
@@ -161,12 +164,16 @@ term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo);
 
 /* bit masks and bit extraction*/
 
-double exp_norm(u64, u8);
-int    exp_cmp(u64, u64, u8, enum MONOMIAL_ORDER);
-int    exp_lex_cmp(u64, u64, u8);
-int    exp_glex_cmp(u64, u64, u8); 
-int    exp_revlex_cmp(u64, u64, u8);
-int    exp_grevlex_cmp(u64, u64, u8);
+double s_exp_norm(u64, u8);
+int    s_exp_cmp(u64, u64, u8, enum MONOMIAL_ORDER);
+int    s_exp_lex_cmp(u64, u64, u8);
+int    s_exp_glex_cmp(u64, u64, u8); 
+int    s_exp_revlex_cmp(u64, u64, u8);
+int    s_exp_grevlex_cmp(u64, u64, u8);
+int    d_exp_lex_cmp(u64 *, u64 *, u8);
+int    d_exp_glex_cmp(u64 *, u64 *, u8); 
+int    d_exp_revlex_cmp(u64 *, u64 * , u8);
+int    d_exp_grevlex_cmp(u64* , u64 * , u8);
 u64 *  exp_add(u64 *, u64 *, u64 *);
 u64 *  exp_unpack(u64, u8);
 u64    exp_pack(u64 *, u8);

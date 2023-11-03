@@ -974,7 +974,7 @@ static char * test_int_max_idx() {
 static char * test_exp_norm() {
     int n = 2;
     u64 e = 4294967297; // (1,1)
-    assert(exp_norm(e, n) == sqrt(2), "exp norm is failing.");
+    assert(s_exp_norm(e, n) == sqrt(2), "exp norm is failing.");
     return 0;
 }
 
@@ -1291,11 +1291,11 @@ static char * test_exp_glex_cmp() {
     u64 e3[] = {1,2,4};
     u64 e4[] = {1,1,5};
     
-    int cmp  = exp_glex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
-    assert(cmp == 1, "exp_glex_cmp is not working properly.");
+    int cmp  = s_exp_glex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    assert(cmp == 1, "s_exp_glex_cmp is not working properly.");
 
-    cmp = exp_glex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
-    assert(cmp == -1, "exp_glex_cmp is no working properly.");
+    cmp = s_exp_glex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
+    assert(cmp == -1, "s_exp_glex_cmp is no working properly.");
 
     return 0;
 }
@@ -1308,11 +1308,11 @@ static char * test_exp_revlex_cmp() {
     u64 e3[] = {1,2,4};
     u64 e4[] = {1,1,5};
     
-    int cmp  = exp_revlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
-    assert(cmp == 1, "exp_revlex_cmp is not working properly.");
+    int cmp  = s_exp_revlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    assert(cmp == 1, "s_exp_revlex_cmp is not working properly.");
 
-    cmp = exp_revlex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
-    assert(cmp == 1, "exp_revlex_cmp is no working properly.");
+    cmp = s_exp_revlex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
+    assert(cmp == 1, "s_exp_revlex_cmp is no working properly.");
 
     return 0;
 }
@@ -1325,11 +1325,11 @@ static char * test_exp_grevlex_cmp() {
     u64 e3[] = {1,5,2};
     u64 e4[] = {4,1,3};
     
-    int cmp  = exp_grevlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
-    assert(cmp == 1, "exp_grevlex_cmp is not working properly.");
+    int cmp  = s_exp_grevlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    assert(cmp == 1, "s_exp_grevlex_cmp is not working properly.");
 
-    cmp = exp_grevlex_cmp(exp_pack(e3, n), exp_pack(e4, n), n);
-    assert(cmp == 1, "exp_grevlex_cmp is no working properly.");
+    cmp = s_exp_grevlex_cmp(exp_pack(e3, n), exp_pack(e4, n), n);
+    assert(cmp == 1, "s_exp_grevlex_cmp is no working properly.");
 
     return 0;
 }

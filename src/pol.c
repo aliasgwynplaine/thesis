@@ -103,7 +103,8 @@ void mergeaapol(aapol_t * a, int p, int q, int r) {
 
     while (k <= r) {
         if (i != n_1 || j != n_2) {
-            c = l_[i].exp - r_[j].exp;
+            printf("%d %d\n", i, j);
+            c = s_exp_cmp(l_[i].exp, r_[j].exp, a->nvar, lex);
 
             if (c > 0) a->terms[k] = l_[i++];
             else if (c < 0) a->terms[k] = r_[j++];
@@ -120,8 +121,8 @@ void mergeaapol(aapol_t * a, int p, int q, int r) {
         k++;
     }
 
-    FREE(l_);
-    FREE(r_);
+    free(l_);
+    free(r_);
 }
 
 void mergesortaapol(aapol_t * aapol, int p, int r) {
@@ -153,7 +154,7 @@ int btpol_quicksort_partition(btpol_t ** lobtpol, int p, int r) {
     i = p - 1;
 
     for (int j = p; j < r; j++) {
-        //cmp = exp_cmp(lobtpol[j]->root->exp, x->root->exp, x->nvar);
+        //cmp = s_exp_cmp(lobtpol[j]->root->exp, x->root->exp, x->nvar);
         cmp = btpol_monomial_cmp(lobtpol[j], x);
         if (cmp <= 0) { // todo: implement other comparition methods
             i++;
@@ -279,7 +280,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
     int i  = aapol->sz++;
     int pi = PARENT(i);
 
-    for (;;) {
+    for (;;) { // wdf??
         if (pi >= 0) {
             if (aapol->terms[i].exp == aapol->terms[pi].exp) {
                 aapol->terms[pi].coef += aapol->terms[i].coef;
@@ -287,7 +288,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
                 aapol->terms[i].exp   = 0;
                 i  = pi;
                 pi = PARENT(i);
-            } else if (aapol->terms[pi].exp < aapol->terms[i].exp) {
+            } else if (s_exp_cmp(aapol->terms[pi].exp, aapol->terms[i].exp, aapol->nvar, lex)) {
                 term_t aux        = aapol->terms[i];
                 aapol->terms[i]  = aapol->terms[pi];
                 aapol->terms[pi] = aux;
@@ -333,7 +334,7 @@ aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
 
 
     while (i < a->sz && j < b->sz) {
-        cmp = exp_cmp(aterms[i].exp, bterms[j].exp, a->nvar, lex);
+        cmp = s_exp_cmp(aterms[i].exp, bterms[j].exp, a->nvar, lex);
         if (cmp < 0) {
             rterms[k].coef = betha * bterms[j].coef;
             rterms[k].exp  = bterms[j++].exp;
@@ -422,7 +423,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
     
     while (i < a->sz) {
         s   = u64_max_idx(dp, i, a->sz - 1);
-        cmp = exp_cmp(rterms[k].exp, dp[s], a->nvar, lex);
+        cmp = s_exp_cmp(rterms[k].exp, dp[s], a->nvar, lex);
 
         if (cmp != 0) {
             if (rterms[k].coef != 0) rterms[++k].coef = 0;
@@ -457,7 +458,7 @@ int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
+        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
 
         if (cmp != 0) return cmp;
         
@@ -487,7 +488,7 @@ int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
+        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
 
         if (cmp != 0 || (a_term_p[i].coef != b_term_p[i].coef)) return 1;
         
@@ -558,7 +559,7 @@ int btpol_monomial_cmp(btpol_t * a, btpol_t * b) {
 
         nodea = stacka[--ha];
         nodeb = stackb[--hb];
-        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar, lex);
+        cmp = s_exp_cmp(nodea->exp, nodeb->exp, a->nvar, lex);
 
         if (cmp != 0) {
             FREE(stackb);
@@ -606,7 +607,7 @@ int btpol_hard_cmp(btpol_t * a, btpol_t * b) {
 
         nodea = stacka[--ha];
         nodeb = stackb[--hb];
-        cmp = exp_cmp(nodea->exp, nodeb->exp, a->nvar, lex);
+        cmp = s_exp_cmp(nodea->exp, nodeb->exp, a->nvar, lex);
 
         if (cmp != 0 || (nodea->coef != nodeb->coef)) {
             FREE(stackb);
@@ -664,7 +665,7 @@ lpol_t * lpol_malloc(size_t) {
 
 void lpol_free(lpol_t * lpol) {
     if (lpol->nxt != NULL) lpol_free(lpol->nxt);
-    FREE(lpol);
+    free(lpol);
 }
 
 /**
@@ -693,23 +694,6 @@ bpol_t * bpol_malloc(size_t sz) {
     return lpol;
 }
 
-
-llpol_t * llpol_create(u8 n) {
-    llpol_t * llpol = malloc(sizeof(*llpol));
-    CHECKPTR(llpol);
-    llpol->first = NULL;
-    llpol->nvar  = n;
-    llpol->sz    = 0;
-
-    return llpol;
-}
-
-void llpol_free(llpol_t * llpol) {
-    if (llpol->first != NULL) lpol_free(llpol->first);
-    FREE(llpol);
-}
-
-
 /**
  * @brief creates a tree like pol struct in n
  * vars. It's necesary to call freebtpol_t at
@@ -731,8 +715,19 @@ btpol_t * btpol_create(u8 n) {
 }
 
 
-lpol_t  * llpol_head(llpol_t * llpol) {
-    return llpol->first;
+llpol_t * llpol_create(u8 n) {
+    llpol_t * llpol = malloc(sizeof(*llpol));
+    CHECKPTR(llpol);
+    llpol->first = NULL;
+    llpol->nvar  = n;
+    llpol->sz    = 0;
+
+    return llpol;
+}
+
+void llpol_free(llpol_t * llpol) {
+    if (llpol->first != NULL) lpol_free(llpol->first);
+    free(llpol);
 }
 
 
@@ -745,7 +740,7 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 exp) {
     lpol_t *  newterm;
 
     while ((*indirect) != NULL) {
-        int cmp = exp_lex_cmp((*indirect)->exp, exp, llpol->nvar);
+        int cmp = s_exp_lex_cmp((*indirect)->exp, exp, llpol->nvar);
 
         if (cmp < 0) {
             newterm = lpol_malloc(sizeof(*newterm));
@@ -792,7 +787,7 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha) {
     lpol_t ** indirect = &c->first;
 
     while (pa != NULL && pb != NULL) {
-        int cmp = exp_lex_cmp(pa->exp, pb->exp, a->nvar);
+        int cmp = s_exp_lex_cmp(pa->exp, pb->exp, a->nvar);
         *indirect = lpol_malloc(sizeof(**indirect));
 
         if (cmp < 0) {
@@ -862,7 +857,7 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha)
     lpol_t ** indirect = &a->first;
 
     while ((*indirect) != NULL && pb != NULL) {
-        int cmp = exp_lex_cmp((*indirect)->exp, pb->exp, a->nvar);
+        int cmp = s_exp_lex_cmp((*indirect)->exp, pb->exp, a->nvar);
 
         if (cmp < 0) {
             newterm = lpol_malloc(sizeof(*newterm));
@@ -1052,7 +1047,7 @@ btpol_t  * btpol_add(btpol_t * a, COEFTYPE alpha, btpol_t * b, COEFTYPE betha) {
     bpol_t * pb = b->root;
 
     while (pa != NULL && pb != NULL) {
-        if (exp_cmp(pa->exp, pb->exp, a->nvar, lex) < 0) {
+        if (s_exp_cmp(pa->exp, pb->exp, a->nvar, lex) < 0) {
             btpol_addterm(res, pa->coef, pa->exp);
         }
     }
@@ -1578,7 +1573,7 @@ void aapol_free(aapol_t * aapol) {
 }
 
 
-double exp_norm(u64 e, u8 nvar) {
+double s_exp_norm(u64 e, u8 nvar) {
     if (nvar <= 0) {
         dbgerr("nvar is no positive!");
         exit(EXIT_FAILURE);
@@ -1627,19 +1622,22 @@ double exp_norm(u64 e, u8 nvar) {
 }
 
 
-int exp_cmp(u64 a, u64 b, u8 nvar, enum MONOMIAL_ORDER mo) {
+int s_exp_cmp(u64 a, u64 b, u8 nvar, enum MONOMIAL_ORDER mo) {
     // todo: handle different ways to compare
-    if (mo == lex) return exp_lex_cmp(a, b, nvar);
+    if (mo == lex) return s_exp_lex_cmp(a, b, nvar);
+    if (mo == glex) return s_exp_glex_cmp(a, b, nvar);
+    if (mo == grevlex) return s_exp_grevlex_cmp(a, b, nvar);
+    if (mo == revlex) return s_exp_revlex_cmp(a, b, nvar);
 }
 
 
-int exp_lex_cmp(u64 a, u64 b, u8 nvar) {
+int s_exp_lex_cmp(u64 a, u64 b, u8 nvar) {
     if (a == b) return 0;
     else if (a < b) return -1;
     else if (a > b) return 1;
 }
 
-int exp_glex_cmp(u64 a, u64 b, u8 nvar) {
+int s_exp_glex_cmp(u64 a, u64 b, u8 nvar) {
     u64 * e_a = exp_unpack(a, nvar);
     u64 * e_b = exp_unpack(b, nvar);
     u64 sum_a = 0;
@@ -1665,7 +1663,7 @@ int exp_glex_cmp(u64 a, u64 b, u8 nvar) {
 }
 
 
-int exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
+int s_exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
     u64 * e_a = exp_unpack(a, nvar);
     u64 * e_b = exp_unpack(b, nvar);
     int cmp = 0;
@@ -1686,7 +1684,7 @@ int exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
 }
 
 
-int exp_grevlex_cmp(u64 a, u64 b, u8 nvar) {
+int s_exp_grevlex_cmp(u64 a, u64 b, u8 nvar) {
     u64 * e_a = exp_unpack(a, nvar);
     u64 * e_b = exp_unpack(b, nvar);
     u64 sum_a = 0;
