@@ -5,6 +5,7 @@
 #include "pol.h"
 #include "sym_table.h"
 #include "tree.h"
+#include "matrix.h"
 
 typedef struct pol_parser_ctx_t pp_ctx_t;
 typedef struct expr_entry_t ee_t;

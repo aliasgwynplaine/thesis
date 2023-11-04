@@ -125,13 +125,13 @@ struct hybrid_rectangular_matrix_t {
 
 
 struct faugere_lachartre_sparse_matrix_t {
-    idx_t n;
-    idx_t m;
+    u32 n;
+    u32 m;
     COEFTYPE ** rows;
-    int * width;
-    idx_t ** pos;
+    u32 * width;
+    u32 ** pos;
     float d;
-    idx_t nnz;
+    u64 nnz;
 };
 
 
