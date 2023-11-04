@@ -42,7 +42,7 @@ struct term_t {
 
 struct lpol_t {
     COEFTYPE coef;
-    u64      exp;
+    u64    * exp;
     lpol_t * nxt;
 };
 
@@ -76,7 +76,7 @@ struct btpol_t {
 /* memory handling */
 term_t  * term_malloc(size_t);
 
-lpol_t  * lpol_malloc(size_t);
+lpol_t  * lpol_malloc(u8 nvar);
 void      lpol_free(lpol_t *);
 
 bpol_t  * bpol_malloc(size_t sz);
@@ -125,10 +125,9 @@ char * aapol_repr(aapol_t *);
 
 /* define polynomial operations here */
 
-lpol_t  * llpol_head(llpol_t *); 
-llpol_t * llpol_addterm(llpol_t *, COEFTYPE, u64); 
-llpol_t * llpol_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE);
-void      llpol_inplace_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE);
+llpol_t * llpol_addterm(llpol_t *, COEFTYPE, u64 *, enum MONOMIAL_ORDER); 
+llpol_t * llpol_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE, enum MONOMIAL_ORDER);
+void      llpol_inplace_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE, enum MONOMIAL_ORDER);
 llpol_t * llpol_coef_multiply(llpol_t *, COEFTYPE);
 void      llpol_inplace_coef_multiply(llpol_t *, COEFTYPE);
 llpol_t * llpol_multiply(llpol_t * , llpol_t *); // todo
@@ -170,6 +169,8 @@ int    s_exp_lex_cmp(u64, u64, u8);
 int    s_exp_glex_cmp(u64, u64, u8); 
 int    s_exp_revlex_cmp(u64, u64, u8);
 int    s_exp_grevlex_cmp(u64, u64, u8);
+int    d_exp_is_zero(u64 *, u8);
+int    d_exp_cmp(u64 *, u64 *, u8, enum MONOMIAL_ORDER);
 int    d_exp_lex_cmp(u64 *, u64 *, u8);
 int    d_exp_glex_cmp(u64 *, u64 *, u8); 
 int    d_exp_revlex_cmp(u64 *, u64 * , u8);

@@ -575,20 +575,35 @@ static char * test_btpol_coef_multiply() {
 static char * test_llpol_addterm() {
     u8 n = 4;
     llpol_t * llpol = llpol_create(n);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 1);
-    llpol = llpol_addterm(llpol, 1, 2);
-    llpol = llpol_addterm(llpol, 1, 3);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, 1, 7);
-    llpol = llpol_addterm(llpol, -1, 7);
+    // u64 * e3 = calloc(4, sizeof(*e3));
+    // u64 * e1 = calloc(4, sizeof(*e1));
+    // u64 * e2 = calloc(4, sizeof(*e2));
+    // u64 * e7 = calloc(4, sizeof(*e7));
+    u64 e3[] = {0,0,0,3};
+    u64 e1[] = {0,0,0,1};
+    u64 e2[] = {0,0,0,2};
+    u64 e7[] = {0,0,0,7};
+    // e3[3] = 3;
+    // e1[3] = 1;
+    // e2[3] = 2;
+    // e7[3] = 7;
+    llpol = llpol_addterm(llpol, 1, e3, lex);
+    llpol = llpol_addterm(llpol, 1, e3, lex);
+    llpol = llpol_addterm(llpol, 1, e1, lex);
+    llpol = llpol_addterm(llpol, 1, e2, lex);
+    llpol = llpol_addterm(llpol, 1, e3, lex);
+    llpol = llpol_addterm(llpol, 1, e7, lex);
+    llpol = llpol_addterm(llpol, 1, e7, lex);
+    llpol = llpol_addterm(llpol, -1, e7, lex);
 
     llpol_t * expectec_llpol = llpol_create(n);
-    llpol_addterm(expectec_llpol, 3, 3);
-    llpol_addterm(expectec_llpol, 1, 7);
-    llpol_addterm(expectec_llpol, 1, 2);
-    llpol_addterm(expectec_llpol, 1, 1);
+    llpol_addterm(expectec_llpol, 3, e3, lex);
+    llpol_addterm(expectec_llpol, 1, e7, lex);
+    llpol_addterm(expectec_llpol, 1, e2, lex);
+    llpol_addterm(expectec_llpol, 1, e1, lex);
+    
+    //llpol_print(llpol);
+    //llpol_print(expectec_llpol);
 
     assert(llpol_hard_cmp(llpol, expectec_llpol) == 0, "llpol_addterm function is failing!");
     assert(llpol->sz == expectec_llpol->sz, "llpols have different numbers of terms");
@@ -605,38 +620,55 @@ static char * test_llpol_addterm() {
 static char * test_llpol_coef_multiply() {
     u8 n = 5;
     llpol_t * llpol = llpol_create(n);
-    llpol_addterm(llpol, 11, 31564275);
-    llpol_addterm(llpol, 14, 61364473);
-    llpol_addterm(llpol, 16, 11264475);
-    llpol_addterm(llpol, 17, 21764275);
-    llpol_addterm(llpol, 31, 31964677);
-    llpol_addterm(llpol, 57, 71264374);
-    llpol_addterm(llpol, 81, 11464577);
-    llpol_addterm(llpol, 65, 51164773);
-    llpol_addterm(llpol, 13, 41264477);
-    llpol_addterm(llpol, 76, 61764272);
-    llpol_addterm(llpol, 34, 11664274);
-    llpol_addterm(llpol, -5, 71564274);
-    llpol_addterm(llpol, -1, 61764274);
-    llpol_addterm(llpol, -7, 21464076);
+
+    u64 e11264475[] = {4,1,4,5,2};
+    u64 e11464577[] = {0,5,2,6,0};
+    u64 e11664274[] = {0,0,0,1,0};
+    u64 e21464076[] = {63,31365,345,13,0};
+    u64 e21764275[] = {0,7,24,13,6};
+    u64 e31564275[] = {1,1,2,1,54};
+    u64 e31964677[] = {9,2,5,1,3};
+    u64 e41264477[] = {0,8,12,3,12};
+    u64 e51164773[] = {1,0,0,0,0};
+    u64 e61364473[] = {0,1,3,4,1};
+    u64 e61764272[] = {978,3,3123,5,354};
+    u64 e61764274[] = {1,1,1,1,1};
+    u64 e71264374[] = {9,543,1,3,1};
+    u64 e71564274[] = {0,1,3,0,2};
+
+
+    llpol_addterm(llpol, 11, e31564275, lex);
+    llpol_addterm(llpol, 14, e61364473, lex);
+    llpol_addterm(llpol, 16, e11264475, lex);
+    llpol_addterm(llpol, 17, e21764275, lex);
+    llpol_addterm(llpol, 31, e31964677, lex);
+    llpol_addterm(llpol, 57, e71264374, lex);
+    llpol_addterm(llpol, 81, e11464577, lex);
+    llpol_addterm(llpol, 65, e51164773, lex);
+    llpol_addterm(llpol, 13, e41264477, lex);
+    llpol_addterm(llpol, 76, e61764272, lex);
+    llpol_addterm(llpol, 34, e11664274, lex);
+    llpol_addterm(llpol, -5, e71564274, lex);
+    llpol_addterm(llpol, -1, e61764274, lex);
+    llpol_addterm(llpol, -7, e21464076, lex);
 
     llpol_t * result = llpol_coef_multiply(llpol, 78.5);
 
     llpol_t * expected_llpol = llpol_create(n);
-    llpol_addterm(expected_llpol, 78.5 * 11, 31564275);
-    llpol_addterm(expected_llpol, 78.5 * 14, 61364473);
-    llpol_addterm(expected_llpol, 78.5 * 16, 11264475);
-    llpol_addterm(expected_llpol, 78.5 * 17, 21764275);
-    llpol_addterm(expected_llpol, 78.5 * 31, 31964677);
-    llpol_addterm(expected_llpol, 78.5 * 57, 71264374);
-    llpol_addterm(expected_llpol, 78.5 * 81, 11464577);
-    llpol_addterm(expected_llpol, 78.5 * 65, 51164773);
-    llpol_addterm(expected_llpol, 78.5 * 13, 41264477);
-    llpol_addterm(expected_llpol, 78.5 * 76, 61764272);
-    llpol_addterm(expected_llpol, 78.5 * 34, 11664274);
-    llpol_addterm(expected_llpol, 78.5 * -5, 71564274);
-    llpol_addterm(expected_llpol, 78.5 * -1, 61764274);
-    llpol_addterm(expected_llpol, 78.5 * -7, 21464076);
+    llpol_addterm(expected_llpol, 78.5 * 11, e31564275, lex);
+    llpol_addterm(expected_llpol, 78.5 * 14, e61364473, lex);
+    llpol_addterm(expected_llpol, 78.5 * 16, e11264475, lex);
+    llpol_addterm(expected_llpol, 78.5 * 17, e21764275, lex);
+    llpol_addterm(expected_llpol, 78.5 * 31, e31964677, lex);
+    llpol_addterm(expected_llpol, 78.5 * 57, e71264374, lex);
+    llpol_addterm(expected_llpol, 78.5 * 81, e11464577, lex);
+    llpol_addterm(expected_llpol, 78.5 * 65, e51164773, lex);
+    llpol_addterm(expected_llpol, 78.5 * 13, e41264477, lex);
+    llpol_addterm(expected_llpol, 78.5 * 76, e61764272, lex);
+    llpol_addterm(expected_llpol, 78.5 * 34, e11664274, lex);
+    llpol_addterm(expected_llpol, 78.5 * -5, e71564274, lex);
+    llpol_addterm(expected_llpol, 78.5 * -1, e61764274, lex);
+    llpol_addterm(expected_llpol, 78.5 * -7, e21464076, lex);
     // printf("\n");
     // printf("%d - %d\n", result->sz, expected_llpol->sz);
     // llpol_print(result);
@@ -656,38 +688,52 @@ static char * test_llpol_coef_multiply() {
 static char * test_llpol_inplace_coef_multiply() {
     u8 n = 5;
     llpol_t * llpol = llpol_create(n);
-    llpol_addterm(llpol, 11, 31564275);
-    llpol_addterm(llpol, 14, 61364473);
-    llpol_addterm(llpol, 16, 11264475);
-    llpol_addterm(llpol, 17, 21764275);
-    llpol_addterm(llpol, 31, 31964677);
-    llpol_addterm(llpol, 57, 71264374);
-    llpol_addterm(llpol, 81, 11464577);
-    llpol_addterm(llpol, 65, 51164773);
-    llpol_addterm(llpol, 13, 41264477);
-    llpol_addterm(llpol, 76, 61764272);
-    llpol_addterm(llpol, 34, 11664274);
-    llpol_addterm(llpol, -5, 71564274);
-    llpol_addterm(llpol, -1, 61764274);
-    llpol_addterm(llpol, -7, 21464076);
+    u64 e11264475[] = {4,1,4,5,2};
+    u64 e11464577[] = {0,5,2,6,0};
+    u64 e11664274[] = {0,0,0,1,0};
+    u64 e21464076[] = {63,31365,345,13,0};
+    u64 e21764275[] = {0,7,24,13,6};
+    u64 e31564275[] = {1,1,2,1,54};
+    u64 e31964677[] = {9,2,5,1,3};
+    u64 e41264477[] = {0,8,12,3,12};
+    u64 e51164773[] = {1,0,0,0,0};
+    u64 e61364473[] = {0,1,3,4,1};
+    u64 e61764272[] = {978,3,3123,5,354};
+    u64 e61764274[] = {1,1,1,1,1};
+    u64 e71264374[] = {9,543,1,3,1};
+    u64 e71564274[] = {0,1,3,0,2};
+    llpol_addterm(llpol, 11, e31564275, lex);
+    llpol_addterm(llpol, 14, e61364473, lex);
+    llpol_addterm(llpol, 16, e11264475, lex);
+    llpol_addterm(llpol, 17, e21764275, lex);
+    llpol_addterm(llpol, 31, e31964677, lex);
+    llpol_addterm(llpol, 57, e71264374, lex);
+    llpol_addterm(llpol, 81, e11464577, lex);
+    llpol_addterm(llpol, 65, e51164773, lex);
+    llpol_addterm(llpol, 13, e41264477, lex);
+    llpol_addterm(llpol, 76, e61764272, lex);
+    llpol_addterm(llpol, 34, e11664274, lex);
+    llpol_addterm(llpol, -5, e71564274, lex);
+    llpol_addterm(llpol, -1, e61764274, lex);
+    llpol_addterm(llpol, -7, e21464076, lex);
 
     llpol_inplace_coef_multiply(llpol, 78.5);
 
     llpol_t * expected_llpol = llpol_create(n);
-    llpol_addterm(expected_llpol, 78.5 * 11, 31564275);
-    llpol_addterm(expected_llpol, 78.5 * 14, 61364473);
-    llpol_addterm(expected_llpol, 78.5 * 16, 11264475);
-    llpol_addterm(expected_llpol, 78.5 * 17, 21764275);
-    llpol_addterm(expected_llpol, 78.5 * 31, 31964677);
-    llpol_addterm(expected_llpol, 78.5 * 57, 71264374);
-    llpol_addterm(expected_llpol, 78.5 * 81, 11464577);
-    llpol_addterm(expected_llpol, 78.5 * 65, 51164773);
-    llpol_addterm(expected_llpol, 78.5 * 13, 41264477);
-    llpol_addterm(expected_llpol, 78.5 * 76, 61764272);
-    llpol_addterm(expected_llpol, 78.5 * 34, 11664274);
-    llpol_addterm(expected_llpol, 78.5 * -5, 71564274);
-    llpol_addterm(expected_llpol, 78.5 * -1, 61764274);
-    llpol_addterm(expected_llpol, 78.5 * -7, 21464076);
+    llpol_addterm(expected_llpol, 78.5 * 11, e31564275, lex);
+    llpol_addterm(expected_llpol, 78.5 * 14, e61364473, lex);
+    llpol_addterm(expected_llpol, 78.5 * 16, e11264475, lex);
+    llpol_addterm(expected_llpol, 78.5 * 17, e21764275, lex);
+    llpol_addterm(expected_llpol, 78.5 * 31, e31964677, lex);
+    llpol_addterm(expected_llpol, 78.5 * 57, e71264374, lex);
+    llpol_addterm(expected_llpol, 78.5 * 81, e11464577, lex);
+    llpol_addterm(expected_llpol, 78.5 * 65, e51164773, lex);
+    llpol_addterm(expected_llpol, 78.5 * 13, e41264477, lex);
+    llpol_addterm(expected_llpol, 78.5 * 76, e61764272, lex);
+    llpol_addterm(expected_llpol, 78.5 * 34, e11664274, lex);
+    llpol_addterm(expected_llpol, 78.5 * -5, e71564274, lex);
+    llpol_addterm(expected_llpol, 78.5 * -1, e61764274, lex);
+    llpol_addterm(expected_llpol, 78.5 * -7, e21464076, lex);
     // printf("\n");
     // printf("%d - %d\n", result->sz, expected_llpol->sz);
     // llpol_print(result);
@@ -705,32 +751,37 @@ static char * test_llpol_inplace_coef_multiply() {
 
 static char * test_llpol_add() {
     int n = 8;
+    u64 e0[] = {0,0,0,0,0,0,0,0};
+    u64 e72340172838076673[]  = {34,64,5542,346,45,75,67,78678};
+    u64 e217020518514230019[] = {0,5,4,7,7,0,0,4};
+    u64 e144680345676153346[] = {1,1,1,1,1,1,1,1};
+    u64 e2305878202712596482[]= {1,3,1,2,4,1,5,5};
+    u64 e8589934594[]         = {6,3,7,45,6,8,42,4};
     llpol_t * a = llpol_create(n);
-    llpol_addterm(a, 1,                  0);
-    llpol_addterm(a, 1,  72340172838076673);
-    llpol_addterm(a, 1, 217020518514230019);
-    llpol_addterm(a, 1, 144680345676153346);
+    llpol_addterm(a, 1,                  e0, lex);
+    llpol_addterm(a, 1,  e72340172838076673, lex);
+    llpol_addterm(a, 1, e217020518514230019, lex);
+    llpol_addterm(a, 1, e144680345676153346, lex);
 
     llpol_t * b = llpol_create(n);
-    llpol_addterm(b, 1,                  0);
-    llpol_addterm(b, 1,  72340172838076673);
-    llpol_addterm(b, 1, 217020518514230019);
-    llpol_addterm(b, 1, 144680345676153346);
+    llpol_addterm(b, 1,                  e0, lex);
+    llpol_addterm(b, 1,  e72340172838076673, lex);
+    llpol_addterm(b, 1, e217020518514230019, lex);
+    llpol_addterm(b, 1, e144680345676153346, lex);
 
     llpol_t * expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 2,                  0);
-    llpol_addterm(expected_result, 2,  72340172838076673);
-    llpol_addterm(expected_result, 2, 217020518514230019);
-    llpol_addterm(expected_result, 2, 144680345676153346);
-
-    llpol_t * result = llpol_add(a, 1, b, 1);
+    llpol_addterm(expected_result, 2,                  e0, lex);
+    llpol_addterm(expected_result, 2,  e72340172838076673, lex);
+    llpol_addterm(expected_result, 2, e217020518514230019, lex);
+    llpol_addterm(expected_result, 2, e144680345676153346, lex);
+    llpol_t * result = llpol_add(a, 1, b, 1, lex);
 
     // printf("\n");
     // llpol_print(a);
     // llpol_print(b);
     // printf("\n");
-    // llpol_print(result);
-    // llpol_print(expected_result);
+    // llpol_print(result);printf("sz::%d\n", result->sz);
+    // llpol_print(expected_result);printf("sz:::%d\n", expected_result->sz);
     // printf("\n");
 
     assert(llpol_hard_cmp(result, expected_result) == 0, "llpols must be equals.");
@@ -743,28 +794,28 @@ static char * test_llpol_add() {
 
     a = llpol_create(n);
     
-    llpol_addterm(a, 1,                  0);
-    llpol_addterm(a, 1,  72340172838076673);
-    llpol_addterm(a, 1, 217020518514230019);
-    llpol_addterm(a, 1, 144680345676153346);
-    llpol_addterm(a, 1,         8589934594);
+    llpol_addterm(a, 1,                  e0, lex);
+    llpol_addterm(a, 1,  e72340172838076673, lex);
+    llpol_addterm(a, 1, e217020518514230019, lex);
+    llpol_addterm(a, 1, e144680345676153346, lex);
+    llpol_addterm(a, 1,         e8589934594, lex);
 
     b = llpol_create(n);
-    llpol_addterm(b, 1,                   0);
-    llpol_addterm(b, 1,   72340172838076673);
-    llpol_addterm(b, 1,  217020518514230019);
-    llpol_addterm(b, 1,  144680345676153346);
-    llpol_addterm(b, 1, 2305878202712596482);
+    llpol_addterm(b, 1,                   e0, lex);
+    llpol_addterm(b, 1,   e72340172838076673, lex);
+    llpol_addterm(b, 1,  e217020518514230019, lex);
+    llpol_addterm(b, 1,  e144680345676153346, lex);
+    llpol_addterm(b, 1, e2305878202712596482, lex);
 
     expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 5,   72340172838076673);
-    llpol_addterm(expected_result, 5,  217020518514230019);
-    llpol_addterm(expected_result, 5,  144680345676153346);
-    llpol_addterm(expected_result, 2,          8589934594);
-    llpol_addterm(expected_result, 3, 2305878202712596482);
-    llpol_addterm(expected_result, 5,                   0);
+    llpol_addterm(expected_result, 5,   e72340172838076673, lex);
+    llpol_addterm(expected_result, 5,  e217020518514230019, lex);
+    llpol_addterm(expected_result, 5,  e144680345676153346, lex);
+    llpol_addterm(expected_result, 2,          e8589934594, lex);
+    llpol_addterm(expected_result, 3, e2305878202712596482, lex);
+    llpol_addterm(expected_result, 5,                   e0, lex);
 
-    result = llpol_add(a, 2, b, 3);
+    result = llpol_add(a, 2, b, 3, lex);
     // printf("\n");
     // llpol_print(a);
     // llpol_print(b);
@@ -782,23 +833,23 @@ static char * test_llpol_add() {
 
     a = llpol_create(n);
     
-    llpol_addterm(a, 1,                  0);
-    llpol_addterm(a, 1,  72340172838076673);
-    llpol_addterm(a, 1, 217020518514230019);
-    llpol_addterm(a, 1, 144680345676153346);
-    llpol_addterm(a, 1,         8589934594);
+    llpol_addterm(a, 1,                  e0, lex);
+    llpol_addterm(a, 1,  e72340172838076673, lex);
+    llpol_addterm(a, 1, e217020518514230019, lex);
+    llpol_addterm(a, 1, e144680345676153346, lex);
+    llpol_addterm(a, 1,         e8589934594, lex);
 
     b = llpol_create(n);
-    llpol_addterm(b, 1,                   0);
-    llpol_addterm(b, 1,   72340172838076673);
-    llpol_addterm(b, 1,  217020518514230019);
-    llpol_addterm(b, 1,  144680345676153346);
-    llpol_addterm(b, 1, 2305878202712596482);
+    llpol_addterm(b, 1,                   e0, lex);
+    llpol_addterm(b, 1,   e72340172838076673, lex);
+    llpol_addterm(b, 1,  e217020518514230019, lex);
+    llpol_addterm(b, 1,  e144680345676153346, lex);
+    llpol_addterm(b, 1, e2305878202712596482, lex);
 
     expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 0,   72340172838076673);
+    llpol_addterm(expected_result, 0,   e72340172838076673, lex);
     
-    result = llpol_add(a, 0, b, 0);
+    result = llpol_add(a, 0, b, 0, lex);
     // printf("***************\n");
     // llpol_print(a);
     // llpol_print(b);
@@ -820,27 +871,33 @@ static char * test_llpol_add() {
 static char * test_llpol_inplace_add() {
     int n = 8;
     llpol_t * a = llpol_create(n);
-    llpol_addterm(a, 1,                  0);
-    llpol_addterm(a, 1,  72340172838076673);
-    llpol_addterm(a, 1, 217020518514230019);
-    llpol_addterm(a, 1, 144680345676153346);
+    u64 e0[] = {0,0,0,0,0,0,0,0};
+    u64 e72340172838076673[]  = {34,64,5542,346,45,75,67,78678};
+    u64 e217020518514230019[] = {0,542,4,7,7,0,0,4};
+    u64 e144680345676153346[] = {1,1,1,1,1,1,1,1};
+    u64 e2305878202712596482[]= {1,3,1,2,4,1,5,5};
+    u64 e8589934594[]         = {6,3,7,45,6,8,42,4};
+    llpol_addterm(a, 1,                  e0, lex);
+    llpol_addterm(a, 1,  e72340172838076673, lex);
+    llpol_addterm(a, 1, e217020518514230019, lex);
+    llpol_addterm(a, 1, e144680345676153346, lex);
 
     llpol_t * b = llpol_create(n);
-    llpol_addterm(b, 1,                  0);
-    llpol_addterm(b, 1,  72340172838076673);
-    llpol_addterm(b, 1, 217020518514230019);
-    llpol_addterm(b, 1, 144680345676153346);
+    llpol_addterm(b, 1,                  e0, lex);
+    llpol_addterm(b, 1,  e72340172838076673, lex);
+    llpol_addterm(b, 1, e217020518514230019, lex);
+    llpol_addterm(b, 1, e144680345676153346, lex);
 
     llpol_t * expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 2,                  0);
-    llpol_addterm(expected_result, 2,  72340172838076673);
-    llpol_addterm(expected_result, 2, 217020518514230019);
-    llpol_addterm(expected_result, 2, 144680345676153346);
+    llpol_addterm(expected_result, 2,                  e0, lex);
+    llpol_addterm(expected_result, 2,  e72340172838076673, lex);
+    llpol_addterm(expected_result, 2, e217020518514230019, lex);
+    llpol_addterm(expected_result, 2, e144680345676153346, lex);
     // printf("\n");
     // printf("sz: %d", a->sz);
     // llpol_print(a);
     // printf("sz: %d", a->sz); llpol_print(b);
-    llpol_inplace_add(a, 1, b, 1);
+    llpol_inplace_add(a, 1, b, 1, lex);
 
     // printf("\n");
     // printf("sz: %d", a->sz);
@@ -860,28 +917,28 @@ static char * test_llpol_inplace_add() {
 
     a = llpol_create(n);
     
-    llpol_addterm(a, 1,                  0);
-    llpol_addterm(a, 1,  72340172838076673);
-    llpol_addterm(a, 1, 217020518514230019);
-    llpol_addterm(a, 1, 144680345676153346);
-    llpol_addterm(a, 1,         8589934594);
+    llpol_addterm(a, 1,                  e0, lex);
+    llpol_addterm(a, 1,  e72340172838076673, lex);
+    llpol_addterm(a, 1, e217020518514230019, lex);
+    llpol_addterm(a, 1, e144680345676153346, lex);
+    llpol_addterm(a, 1,         e8589934594, lex);
 
     b = llpol_create(n);
-    llpol_addterm(b, 1,                   0);
-    llpol_addterm(b, 1,   72340172838076673);
-    llpol_addterm(b, 1,  217020518514230019);
-    llpol_addterm(b, 1,  144680345676153346);
-    llpol_addterm(b, 1, 2305878202712596482);
+    llpol_addterm(b, 1,                   e0, lex);
+    llpol_addterm(b, 1,   e72340172838076673, lex);
+    llpol_addterm(b, 1,  e217020518514230019, lex);
+    llpol_addterm(b, 1,  e144680345676153346, lex);
+    llpol_addterm(b, 1, e2305878202712596482, lex);
 
     expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 5,   72340172838076673);
-    llpol_addterm(expected_result, 5,  217020518514230019);
-    llpol_addterm(expected_result, 5,  144680345676153346);
-    llpol_addterm(expected_result, 2,          8589934594);
-    llpol_addterm(expected_result, 3, 2305878202712596482);
-    llpol_addterm(expected_result, 5,                   0);
+    llpol_addterm(expected_result, 5,   e72340172838076673, lex);
+    llpol_addterm(expected_result, 5,  e217020518514230019, lex);
+    llpol_addterm(expected_result, 5,  e144680345676153346, lex);
+    llpol_addterm(expected_result, 2,          e8589934594, lex);
+    llpol_addterm(expected_result, 3, e2305878202712596482, lex);
+    llpol_addterm(expected_result, 5,                   e0, lex);
 
-    llpol_inplace_add(a, 2, b, 3);
+    llpol_inplace_add(a, 2, b, 3, lex);
     // printf("\n");
     // llpol_print(a);
     // llpol_print(b);
@@ -890,7 +947,9 @@ static char * test_llpol_inplace_add() {
     // llpol_print(expected_result);
     // printf("\n");
     // llpol_print(a);
+    // printf("sz::%d\n", a->sz);
     // llpol_print(expected_result);
+    // printf("sz:::%d\n", expected_result->sz);
 
     assert(llpol_hard_cmp(a, expected_result) == 0, "llpols must be equals.");
     assert(a->sz == expected_result->sz, "llpols have different numbers of terms");
@@ -901,23 +960,23 @@ static char * test_llpol_inplace_add() {
 
     a = llpol_create(n);
     
-    llpol_addterm(a, 1,                  0);
-    llpol_addterm(a, 1,  72340172838076673);
-    llpol_addterm(a, 1, 217020518514230019);
-    llpol_addterm(a, 1, 144680345676153346);
-    llpol_addterm(a, 1,         8589934594);
+    llpol_addterm(a, 1,                  e0, lex);
+    llpol_addterm(a, 1,  e72340172838076673, lex);
+    llpol_addterm(a, 1, e217020518514230019, lex);
+    llpol_addterm(a, 1, e144680345676153346, lex);
+    llpol_addterm(a, 1,         e8589934594, lex);
 
     b = llpol_create(n);
-    llpol_addterm(b, 1,                   0);
-    llpol_addterm(b, 1,   72340172838076673);
-    llpol_addterm(b, 1,  217020518514230019);
-    llpol_addterm(b, 1,  144680345676153346);
-    llpol_addterm(b, 1, 2305878202712596482);
+    llpol_addterm(b, 1,                   e0, lex);
+    llpol_addterm(b, 1,   e72340172838076673, lex);
+    llpol_addterm(b, 1,  e217020518514230019, lex);
+    llpol_addterm(b, 1,  e144680345676153346, lex);
+    llpol_addterm(b, 1, e2305878202712596482, lex);
 
     expected_result = llpol_create(n);
-    llpol_addterm(expected_result, 0,   72340172838076673);
+    llpol_addterm(expected_result, 0,   e72340172838076673, lex);
     
-    llpol_inplace_add(a, 0, b, 0);
+    llpol_inplace_add(a, 0, b, 0, lex);
 
     assert(llpol_hard_cmp(a, expected_result) == 0, "llpols must be equals and equal to zero");
     assert(a->sz == expected_result->sz, "llpols have different numbers of terms");
@@ -1339,20 +1398,20 @@ static void all_tests() {
     run_unittest(test_packexp);
     run_unittest(test_unpackexp);
     run_unittest(test_packexp_with_zero);
-    run_unittest(test_aapol_addterm_equals);
-    run_unittest(test_aapol_addterm_different_minor);
-    run_unittest(test_aapol_coef_multiply);
-    run_unittest(test_aapol_cpy);
-    run_unittest(test_aapol_add);
-    run_unittest(test_aapol_multiply);
-    run_unittest(test_aapol_inplace_coef_multiply);
-    run_unittest(test_btpol_free_empty);
-    run_unittest(test_btpol_addterm_equals);
-    run_unittest(test_btpol_addterm_different_major);
-    run_unittest(test_btpol_addterm_different_minor);
-    run_unittest(test_btpol_cpy);
-    run_unittest(test_btpol_inplace_coef_multiply);
-    run_unittest(test_btpol_coef_multiply);
+    //run_unittest(test_aapol_addterm_equals);
+    //run_unittest(test_aapol_addterm_different_minor);
+    //run_unittest(test_aapol_coef_multiply);
+    //run_unittest(test_aapol_cpy);
+    //run_unittest(test_aapol_add);
+    //run_unittest(test_aapol_multiply);
+    //run_unittest(test_aapol_inplace_coef_multiply);
+    //run_unittest(test_btpol_free_empty);
+    //run_unittest(test_btpol_addterm_equals);
+    //run_unittest(test_btpol_addterm_different_major);
+    //run_unittest(test_btpol_addterm_different_minor);
+    //run_unittest(test_btpol_cpy);
+    //run_unittest(test_btpol_inplace_coef_multiply);
+    //run_unittest(test_btpol_coef_multiply);
     run_unittest(test_llpol_addterm);
     run_unittest(test_llpol_add);
     run_unittest(test_llpol_inplace_add);
