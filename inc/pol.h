@@ -161,24 +161,28 @@ int        aapol_hard_cmp(aapol_t * a, aapol_t * b);
 aapol_t  * aapol_cpy(aapol_t * dst, aapol_t * src);
 term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo);
 
-/* bit masks and bit extraction*/
-
+/* sparse exponent fux*/
 double s_exp_norm(u64, u8);
 int    s_exp_cmp(u64, u64, u8, enum MONOMIAL_ORDER);
 int    s_exp_lex_cmp(u64, u64, u8);
 int    s_exp_glex_cmp(u64, u64, u8); 
 int    s_exp_revlex_cmp(u64, u64, u8);
 int    s_exp_grevlex_cmp(u64, u64, u8);
+void   s_exp_add(u64 *, u64 *, u64 *);
+
+/* dense exponent fux */
 int    d_exp_is_zero(u64 *, u8);
 int    d_exp_cmp(u64 *, u64 *, u8, enum MONOMIAL_ORDER);
 int    d_exp_lex_cmp(u64 *, u64 *, u8);
 int    d_exp_glex_cmp(u64 *, u64 *, u8); 
 int    d_exp_revlex_cmp(u64 *, u64 * , u8);
 int    d_exp_grevlex_cmp(u64* , u64 * , u8);
-u64 *  exp_add(u64 *, u64 *, u64 *);
-u64 *  exp_unpack(u64, u8);
-u64    exp_pack(u64 *, u8);
+u64 *  d_exp_add(u64 *, u64 *, u8);
+void   d_exp_inline_add(u64 *, u64*, u8);
 
+/* bit masks and bit extraction*/
+u64 *  s_exp_unpack(u64, u8);
+u64    s_exp_pack(u64 *, u8);
 
 /* exponent's binary masks */
 /*

@@ -19,14 +19,14 @@ static char * test_unpackexp() {
     u8 n = 8;
     u64 x = 7164981176274674482;
     u64 expected_exp_x[] = {0x63, 0x6f, 0x20, 0x6b, 0xa, 0x36, 0x63, 0x32};
-    u64 * exp_x = exp_unpack(x, n);
+    u64 * exp_x = s_exp_unpack(x, n);
 
     for (int i = 0; i < n; i++) {
-        assert(expected_exp_x[i] == exp_x[i], "exp_unpack function is failing!");
+        assert(expected_exp_x[i] == exp_x[i], "s_exp_unpack function is failing!");
     }
 
-    u64 y = exp_pack(exp_x, 8);
-    assert(x == y, "exp_pack function is failing!");
+    u64 y = s_exp_pack(exp_x, 8);
+    assert(x == y, "s_exp_pack function is failing!");
 
     FREE(exp_x);
 
@@ -38,8 +38,8 @@ static char * test_packexp() {
     u8 n = 8;
     u64 expected_x = 7164981176274674482;
     u64 exp_x[] = {0x63, 0x6f, 0x20, 0x6b, 0xa, 0x36, 0x63, 0x32};
-    u64 x = exp_pack(exp_x, n);
-    assert(x == expected_x, "exp_pack function is failing!");
+    u64 x = s_exp_pack(exp_x, n);
+    assert(x == expected_x, "s_exp_pack function is failing!");
 
     return 0;
 }
@@ -49,8 +49,8 @@ static char * test_packexp_with_zero() {
     u8 n = 8;
     u64 expected_x = 0;
     u64 exp_x[] = {0, 0, 0, 0, 0, 0, 0, 0};
-    u64 x = exp_pack(exp_x, n);
-    assert(x == expected_x, "exp_pack function is failing!");
+    u64 x = s_exp_pack(exp_x, n);
+    assert(x == expected_x, "s_exp_pack function is failing!");
 
     return 0;
 }
@@ -1350,10 +1350,10 @@ static char * test_exp_glex_cmp() {
     u64 e3[] = {1,2,4};
     u64 e4[] = {1,1,5};
     
-    int cmp  = s_exp_glex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    int cmp  = s_exp_glex_cmp(s_exp_pack(e1, n), s_exp_pack(e2, n), n);
     assert(cmp == 1, "s_exp_glex_cmp is not working properly.");
 
-    cmp = s_exp_glex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
+    cmp = s_exp_glex_cmp(s_exp_pack(e4, n), s_exp_pack(e3, n), n);
     assert(cmp == -1, "s_exp_glex_cmp is no working properly.");
 
     return 0;
@@ -1367,10 +1367,10 @@ static char * test_exp_revlex_cmp() {
     u64 e3[] = {1,2,4};
     u64 e4[] = {1,1,5};
     
-    int cmp  = s_exp_revlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    int cmp  = s_exp_revlex_cmp(s_exp_pack(e1, n), s_exp_pack(e2, n), n);
     assert(cmp == 1, "s_exp_revlex_cmp is not working properly.");
 
-    cmp = s_exp_revlex_cmp(exp_pack(e4, n), exp_pack(e3, n), n);
+    cmp = s_exp_revlex_cmp(s_exp_pack(e4, n), s_exp_pack(e3, n), n);
     assert(cmp == 1, "s_exp_revlex_cmp is no working properly.");
 
     return 0;
@@ -1384,10 +1384,10 @@ static char * test_exp_grevlex_cmp() {
     u64 e3[] = {1,5,2};
     u64 e4[] = {4,1,3};
     
-    int cmp  = s_exp_grevlex_cmp(exp_pack(e1, n), exp_pack(e2, n), n);
+    int cmp  = s_exp_grevlex_cmp(s_exp_pack(e1, n), s_exp_pack(e2, n), n);
     assert(cmp == 1, "s_exp_grevlex_cmp is not working properly.");
 
-    cmp = s_exp_grevlex_cmp(exp_pack(e3, n), exp_pack(e4, n), n);
+    cmp = s_exp_grevlex_cmp(s_exp_pack(e3, n), s_exp_pack(e4, n), n);
     assert(cmp == 1, "s_exp_grevlex_cmp is no working properly.");
 
     return 0;

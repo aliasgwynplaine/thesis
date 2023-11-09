@@ -226,7 +226,7 @@ void aapol_list_sort(aapol_t ** loaapol, int sz) {
 term_t * term_add(term_t * p, COEFTYPE a, term_t * q, COEFTYPE b) {
     term_t * r = term_malloc(sizeof(term_t));
     r->coef = a * p->coef + b * q->coef;
-    exp_add(&p->exp, &q->exp, &r->exp);
+    s_exp_add(&p->exp, &q->exp, &r->exp);
     
     return r;
 }
@@ -412,12 +412,12 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
     CHECKPTR(f);
     u64 * dp = malloc(sizeof(u64) * a->sz);
     CHECKPTR(dp);
-    exp_add(&aterms[0].exp, &bterms[0].exp, &rterms[0].exp);
+    s_exp_add(&aterms[0].exp, &bterms[0].exp, &rterms[0].exp);
     rterms[0].coef = 0;
     for (int j = 0; j < a->sz; j++) {
         f[j]  = 0;
         // dp[i] = aterms[i].exp + bterms[f[i]].exp;
-        exp_add(&aterms[j].exp, &bterms[f[j]].exp, &dp[j]);
+        s_exp_add(&aterms[j].exp, &bterms[f[j]].exp, &dp[j]);
     }
 
     
@@ -433,7 +433,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
 
         rterms[k].coef += aterms[s].coef * bterms[f[s]].coef;
         f[s]++;
-        exp_add(&aterms[s].exp, &bterms[f[s]].exp, &dp[s]);
+        s_exp_add(&aterms[s].exp, &bterms[f[s]].exp, &dp[s]);
 
         if (f[s] > b->sz - 1) i = s + 1;    
     }
@@ -1154,7 +1154,7 @@ btpol_t * btpol_cpy(btpol_t * dst, btpol_t * src) {
 }
 
 void printlpol(bpol_t * lpol, u8 nvar) {
-    u64 * e = exp_unpack(lpol->exp, nvar);
+    u64 * e = s_exp_unpack(lpol->exp, nvar);
     if (lpol->coef >= 0) printf("+ ");
     if (lpol->exp == 0) {
         printf("%f", lpol->coef);
@@ -1309,7 +1309,7 @@ static u64 accept_exp(parser_ctx_t * ctx) {
         return -1;
     }
 
-    e = exp_pack(exp, ctx->nvar);
+    e = s_exp_pack(exp, ctx->nvar);
     //printf("exp: %ld\n", e);
     FREE(exp);
 
@@ -1473,7 +1473,7 @@ void aapol_print(aapol_t * aapol) {
             continue;
         }
         
-        e = exp_unpack(terms[i].exp, aapol->nvar);
+        e = s_exp_unpack(terms[i].exp, aapol->nvar);
         printf("%0.1f*x^(", terms[i].coef);
 
         for (int i = 0; i < aapol->nvar - 1; i++) {
@@ -1535,7 +1535,7 @@ char * aapol_repr(aapol_t * aapol) {
             return repr;
         }
 
-        e = exp_unpack(aapol->terms[i].exp, aapol->nvar);
+        e = s_exp_unpack(aapol->terms[i].exp, aapol->nvar);
 
         for (int j = 0; j < aapol->nvar - 1; j++) {
             c = snprintf(buff, 32, "%ld,", *(e+j));
@@ -1649,8 +1649,8 @@ int s_exp_lex_cmp(u64 a, u64 b, u8 nvar) {
 }
 
 int s_exp_glex_cmp(u64 a, u64 b, u8 nvar) {
-    u64 * e_a = exp_unpack(a, nvar);
-    u64 * e_b = exp_unpack(b, nvar);
+    u64 * e_a = s_exp_unpack(a, nvar);
+    u64 * e_b = s_exp_unpack(b, nvar);
     u64 sum_a = 0;
     u64 sum_b = 0;
     int cmp   = 0;
@@ -1675,8 +1675,8 @@ int s_exp_glex_cmp(u64 a, u64 b, u8 nvar) {
 
 
 int s_exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
-    u64 * e_a = exp_unpack(a, nvar);
-    u64 * e_b = exp_unpack(b, nvar);
+    u64 * e_a = s_exp_unpack(a, nvar);
+    u64 * e_b = s_exp_unpack(b, nvar);
     int cmp = 0;
 
     for (int i = 0; i < nvar; i++) {
@@ -1696,8 +1696,8 @@ int s_exp_revlex_cmp(u64 a, u64 b, u8 nvar) {
 
 
 int s_exp_grevlex_cmp(u64 a, u64 b, u8 nvar) {
-    u64 * e_a = exp_unpack(a, nvar);
-    u64 * e_b = exp_unpack(b, nvar);
+    u64 * e_a = s_exp_unpack(a, nvar);
+    u64 * e_b = s_exp_unpack(b, nvar);
     u64 sum_a = 0;
     u64 sum_b = 0;
     int cmp   = 0;
@@ -1720,6 +1720,14 @@ int s_exp_grevlex_cmp(u64 a, u64 b, u8 nvar) {
     if (sum_a > sum_b) return 1;
 }
 
+
+void s_exp_add(u64 * a, u64 * b, u64 * c) {
+    *c = *a + *b; // be carefull
+    /* todo: handle "local" overflow */
+    return c;
+}
+
+
 int d_exp_is_zero(u64 * e, u8 n) {
     for (int i = 0; i < n; i++)
         if (e[i] != 0) return 1;
@@ -1727,12 +1735,14 @@ int d_exp_is_zero(u64 * e, u8 n) {
     return 0;
 }
 
+
 int d_exp_cmp(u64 * a, u64 * b, u8 nvar, enum MONOMIAL_ORDER mo) {
     if (mo == lex) return d_exp_lex_cmp(a, b, nvar);
     if (mo == glex) return d_exp_glex_cmp(a, b, nvar);
     if (mo == grevlex) return d_exp_grevlex_cmp(a, b, nvar);
     if (mo == revlex) return d_exp_revlex_cmp(a, b, nvar);
 }
+
 
 int d_exp_lex_cmp(u64 * a, u64 * b, u8 nvar) {
     int cmp = 0;
@@ -1802,10 +1812,27 @@ int d_exp_grevlex_cmp(u64 * a, u64 * b, u8 nvar) {
 }
 
 
-u64 * exp_add(u64 * a, u64 * b, u64 * c) {
-    *c = *a + *b; // be carefull
-    /* todo: handle "local" overflow */
+u64 * d_exp_add(u64 * a, u64 * b, u8 n) {
+    if (a == NULL) SAYNEXITWERROR("a exp is null");
+    if (b == NULL) SAYNEXITWERROR("b exp is null");
+    
+    u64 * c = malloc(n * sizeof(*c));
+    CHECKPTR(c);
+
+    for (int i = 0; i < n; i++) {
+        *(c + i) = *(a + i) + *(b + i);
+    }
+
     return c;
+}
+
+void d_exp_inline_add(u64 * a, u64 * b, u8 n ) {
+    if (a == NULL) SAYNEXITWERROR("a exp is null");
+    if (b == NULL) SAYNEXITWERROR("b exp is null");
+
+    for (int i = 0; i < n; i++)
+        *(a + i) += *(b + i);
+
 }
 
 /**
@@ -1816,7 +1843,7 @@ u64 * exp_add(u64 * a, u64 * b, u64 * c) {
  * @param nvar number of variables on e
  * @return u64* that stores unpacked variables
  */
-u64 * exp_unpack(u64 e, u8 nvar) {
+u64 * s_exp_unpack(u64 e, u8 nvar) {
     if (nvar <= 0) {
         dbgerr("nvar is no positive!");
         exit(EXIT_FAILURE);
@@ -1864,7 +1891,7 @@ u64 * exp_unpack(u64 e, u8 nvar) {
     return exp;
 }
 
-u64 exp_pack(u64 * e, u8 nvar) {
+u64 s_exp_pack(u64 * e, u8 nvar) {
     if (nvar <= 0) {
         dbgerr("nvar is no positive!");
         exit(EXIT_FAILURE);
