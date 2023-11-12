@@ -5,12 +5,12 @@ void ee_free(ee_t * ee) {
     if (ee) {
         if (ee->v) {
             if (strcmp(ee->t, "aapol") == 0) aapol_free(ee->v);
-            else if (strcmp(ee->t, "llpol") == 0) btpol_free(ee->v);
-            else FREE(ee->v);
+            else if (strcmp(ee->t, "llpol") == 0) llpol_free(ee->v);
+            else free(ee->v);
         }
         
-        if (ee->t) FREE(ee->t);
-        FREE(ee);
+        if (ee->t) free(ee->t);
+        free(ee);
     }
 }
 
@@ -48,7 +48,7 @@ void print_var(sym_table_t * st, char * var) {
     } 
 }
 
-ee_t * resolve_var_as_expression(sym_table_t * st, char * var) {
+ee_t * resolve_var_as_expression(sym_table_t * st, char * var, pp_ctx_t * ctx) {
     ee_t * ee = NULL;
     ste_t * entry = st_probe(st, var);
     if (!entry) {
@@ -58,9 +58,9 @@ ee_t * resolve_var_as_expression(sym_table_t * st, char * var) {
         ee = malloc(sizeof(*ee));
         ee->t = strdup(entry->t);
         
-        if (strcmp(ee->t, "btpol") == 0) {
-            ee->v = btpol_create(((aapol_t *)entry->v)->nvar);
-            btpol_cpy(ee->v, entry->v);
+        if (strcmp(ee->t, "llpol") == 0) {
+            ee->v = llpol_create(ctx->nvars);
+            llpol_cpy(ee->v, entry->v, ctx->order);
         } else if (strcmp(ee->t, "aapol") == 0) {
             ee->v = aapol_create(((aapol_t *)entry->v)->nvar);
             aapol_cpy(ee->v, entry->v);
@@ -83,8 +83,8 @@ ee_t * get_object_from_var(sym_table_t * st, char * var) {
         ee = malloc(sizeof(*ee));
         ee->t = strdup(entry->t);
         
-        if (strcmp(ee->t, "btpol") == 0) {
-            ee->v = (aapol_t *)entry->v;
+        if (strcmp(ee->t, "llpol") == 0) {
+            ee->v = (llpol_t *)entry->v;
         } else if (strcmp(ee->t, "aapol") == 0) {
             ee->v = (aapol_t *)entry->v;
         } else {
@@ -163,13 +163,13 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
 
                 if (strcmp(op, "+") == 0) {
                     ee->v = llpol_create(ctx->nvars);
-                    llpol_cpy(ee->v, e2->v);
+                    llpol_cpy(ee->v, e2->v, ctx->order);
                     llpol_addterm(ee->v, *(float *)e1->v, 0, ctx->order);
                 }
 
                 if (strcmp(op, "-") == 0) {
                     ee->v = llpol_create(ctx->nvars);
-                    llpol_cpy(ee->v, e2->v);
+                    llpol_cpy(ee->v, e2->v, ctx->order);
                     llpol_addterm(ee->v, -1 * *(float *)e1->v, 0, ctx->order);
                 }
                 
@@ -246,14 +246,14 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
             if (strcmp(e2->t, "number") == 0) {
                 if (strcmp(op, "+") == 0) {
                     ee->v = llpol_create(ctx->nvars);
-                    llpol_cpy(ee->v, e1->v);
+                    llpol_cpy(ee->v, e1->v, ctx->order);
                     //printf("copy done!: "); llpol_print(ee->v);
                     llpol_addterm(ee->v, *(float *)e2->v, 0, ctx->order);
                 }
 
                 if (strcmp(op, "-") == 0) {
                     ee->v = llpol_create(((aapol_t *)e1->v)->nvar);
-                    llpol_cpy(ee->v, e1->v);
+                    llpol_cpy(ee->v, e1->v, ctx->order);
                     llpol_addterm(ee->v, -1 * *(float *)e2->v, 0, ctx->order);
                 }
                 
@@ -314,7 +314,7 @@ void change_mon_order(pp_ctx_t * ctx, char * order) {
 
 void ee_print(ee_t * ee) {
     if (strcmp("number", ee->t) == 0) printf("%f\n", *(float *)ee->v);
-    if (strcmp("llpol", ee->t) == 0) btpol_print(ee->v);
+    if (strcmp("llpol", ee->t) == 0) llpol_print(ee->v);
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
 
@@ -352,14 +352,14 @@ void destroy_set_for_expr_l(set_t * s) {
     rbtree_destroy(s, NULL);
 }
 
-void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
+void set_insert(rbtree_t * rbt, ee_t * d, pp_ctx_t * ctx) {
     if(rbt == NULL) SAYNEXITWERROR("set is null");
     if(d == NULL) SAYNEXITWERROR("d is null");
-    aapol_t * pol;
+    llpol_t * pol;
 
     if (strcmp(d->t, "number") == 0) {
-        pol = aapol_create(n);
-        aapol_addterm(pol, *(float *)d->v, 0);
+        pol = llpol_create(ctx->nvars);
+        llpol_addterm(pol, *(float *)d->v, 0, ctx->order);
     }
 
     if (strcmp(d->t, "llpol") == 0) {
@@ -373,7 +373,7 @@ void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
 
 void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
     rbt_trav_t trav;
-    aapol_t * pol;
+    llpol_t * pol;
 
     for (pol = rbtree_trav_first(&trav, in); pol != NULL; pol = rbtree_trav_next(&trav)) {
         llpol_t * newpol = llpol_add(pol, 1, pol, 1, ctx->order);

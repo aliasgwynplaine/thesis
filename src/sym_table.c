@@ -14,7 +14,7 @@ sym_table_t * st_create(u64 size) {
 }
 
 void destroy_pol(void * pol, void * param) { // todo: make smarter
-    llpol_free((aapol_t *) pol); 
+    llpol_free((llpol_t *) pol); 
 }
 
 void st_destroy(sym_table_t * st) {

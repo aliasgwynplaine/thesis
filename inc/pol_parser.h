@@ -42,11 +42,11 @@ int  str_varlist_lookup(char * , char **, int );
 void generate_term(void * , COEFTYPE, pp_ctx_t *);
 rbtree_t * create_set_for_expr_l();
 void destroy_set_for_expr_l(set_t *);
-void set_insert(rbtree_t * rbt, ee_t * d, u8 n);
+void set_insert(rbtree_t * rbt, ee_t * d, pp_ctx_t *);
 void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t *);
 
 void print_var(sym_table_t *, char *);
-ee_t * resolve_var_as_expression(sym_table_t * , char * );
+ee_t * resolve_var_as_expression(sym_table_t * , char * , pp_ctx_t *);
 ee_t * get_object_from_var(sym_table_t * st, char * var);
 ee_t * resolve_number_as_expression(sym_table_t * , float );
 ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *, pp_ctx_t *);

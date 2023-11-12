@@ -996,11 +996,18 @@ int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
 }
 
 
-llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src) {
-    if (src == NULL || dst == NULL) SAYNEXITWERROR("src or dst is null");
-    if (src->first != NULL) lpol_free(src->first);
+llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src, enum MONOMIAL_ORDER mo) {
+    if (src == NULL) return NULL;
 
-    dst = llpol_coef_multiply(src, 1);
+    dst->nvar = src->nvar;
+    dst->sz   = src->sz;
+
+    lpol_t * p = src->first;
+
+    while ( p ) {
+        llpol_addterm(dst, p->coef, p->exp, mo);
+        p = p->nxt;
+    }
 
     return dst;
 }
@@ -1813,7 +1820,6 @@ int s_exp_grevlex_cmp(u64 a, u64 b, u8 nvar) {
 void s_exp_add(u64 * a, u64 * b, u64 * c) {
     *c = *a + *b; // be carefull
     /* todo: handle "local" overflow */
-    return c;
 }
 
 

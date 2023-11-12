@@ -104,7 +104,7 @@ expression
     | expression '/' expression { $$ = resolve_op_expression(st, $1, $3, "/", ctx); ee_free($1); ee_free($3); }
     | pol_expr
     | number { $$ = resolve_number_as_expression(st, $1); }
-    | VAR { $$ = resolve_var_as_expression(st, $1); FREE($1); }
+    | VAR { $$ = resolve_var_as_expression(st, $1, ctx); FREE($1); }
     ;
 
 pol_expr: aapol_expr | llpol_expr;

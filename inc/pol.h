@@ -134,7 +134,7 @@ llpol_t * llpol_multiply(llpol_t * , llpol_t *); // todo
 void      llpol_inplace_multiply(llpol_t *, llpol_t *); // todo
 int       llpol_monomial_cmp(llpol_t *, llpol_t *, enum MONOMIAL_ORDER);
 int       llpol_hard_cmp(llpol_t * a, llpol_t * b);
-llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src); // todo: test
+llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src, enum MONOMIAL_ORDER);
 lpol_t  * llpol_head_lcm(llpol_t * l1, llpol_t * l2, enum MONOMIAL_ORDER mo); // todo
 
 
