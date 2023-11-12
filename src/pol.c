@@ -193,7 +193,7 @@ int aapol_list_quicksort_partition(aapol_t ** loaapol, int p, int r) {
     i = p - 1;
 
     for (int j = 0; j < r; j++) {
-        cmp = aapol_monomial_cmp(loaapol[j], x);
+        cmp = aapol_monomial_cmp(loaapol[j], x, lex);
 
         if (cmp <= 0) {
             i++;
@@ -446,7 +446,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
 }
 #undef _DEBUG
 
-int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
+int aapol_monomial_cmp(aapol_t * a, aapol_t * b, enum MONOMIAL_ORDER mo) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot compare polynomials of different number of variables.");
 
     aapol_sort(a);
@@ -458,7 +458,7 @@ int aapol_monomial_cmp(aapol_t * a, aapol_t * b) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
+        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, mo);
 
         if (cmp != 0) return cmp;
         
@@ -744,6 +744,12 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
 
     // for (int i = 0; i < llpol->nvar; i++) printf("%d ", *(exp + i));
     // printf("\n");
+    int flag = 1;
+
+    if (exp == NULL) {
+        exp = calloc(sizeof(u64), llpol->nvar);
+        flag = 0;
+    }
 
     while ((*indirect) != NULL) {
         int cmp = d_exp_cmp((*indirect)->exp, exp, llpol->nvar, mo);
@@ -772,6 +778,7 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
     //(*indirect)->exp  = exp;
     memcpy((*indirect)->exp, exp, llpol->nvar * sizeof(*(exp)));
     llpol->sz++;
+    if (flag == 0) free(exp);
 
     return llpol;
 }
@@ -947,6 +954,24 @@ void llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
         a->first = NULL;
         a->sz = 0;
     }
+}
+
+
+int llpol_monomial_cmp(llpol_t * a, llpol_t * b, enum MONOMIAL_ORDER mo) {
+    if (a == NULL || b == NULL) SAYNEXITWERROR("cannot compare null llpols");
+    if (a->nvar != b->nvar) SAYNEXITWERROR("cannot compare. nvar diff");
+
+    lpol_t * pa = a->first;
+    lpol_t * pb = b->first;
+
+    while (pa && pb) {
+        int cmp = d_exp_cmp(pa->exp, pb->exp, a->nvar, mo);
+        if (cmp != 0) return cmp;
+        pa = pa->nxt;
+        pb = pb->nxt;
+    }
+
+    return 0;
 }
 
 
@@ -1444,6 +1469,74 @@ void llpol_print(llpol_t * llpol) {
 }
 
 
+char * llpol_repr(llpol_t * llpol) {
+    int c;
+    u64 * e;
+    int p = REPR_MAX_SZ; // space left in repr
+    char buff[32];
+    char * repr = calloc(REPR_MAX_SZ, sizeof(*repr));
+
+    if (llpol == NULL) {
+        strncat(repr, "NULL", p);
+        return repr;
+    }
+
+    lpol_t * ptr = llpol->first;
+
+    while ( ptr ) {
+        if (ptr->coef >= 0) {
+            p = p - 3;
+            if (p >= 3) strncat(repr, "+ ", p);
+            else {
+                strncat(repr, "...", p);
+                return repr;
+            }
+        }
+
+        c = snprintf(buff, 32, "%.2f", ptr->coef);
+        p = p - c;
+        if (p >= 3) strcat(repr, buff);
+        else {
+            strncat(repr, "...", p);
+            return repr;
+        }
+        if (d_exp_is_zero(ptr->exp, llpol->nvar) == 0) {
+            ptr = ptr->nxt;
+            continue;
+        }
+        p = p - 4;
+
+        if (p >= 3) strncat(repr, "x^(", p);
+        else {
+            strncat(repr, "...", p);
+            return repr;
+        }
+
+        for (int j = 0; j < llpol->nvar - 1; j++) {
+            c = snprintf(buff, 32, "%ld,", *(ptr->exp+j));
+            p = p - c;
+            if (p >= 3) strcat(repr, buff);
+            else {
+                strncat(repr, "...", p);
+                return repr;
+            }
+        }
+
+        c = snprintf(buff, 32, "%ld)", *(ptr->exp+llpol->nvar-1));
+        p = p - c;
+        if (p >= 3) strcat(repr, buff);
+        else {
+            strncat(repr, "...", p);
+            return repr;
+        }
+
+        ptr = ptr->nxt;
+    }
+
+    return repr;
+}
+
+
 void btpol_print(btpol_t * btpol) {
     //debug("checking if pol is null");
     if (btpol == NULL) {
@@ -1485,10 +1578,6 @@ void aapol_print(aapol_t * aapol) {
     printf("\n");
 }
 
-char * btpol_repr(btpol_t * btpol) {
-    char * repr = malloc(REPR_MAX_SZ * sizeof(*repr));
-
-}
 
 /**
  * @brief return string representation of aapol

@@ -11,7 +11,8 @@ int yydebug = 1;
 
 extern sym_table_t * st;
 extern pp_ctx_t   * ctx;
-extern aapol_t * aux_pol;
+extern aapol_t * aux_aapol;
+extern llpol_t * aux_llpol;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
 // %token <str_val>   STRING
@@ -74,10 +75,10 @@ assignment: VAR '=' expression
 expression_list
     : expression { 
         //$$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); FREE($1->t); FREE($1);
-        if (strcmp($1->t, "aapol") == 0) rbtree_probe(_pol_acc_in, $1->v); 
+        if (strcmp($1->t, "llpol") == 0) rbtree_probe(_pol_acc_in, $1->v); 
         if (strcmp($1->t, "number") == 0) {
-            aapol_t * pol = aapol_create(ctx->nvars);
-            aapol_addterm(pol, *(float*)$1->v, 0);
+            llpol_t * pol = llpol_create(ctx->nvars);
+            llpol_addterm(pol, *(float*)$1->v, 0, ctx->order);
             rbtree_probe(_pol_acc_in, pol);
             free($1->v);
         }
@@ -85,10 +86,10 @@ expression_list
     }
     | expression_list ',' expression { 
         //$$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); FREE($3->t); FREE($3);
-        if (strcmp($3->t, "aapol") == 0) rbtree_probe(_pol_acc_in, $3->v);
+        if (strcmp($3->t, "llpol") == 0) rbtree_probe(_pol_acc_in, $3->v);
         if (strcmp($3->t, "number") == 0) {
-            aapol_t * pol = aapol_create(ctx->nvars);
-            aapol_addterm(pol, *(float*)$3->v, 0);
+            llpol_t * pol = llpol_create(ctx->nvars);
+            llpol_addterm(pol, *(float*)$3->v, 0, ctx->order);
             rbtree_probe(_pol_acc_in, pol);
             free($3->v);
         }
@@ -97,10 +98,10 @@ expression_list
     ;
 
 expression
-    : expression '+' expression { $$ = resolve_op_expression(st, $1, $3, "+"); ee_free($1); ee_free($3); }
-    | expression '-' expression { $$ = resolve_op_expression(st, $1, $3, "-"); ee_free($1); ee_free($3); }
-    | expression '*' expression { $$ = resolve_op_expression(st, $1, $3, "*"); ee_free($1); ee_free($3); }
-    | expression '/' expression { $$ = resolve_op_expression(st, $1, $3, "/"); ee_free($1); ee_free($3); }
+    : expression '+' expression { $$ = resolve_op_expression(st, $1, $3, "+", ctx); ee_free($1); ee_free($3); }
+    | expression '-' expression { $$ = resolve_op_expression(st, $1, $3, "-", ctx); ee_free($1); ee_free($3); }
+    | expression '*' expression { $$ = resolve_op_expression(st, $1, $3, "*", ctx); ee_free($1); ee_free($3); }
+    | expression '/' expression { $$ = resolve_op_expression(st, $1, $3, "/", ctx); ee_free($1); ee_free($3); }
     | pol_expr
     | number { $$ = resolve_number_as_expression(st, $1); }
     | VAR { $$ = resolve_var_as_expression(st, $1); FREE($1); }
@@ -111,18 +112,18 @@ pol_expr: aapol_expr | llpol_expr;
 aapol_expr: AAPOLTOK '(' pol ')' {
         $$ = malloc(sizeof(*$$)); 
         $$->t = strdup("aapol"); 
-        $$->v = (void *)aux_pol; 
-        aux_pol = aapol_create(ctx->nvars);
-        //st_insert(st, "auxpol", aux_pol, "aapol");
+        $$->v = (void *)aux_aapol; 
+        aux_aapol = aapol_create(ctx->nvars);
+        //st_insert(st, "auxpol", aux_aapol, "aapol");
     }
     ;
 
 llpol_expr: LLPOLTOK '(' pol ')' { 
         $$ = malloc(sizeof(*$$)); 
-        $$->t = strdup("aapol");  // todo: finish llpol implementation
-        $$->v = (void *)aux_pol; 
-        aux_pol = aapol_create(ctx->nvars);
-        //st_insert(st, "auxpol", aux_pol, "aapol");
+        $$->t = strdup("llpol");  // todo: finish llpol implementation
+        $$->v = (void *)aux_llpol; 
+        aux_llpol = llpol_create(ctx->nvars);
+        //st_insert(st, "auxpol", aux_llpol, "llpol");
     }
     ;
 
@@ -131,11 +132,11 @@ pol: pol term
     | /* empty */
     ;
 
-term: number '*' mvar { generate_term(aux_pol, $1, ctx); }
-    | mvar '*' number { generate_term(aux_pol, $3, ctx); }
-    | sign mvar       { generate_term(aux_pol, $1, ctx); }
-    | mvar            { generate_term(aux_pol,  1, ctx); }
-    | number          { aapol_addterm(aux_pol, $1, 0);}
+term: number '*' mvar { generate_term(aux_llpol, $1, ctx); }
+    | mvar '*' number { generate_term(aux_llpol, $3, ctx); }
+    | sign mvar       { generate_term(aux_llpol, $1, ctx); }
+    | mvar            { generate_term(aux_llpol,  1, ctx); }
+    | number          { llpol_addterm(aux_llpol, $1, NULL, ctx->order);}
     ;
 
 number: sign INTEGER { $$ = (float) ($1 * $2); }
@@ -165,7 +166,7 @@ directive: SYMTABTOK { print_sym_table(st); }
     | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); }
     | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
     | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
-    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out); set_print(_pol_acc_out); }
+    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, ctx); set_print(_pol_acc_out); }
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

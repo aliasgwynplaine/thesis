@@ -132,7 +132,8 @@ llpol_t * llpol_coef_multiply(llpol_t *, COEFTYPE);
 void      llpol_inplace_coef_multiply(llpol_t *, COEFTYPE);
 llpol_t * llpol_multiply(llpol_t * , llpol_t *); // todo
 void      llpol_inplace_multiply(llpol_t *, llpol_t *); // todo
-int       llpol_hard_cmp(llpol_t * a, llpol_t * b); // todo
+int       llpol_monomial_cmp(llpol_t *, llpol_t *, enum MONOMIAL_ORDER);
+int       llpol_hard_cmp(llpol_t * a, llpol_t * b);
 llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src); // todo: test
 lpol_t  * llpol_head_lcm(llpol_t * l1, llpol_t * l2, enum MONOMIAL_ORDER mo); // todo
 
@@ -156,7 +157,7 @@ void       aapol_inplace_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE 
 aapol_t  * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha);
 aapol_t  * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha);
 aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b); 
-int        aapol_monomial_cmp(aapol_t * a, aapol_t * b);
+int        aapol_monomial_cmp(aapol_t * a, aapol_t * b, enum MONOMIAL_ORDER mo);
 int        aapol_hard_cmp(aapol_t * a, aapol_t * b); 
 aapol_t  * aapol_cpy(aapol_t * dst, aapol_t * src);
 term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo);

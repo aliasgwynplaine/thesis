@@ -19,7 +19,8 @@ struct expr_entry_t {
 enum parser_ctx_status {
     Ok,
     NameError,
-    SyntaxError
+    SyntaxError,
+    TypeError
 };
 
 struct pol_parser_ctx_t {
@@ -30,6 +31,10 @@ struct pol_parser_ctx_t {
     enum MONOMIAL_ORDER order;
 };
 
+enum pol_type {
+    llpol_p,
+    aapol_p
+};
 
 void ee_free(ee_t *);
 void ee_print(ee_t * ee);
@@ -38,13 +43,13 @@ void generate_term(void * , COEFTYPE, pp_ctx_t *);
 rbtree_t * create_set_for_expr_l();
 void destroy_set_for_expr_l(set_t *);
 void set_insert(rbtree_t * rbt, ee_t * d, u8 n);
-void f4_wrapper(rbtree_t * in, rbtree_t * out);
+void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t *);
 
 void print_var(sym_table_t *, char *);
 ee_t * resolve_var_as_expression(sym_table_t * , char * );
 ee_t * get_object_from_var(sym_table_t * st, char * var);
 ee_t * resolve_number_as_expression(sym_table_t * , float );
-ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *);
+ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *, pp_ctx_t *);
 void   change_mon_order(pp_ctx_t*, char *);
 
 #endif

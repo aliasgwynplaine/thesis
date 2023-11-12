@@ -25,10 +25,16 @@ int str_varlist_lookup(char * str, char **var_lst, int n) {
 
 
 void generate_term(void * aux_pol, COEFTYPE coef, pp_ctx_t * ctx) {
-    u64 exp = s_exp_pack(ctx->var_cntr, ctx->nvars);
-    aapol_addterm(aux_pol, coef, exp);
+    //u64 exp = s_exp_pack(ctx->var_cntr, ctx->nvars);
+    u64 * exp = calloc(sizeof(u64), ctx->nvars);
+    
+    for (int i = 0; i < ctx->nvars; i++) exp[i] = ctx->var_cntr[i];
 
-    for (int i = 0; i < ctx->nvars; i++) ctx->var_cntr[i]=0;
+    llpol_addterm(aux_pol, coef, exp, ctx->order);
+
+    for (int i = 0; i < ctx->nvars; i++) ctx->var_cntr[i] = 0;
+
+    free(exp);
 }
 
 void print_var(sym_table_t * st, char * var) {
@@ -37,7 +43,7 @@ void print_var(sym_table_t * st, char * var) {
     if (!entry) printf("undefined variable: %s\n", var);
     else {
         if (strcmp(entry->t, "aapol") == 0) aapol_print((aapol_t *)entry->v);
-        if (strcmp(entry->t, "llpol") == 0) btpol_print((btpol_t *)entry->v);
+        if (strcmp(entry->t, "llpol") == 0) llpol_print((llpol_t *)entry->v);
         if (strcmp(entry->t, "number") == 0) printf("%f\n", *(float *)entry->v);
     } 
 }
@@ -99,7 +105,7 @@ ee_t * resolve_number_as_expression(sym_table_t * st, float f) {
     return ee;
 }
 
-ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) {
+ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, pp_ctx_t * ctx) {
     //printf("heeeeeee!\n");
     //printf("e1: %f - e2: %f\n", *(float *)e1->v, *(float *)e2->v);
     ee_t * ee = NULL;
@@ -130,19 +136,45 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
                 ee->t = strdup("aapol");
 
                 if (strcmp(op, "+") == 0) {
-                    ee->v = aapol_create(((aapol_t *)e2->v)->nvar);
+                    ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e2->v);
                     aapol_addterm(ee->v, *(float *)e1->v, 0);
                 }
 
                 if (strcmp(op, "-") == 0) {
-                    ee->v = aapol_create(((aapol_t *)e2->v)->nvar);
+                    ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e2->v);
                     aapol_addterm(ee->v, -1 * *(float *)e1->v, 0);
                 }
                 
                 if (strcmp(op, "*") == 0)
                     ee->v = aapol_coef_multiply(e2->v, *(float *)e1->v);
+
+                if (strcmp(op, "/") == 0) {
+                    fprintf(stderr, "TypeError: cannot divide by pol object");
+                    ee_free(ee);
+                    return NULL;
+                }
+            }
+
+            if (strcmp(e2->t, "llpol") == 0) {
+                ee = malloc(sizeof(*ee));
+                ee->t = strdup("llpol");
+
+                if (strcmp(op, "+") == 0) {
+                    ee->v = llpol_create(ctx->nvars);
+                    llpol_cpy(ee->v, e2->v);
+                    llpol_addterm(ee->v, *(float *)e1->v, 0, ctx->order);
+                }
+
+                if (strcmp(op, "-") == 0) {
+                    ee->v = llpol_create(ctx->nvars);
+                    llpol_cpy(ee->v, e2->v);
+                    llpol_addterm(ee->v, -1 * *(float *)e1->v, 0, ctx->order);
+                }
+                
+                if (strcmp(op, "*") == 0)
+                    ee->v = llpol_coef_multiply(e2->v, *(float *)e1->v);
 
                 if (strcmp(op, "/") == 0) {
                     fprintf(stderr, "error: cannot divide by pol object");
@@ -158,14 +190,14 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
 
             if (strcmp(e2->t, "number") == 0) {
                 if (strcmp(op, "+") == 0) {
-                    ee->v = aapol_create(((aapol_t *)e1->v)->nvar);
+                    ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e1->v);
                     //printf("copy done!: "); aapol_print(ee->v);
                     aapol_addterm(ee->v, *(float *)e2->v, 0);
                 }
 
                 if (strcmp(op, "-") == 0) {
-                    ee->v = aapol_create(((aapol_t *)e1->v)->nvar);
+                    ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e1->v);
                     aapol_addterm(ee->v, -1 * *(float *)e2->v, 0);
                 }
@@ -192,11 +224,78 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op) 
                 }
 
                 if (strcmp(op, "/") == 0) {
-                    fprintf(stderr, "error: cannot divide by pol object");
+                    fprintf(stderr, "TypeError: cannot divide by pol object");
                     ee_free(ee);
                     return NULL;
                 }
             }
+
+            if (strcmp(e2->t, "llpol") == 0) {
+                fprintf(stderr, "TypeError: cannot operate diff poltypes object");
+                ee_free(ee);
+                ctx->status = TypeError;
+                return NULL;
+            }
+
+        }
+
+        if (strcmp(e1->t, "llpol") == 0) {
+            ee = malloc(sizeof(*ee)); CHECKPTR(ee);
+            ee->t = strdup("llpol");
+
+            if (strcmp(e2->t, "number") == 0) {
+                if (strcmp(op, "+") == 0) {
+                    ee->v = llpol_create(ctx->nvars);
+                    llpol_cpy(ee->v, e1->v);
+                    //printf("copy done!: "); llpol_print(ee->v);
+                    llpol_addterm(ee->v, *(float *)e2->v, 0, ctx->order);
+                }
+
+                if (strcmp(op, "-") == 0) {
+                    ee->v = llpol_create(((aapol_t *)e1->v)->nvar);
+                    llpol_cpy(ee->v, e1->v);
+                    llpol_addterm(ee->v, -1 * *(float *)e2->v, 0, ctx->order);
+                }
+                
+                if (strcmp(op, "*") == 0)
+                    ee->v = llpol_coef_multiply(e1->v, *(float *)e2->v);
+
+                if (strcmp(op, "/") == 0) {
+                    ee->v = llpol_coef_multiply(e1->v, 1 / *(float *)e2->v);
+                }
+            }
+
+            if (strcmp(e2->t, "llpol") == 0) {
+                if (strcmp(op, "+") == 0) {
+                    ee->v = llpol_add(e1->v, 1, e2->v, 1, ctx->order);
+                }
+
+                if (strcmp(op, "-") == 0) {
+                    ee->v = llpol_add(e1->v, 1, e2->v, -1, ctx->order);
+                }
+
+                if (strcmp(op, "*") == 0) {
+                    //ee->v = llpol_multiply(e1->v, e2->v);
+                    fprintf(stderr, "error: multiplication is not implemented yet");
+                    ctx->status = TypeError;
+                    return NULL;
+                }
+
+                if (strcmp(op, "/") == 0) {
+                    fprintf(stderr, "error: cannot divide by pol object");
+                    ee_free(ee);
+                    ctx->status = TypeError;
+                    return NULL;
+                }
+            }
+
+            if (strcmp(e2->t, "aapol") == 0) {
+                fprintf(stderr, "TypeError: cannot operate diff poltypes object");
+                ee_free(ee);
+                ctx->status = TypeError;
+                return NULL;
+            }
+
         }
     }
 
@@ -219,8 +318,21 @@ void ee_print(ee_t * ee) {
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
 
+int pol_monomial_cmp_wrap(const void *a, const void *b, void *param) {
+    int cmp = llpol_monomial_cmp(((llpol_t *)a), (llpol_t *)b, *(enum MONOMIAL_ORDER*)param);
+    
+    if (cmp == 0) {
+        if (LLPOL_HEAD_COEF((llpol_t *)a) < LLPOL_HEAD_COEF((llpol_t *)b)) return -1;
+        else if (LLPOL_HEAD_COEF((llpol_t *)a) < LLPOL_HEAD_COEF((llpol_t *)b)) return 1;
+        else return 0;
+    }
+
+    return cmp;
+
+}
+
 int aapol_monomial_cmp_wrap(const void * a, const void * b, void * param) {
-    int cmp = aapol_monomial_cmp((aapol_t *)a, (aapol_t *)b);
+    int cmp = aapol_monomial_cmp((aapol_t *)a, (aapol_t *)b, *(enum MONOMIAL_ORDER*)param);
 
     if (cmp == 0) {
         if (AAPOL_HEAD_COEF((aapol_t *)a) < AAPOL_HEAD_COEF((aapol_t *)b)) return -1;
@@ -250,8 +362,8 @@ void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
         aapol_addterm(pol, *(float *)d->v, 0);
     }
 
-    if (strcmp(d->t, "aapol") == 0) {
-        pol = (aapol_t *)d->v;
+    if (strcmp(d->t, "llpol") == 0) {
+        pol = (llpol_t *)d->v;
     }
 
     rbtree_probe(rbt, pol);
@@ -259,21 +371,21 @@ void set_insert(rbtree_t * rbt, ee_t * d, u8 n) {
     // todo: llpol
 }
 
-void f4_wrapper(rbtree_t * in, rbtree_t * out) {
+void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
     rbt_trav_t trav;
     aapol_t * pol;
 
     for (pol = rbtree_trav_first(&trav, in); pol != NULL; pol = rbtree_trav_next(&trav)) {
-        aapol_t * newpol = aapol_add(pol, 1, pol, 1);
+        llpol_t * newpol = llpol_add(pol, 1, pol, 1, ctx->order);
         rbtree_probe(out, newpol);
     }
 }
 
 void set_print(rbtree_t * rbt) {
     rbt_trav_t trav;
-    aapol_t * pol;
+    llpol_t * pol;
 
     for (pol = rbtree_trav_first(&trav, rbt); pol != NULL; pol = rbtree_trav_next(&trav)) {
-        aapol_print(pol);
+        llpol_print(pol);
     }
 }
