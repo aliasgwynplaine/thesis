@@ -1930,6 +1930,44 @@ void d_exp_inline_add(u64 * a, u64 * b, u8 n ) {
 
 }
 
+
+u64 * d_exp_lcm(u64 * a, u64 * b, u8 n) {
+    u64 * c = malloc(n * sizeof(*c));
+    u64 b_g, a_g;
+
+    for (int i = 0; i < n; i++) {
+        b_g  = (a[i] <= b[i]);
+        a_g  = (a[i] > b[i]);
+        c[i] = (a[i] & a_g) | (b[i] & b_g);
+    }
+
+    return c;
+}
+
+
+u64 * d_exp_gcd(u64 * a, u64 * b, u8 n) {
+    u64 * c = malloc(n * sizeof(*c));
+    u64 b_s, a_s;
+
+    for (int i = 0; i < n; i++) {
+        b_s  = (a[i] > b[i]);
+        a_s  = (a[i] >= b[i]);
+        c[i] = (a[i] & a_s) | (b[i] & b_s);
+    }
+
+    return c;
+}
+
+
+bool d_exp_div(u64 * a, u64 * b, u8 n) {
+    for (int i = 0; i < n; i++) 
+        if ((a[i] - b[i]) < 0) return false;
+    
+    return true;
+}
+
+
+
 /**
  * @brief unpacks the exponent stored in u64 var.
  *        if nvar is 0, exits with status 1.
