@@ -322,9 +322,17 @@ int pol_monomial_cmp_wrap(const void *a, const void *b, void *param) {
     int cmp = llpol_monomial_cmp(((llpol_t *)a), (llpol_t *)b, *(enum MONOMIAL_ORDER*)param);
     
     if (cmp == 0) {
-        if (LLPOL_HEAD_COEF((llpol_t *)a) < LLPOL_HEAD_COEF((llpol_t *)b)) return -1;
-        else if (LLPOL_HEAD_COEF((llpol_t *)a) < LLPOL_HEAD_COEF((llpol_t *)b)) return 1;
-        else return 0;
+        lpol_t * pa = ((llpol_t *)a)->first;
+        lpol_t * pb = ((llpol_t *)b)->first;
+
+        while (pa && pb) {
+            if (pa->coef < pb->coef) return -1;
+            if (pa->coef > pb->coef) return  1;
+            pa = pa->nxt;
+            pb = pb->nxt;
+        }
+
+        return 0;
     }
 
     return cmp;
@@ -378,6 +386,7 @@ void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
     for (pol = rbtree_trav_first(&trav, in); pol != NULL; pol = rbtree_trav_next(&trav)) {
         llpol_t * newpol = llpol_add(pol, 1, pol, 1, ctx->order);
         rbtree_probe(out, newpol);
+        // rbtree_delete(in, pol);
     }
 }
 
