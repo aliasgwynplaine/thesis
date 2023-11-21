@@ -1472,7 +1472,7 @@ void llpol_print(llpol_t * llpol) {
         p = p->nxt;
     }
 
-    printf("\n");
+    //printf("\n");
 }
 
 

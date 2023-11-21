@@ -48,6 +48,16 @@ void print_var(sym_table_t * st, char * var) {
     } 
 }
 
+
+void print_status(enum parser_ctx_status status) {
+    if (status == Ok)           printf("Ok");
+    if (status == SyntaxError)  printf("SyntaxError");
+    if (status == NameError)    printf("NameError");
+    if (status == TypeError)    printf("TypeError");
+
+}
+
+
 ee_t * resolve_var_as_expression(sym_table_t * st, char * var, pp_ctx_t * ctx) {
     ee_t * ee = NULL;
     ste_t * entry = st_probe(st, var);
@@ -313,7 +323,7 @@ void change_mon_order(pp_ctx_t * ctx, char * order) {
 
 
 void ee_print(ee_t * ee) {
-    if (strcmp("number", ee->t) == 0) printf("%f\n", *(float *)ee->v);
+    if (strcmp("number", ee->t) == 0) printf("%f", *(float *)ee->v);
     if (strcmp("llpol", ee->t) == 0) llpol_print(ee->v);
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
@@ -380,14 +390,28 @@ void set_insert(rbtree_t * rbt, ee_t * d, pp_ctx_t * ctx) {
 }
 
 void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
-    rbt_trav_t trav;
-    llpol_t * pol;
+    rbt_trav_t trav1;
+    rbt_trav_t trav2;
+    llpol_t * pol1;
+    llpol_t * pol2;
 
-    for (pol = rbtree_trav_first(&trav, in); pol != NULL; pol = rbtree_trav_next(&trav)) {
-        llpol_t * newpol = llpol_add(pol, 1, pol, 1, ctx->order);
+    for (pol1 = rbtree_trav_first(&trav1, in); pol1 != NULL; pol1 = rbtree_trav_next(&trav1)) {
+        llpol_t * newpol = llpol_add(pol1, 1, pol1, 1, ctx->order);
         rbtree_probe(out, newpol);
-        // rbtree_delete(in, pol);
+        rbtree_trav_cpy(&trav2, &trav1);
+        llpol_print(pol1);
+        printf(":::\n");
+
+        for (pol2 = rbtree_trav_next(&trav2); pol2 != NULL; pol2 = rbtree_trav_next(&trav2)) {
+            pc_t * pc = llpol2pairecritique(pol1, pol2);
+            pc_print(pc);
+            printf("\n");
+        }
+
+        printf("\n\n");
+        
     }
+    printf("Done!\n");
 }
 
 void set_print(rbtree_t * rbt) {

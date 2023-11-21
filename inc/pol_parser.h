@@ -6,6 +6,7 @@
 #include "sym_table.h"
 #include "tree.h"
 #include "matrix.h"
+#include "f4.h"
 
 typedef struct pol_parser_ctx_t pp_ctx_t;
 typedef struct expr_entry_t ee_t;
@@ -46,6 +47,7 @@ void set_insert(rbtree_t * rbt, ee_t * d, pp_ctx_t *);
 void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t *);
 
 void print_var(sym_table_t *, char *);
+void print_status(enum parser_ctx_status);
 ee_t * resolve_var_as_expression(sym_table_t * , char * , pp_ctx_t *);
 ee_t * get_object_from_var(sym_table_t * st, char * var);
 ee_t * resolve_number_as_expression(sym_table_t * , float );

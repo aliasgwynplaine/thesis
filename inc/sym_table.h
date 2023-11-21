@@ -14,6 +14,7 @@
 #include "outils.h"
 #include "pol.h"
 #include "matrix.h"
+#include "tree.h"
 
 typedef struct sym_table_t sym_table_t;
 typedef struct sym_table_entry_t ste_t;
