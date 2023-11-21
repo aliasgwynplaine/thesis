@@ -142,6 +142,16 @@ rbtree_t * rbtree_create(rbt_cmpfux_t * cfux, void * param, tree_allocator_t * a
 }
 
 
+static void copy_error_recovery (rbnode_t **stack, int h, rbtree_t *new, rbt_item_fux_t *destroy) {
+    assert (stack != NULL && h >= 0 && new != NULL);
+
+    for (; h > 2; h -= 2)
+        stack[h - 1]->r = NULL;
+
+    rbtree_destroy (new, destroy);
+}
+
+
 rbtree_t * rbtree_cpy (const rbtree_t *src, rbt_cpy_fux_t *cpy, rbt_item_fux_t *destroy, tree_allocator_t *alloc) {
     rbnode_t *stack[2 * (MAX_HEIGHT + 1)];
     int h = 0;
@@ -222,17 +232,6 @@ rbtree_t * rbtree_cpy (const rbtree_t *src, rbt_cpy_fux_t *cpy, rbt_item_fux_t *
         }
     }
 }
-
-
-static void copy_error_recovery (rbnode_t **stack, int h, rbtree_t *new, rbt_item_fux_t *destroy) {
-    assert (stack != NULL && h >= 0 && new != NULL);
-
-    for (; h > 2; h -= 2)
-        stack[h - 1]->r = NULL;
-
-    rbtree_destroy (new, destroy);
-}
-
 
 /**
  * @brief 
