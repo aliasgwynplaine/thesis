@@ -62,9 +62,9 @@ stmts: stmts stmt NEWLINE { printf("prelude> "); }
     | error NEWLINE { yyerror("Error!"); printf("prelude> "); yyerrok; }
     ;
 
-stmt: VAR { print_var(st, $1); FREE($1); }
+stmt: VAR { print_var(st, $1); printf("\n"); FREE($1); }
     | assignment
-    | expression { ee_print($1); ee_free($1); }
+    | expression { ee_print($1); printf("\n"); ee_free($1); }
     | directive
     ;
 
