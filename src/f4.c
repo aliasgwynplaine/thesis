@@ -38,7 +38,7 @@ pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2) {
 
     for (int i = 0; i < 2; i++) {
         pc->t[i] = malloc(n * sizeof(*pc->t[i]));
-        memcpy(pc->t[i], f1->first->exp, n * sizeof(*pc->t[i]));
+        memcpy(pc->t[i], pc->f[i]->first->exp, n * sizeof(*pc->t[i]));
     }
 
     return pc;

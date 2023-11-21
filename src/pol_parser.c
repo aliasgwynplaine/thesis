@@ -406,6 +406,7 @@ void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
             pc_t * pc = llpol2pairecritique(pol1, pol2);
             pc_print(pc);
             printf("\n");
+            pc_free(pc);
         }
 
         printf("\n\n");
