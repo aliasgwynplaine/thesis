@@ -135,7 +135,7 @@ void        avltree_preorderwalk(bnode_t *);                       // todo
 void        avltree_postorderwalk(bnode_t *);                      // todo 
 
 rbtree_t  * rbtree_create(rbt_cmpfux_t *, void *, tree_allocator_t *); 
-rbtree_t  * rbtree_cpy(const rbtree_t *, rbt_cpy_fux_t *, rbt_item_fux_t *, tree_allocator_t *); //todo
+rbtree_t  * rbtree_cpy(const rbtree_t *, rbt_cpy_fux_t *, rbt_item_fux_t *, tree_allocator_t *); //todo: test
 void        rbtree_destroy(rbtree_t *, rbt_item_fux_t *);
 void        rbtree_free(rbtree_t *);
 void      * rbtree_find(const rbtree_t *, const void * data);

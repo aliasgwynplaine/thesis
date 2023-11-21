@@ -142,6 +142,98 @@ rbtree_t * rbtree_create(rbt_cmpfux_t * cfux, void * param, tree_allocator_t * a
 }
 
 
+rbtree_t * rbtree_cpy (const rbtree_t *src, rbt_cpy_fux_t *cpy, rbt_item_fux_t *destroy, tree_allocator_t *alloc) {
+    rbnode_t *stack[2 * (MAX_HEIGHT + 1)];
+    int h = 0;
+
+    rbtree_t *new;
+    const rbnode_t *x;
+    rbnode_t *y;
+
+    assert (src != NULL);
+    new = rbtree_create(src->cmp, src->param, alloc != NULL ? alloc : src->alloc);
+    
+    if (new == NULL) return NULL;
+    
+    new->sz = src->sz;
+    
+    if (new->sz == 0)
+        return new;
+
+    x = (const rbnode_t *) &src->root;
+    y = (rbnode_t *) &new->root;
+
+    for (;;) {
+        while (x->l != NULL) {
+            assert (h < 2 * (MAX_HEIGHT + 1));
+
+            y->l = new->alloc->tree_malloc (new->alloc, sizeof *y->l);
+            
+            if (y->l == NULL) {
+                    if (y != (rbnode_t *) &new->root) {
+                            y->d = NULL;
+                            y->r = NULL;
+                    }
+
+                    copy_error_recovery (stack, h, new, destroy);
+                    return NULL;
+            }
+
+            stack[h++] = (rbnode_t *) x;
+            stack[h++] = y;
+            x = x->l;
+            y = y->l;
+        }
+
+        y->l = NULL;
+
+        for (;;) {
+            y->c = x->c;
+            if (cpy == NULL)
+                y->d = x->d;
+            else {
+                y->d = cpy (x->d, src->param);
+                
+                if (y->d == NULL) {
+                    y->r = NULL;
+                    copy_error_recovery (stack, h, new, destroy);
+                    return NULL;
+                }
+            }
+
+            if (x->r != NULL) {
+                y->r = new->alloc->tree_malloc (new->alloc, sizeof *y->r);
+
+                if (y->r == NULL) {
+                    copy_error_recovery (stack, h, new, destroy);
+                    return NULL;
+                }
+
+                x = x->r;
+                y = y->r;
+                break;
+            } else y->r = NULL;
+
+            if (h <= 2)
+                return new;
+
+            y = stack[--h];
+            x = stack[--h];
+        }
+    }
+}
+
+
+static void copy_error_recovery (rbnode_t **stack, int h, rbtree_t *new, rbt_item_fux_t *destroy) {
+    assert (stack != NULL && h >= 0 && new != NULL);
+
+    for (; h > 2; h -= 2)
+        stack[h - 1]->r = NULL;
+
+    rbtree_destroy (new, destroy);
+}
+
+
 /**
  * @brief 
  * 
