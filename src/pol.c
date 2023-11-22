@@ -720,7 +720,7 @@ llpol_t * llpol_create(u8 n) {
     llpol_t * llpol = malloc(sizeof(*llpol));
     CHECKPTR(llpol);
     llpol->first = NULL;
-    llpol->nvar  = n;
+    llpol->n  = n;
     llpol->sz    = 0;
 
     return llpol;
@@ -747,18 +747,18 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
     int flag = 1;
 
     if (exp == NULL) {
-        exp = calloc(sizeof(u64), llpol->nvar);
+        exp = calloc(sizeof(u64), llpol->n);
         flag = 0;
     }
 
     while ((*indirect) != NULL) {
-        int cmp = d_exp_cmp((*indirect)->exp, exp, llpol->nvar, mo);
+        int cmp = d_exp_cmp((*indirect)->exp, exp, llpol->n, mo);
 
         if (cmp < 0) {
-            newterm = lpol_malloc(llpol->nvar);
+            newterm = lpol_malloc(llpol->n);
             newterm->coef = coef;
             //newterm->exp  = exp;
-            memcpy(newterm->exp, exp, llpol->nvar * sizeof(*(exp)));
+            memcpy(newterm->exp, exp, llpol->n * sizeof(*(exp)));
             newterm->nxt  = (*indirect);
             (*indirect)   = newterm;
             llpol->sz++;
@@ -773,10 +773,10 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
         }
     }
     
-    *indirect = lpol_malloc(llpol->nvar);
+    *indirect = lpol_malloc(llpol->n);
     (*indirect)->coef = coef;
     //(*indirect)->exp  = exp;
-    memcpy((*indirect)->exp, exp, llpol->nvar * sizeof(*(exp)));
+    memcpy((*indirect)->exp, exp, llpol->n * sizeof(*(exp)));
     llpol->sz++;
     if (flag == 0) free(exp);
 
@@ -786,7 +786,7 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
 
 
 llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, enum MONOMIAL_ORDER mo) {
-    if (a->nvar != b->nvar) SAYNEXITWERROR("pols with diferent nvars");
+    if (a->n != b->n) SAYNEXITWERROR("pols with diferent nvars");
 
     if (a == NULL || b == NULL) SAYNEXITWERROR("NULL pointer received!");
 
@@ -796,29 +796,44 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
     if (b->sz == 0 || betha == 0) 
         return llpol_coef_multiply(a, alpha);
 
-    llpol_t * c = llpol_create(a->nvar);
+    llpol_t * c = llpol_create(a->n);
     lpol_t * pa = a->first;
     lpol_t * pb = b->first;
     lpol_t ** indirect = &c->first;
 
     while (pa != NULL && pb != NULL) {
-        int cmp = d_exp_cmp(pa->exp, pb->exp, a->nvar, mo);
-        *indirect = lpol_malloc(a->nvar);
-
+        int cmp = d_exp_cmp(pa->exp, pb->exp, a->n, mo);
+        *indirect = lpol_malloc(a->n);
+        // printf("cmp: %d!\n", cmp);
+        // printf("[ ");
+        // for (int i = 0; i < a->n; i++) printf("%ld ", pa->exp[i]);
+        // printf("]");
         if (cmp < 0) {
+            // printf(" < ");
             (*indirect)->coef = betha * pb->coef;
             //(*indirect)->exp  = pb->exp;
-            memcpy((*indirect)->exp, pb->exp, a->nvar * sizeof(*(pb->exp)));
+            memcpy((*indirect)->exp, pb->exp, a->n * sizeof(*(pb->exp)));
+            // printf("[ ");
+            // for (int i = 0; i < a->n; i++) printf("%ld ", pb->exp[i]);
+            // printf("]\n");
             pb = pb->nxt;
         } else if (cmp > 0) {
+            // printf(" > ");
             (*indirect)->coef = alpha * pa->coef;
             //(*indirect)->exp  = pa->exp;
-            memcpy((*indirect)->exp, pa->exp, a->nvar * sizeof(*(pb->exp)));
+            memcpy((*indirect)->exp, pa->exp, a->n * sizeof(*(pb->exp)));
+            // printf("[ ");
+            // for (int i = 0; i < a->n; i++) printf("%ld ", pb->exp[i]);
+            // printf("]\n");
             pa = pa->nxt;
         } else {
+            // printf(" = ");
             (*indirect)->coef = alpha * pa->coef + betha * pb->coef;
             //(*indirect)->exp  = pa->exp;
-            memcpy((*indirect)->exp, pa->exp, a->nvar * sizeof(*(pb->exp)));
+            memcpy((*indirect)->exp, pa->exp, a->n * sizeof(*(pb->exp)));
+            // printf("[ ");
+            // for (int i = 0; i < a->n; i++) printf("%ld ", pb->exp[i]);
+            // printf("]\n");
             pa = pa->nxt;
             pb = pb->nxt;
         }
@@ -828,20 +843,20 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
     }
 
     while (pa != NULL) {
-        *indirect = lpol_malloc(a->nvar);
+        *indirect = lpol_malloc(a->n);
         (*indirect)->coef = pa->coef;
         //(*indirect)->exp  = pa->exp;
-        memcpy((*indirect)->exp, pa->exp, a->nvar * sizeof(*(pb->exp)));
+        memcpy((*indirect)->exp, pa->exp, a->n * sizeof(*(pb->exp)));
         indirect = &(*indirect)->nxt;
         pa = pa->nxt;
         c->sz++;
     }
 
     while (pb != NULL) {
-        *indirect = lpol_malloc(a->nvar);
+        *indirect = lpol_malloc(a->n);
         (*indirect)->coef = pb->coef;
         //(*indirect)->exp  = pb->exp;
-        memcpy((*indirect)->exp, pb->exp, a->nvar * sizeof(*(pb->exp)));
+        memcpy((*indirect)->exp, pb->exp, a->n * sizeof(*(pb->exp)));
         indirect = &(*indirect)->nxt;
         pb = pb->nxt;
         c->sz++;
@@ -852,7 +867,7 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
 
 
 void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, enum MONOMIAL_ORDER mo) {
-    if (a->nvar != b->nvar) SAYNEXITWERROR("pols with diferent nvars");
+    if (a->n != b->n) SAYNEXITWERROR("pols with diferent nvars");
 
     if (a == NULL || b == NULL) SAYNEXITWERROR("NULL pointer received!");
 
@@ -877,13 +892,13 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
     lpol_t ** indirect = &a->first;
 
     while ((*indirect) != NULL && pb != NULL) {
-        int cmp = d_exp_cmp((*indirect)->exp, pb->exp, a->nvar, mo);
+        int cmp = d_exp_cmp((*indirect)->exp, pb->exp, a->n, mo);
 
         if (cmp < 0) {
-            newterm = lpol_malloc(b->nvar);
+            newterm = lpol_malloc(b->n);
             newterm->coef = betha * pb->coef;
             //newterm->exp  = pb->exp;
-            memcpy(newterm->exp, pb->exp, b->nvar * sizeof(*(pb->exp)));
+            memcpy(newterm->exp, pb->exp, b->n * sizeof(*(pb->exp)));
             newterm->nxt  = *indirect;
             *indirect     = newterm;
             indirect = &(*indirect)->nxt;
@@ -905,10 +920,10 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
         indirect = &(*indirect)->nxt;
     }
     while (pb != NULL) {
-        (*indirect) = lpol_malloc(b->nvar);
+        (*indirect) = lpol_malloc(b->n);
         (*indirect)->coef = betha * pb->coef;
         //(*indirect)->exp  = pb->exp;
-        memcpy(newterm->exp, pb->exp, b->nvar * sizeof(*(pb->exp)));
+        memcpy(newterm->exp, pb->exp, b->n * sizeof(*(pb->exp)));
         indirect = &(*indirect)->nxt;
         pb = pb->nxt;
     }
@@ -918,17 +933,17 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
 llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
     if (a == NULL) SAYNEXITWERROR("null pol received");
 
-    llpol_t * llpol = llpol_create(a->nvar);
+    llpol_t * llpol = llpol_create(a->n);
 
     if (alpha != 0) {
         lpol_t *  ps = a->first;
         lpol_t ** pd = &llpol->first;
         
         while (ps != NULL) {
-            *pd = lpol_malloc(a->nvar);
+            *pd = lpol_malloc(a->n);
             (*pd)->coef = alpha * ps->coef;
             //(*pd)->exp  = ps->exp;
-            memcpy((*pd)->exp, ps->exp, a->nvar * sizeof(*(ps->exp)));
+            memcpy((*pd)->exp, ps->exp, a->n * sizeof(*(ps->exp)));
             ps = ps->nxt;
             pd = &(*pd)->nxt;
             llpol->sz++;
@@ -959,13 +974,13 @@ void llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
 
 int llpol_monomial_cmp(llpol_t * a, llpol_t * b, enum MONOMIAL_ORDER mo) {
     if (a == NULL || b == NULL) SAYNEXITWERROR("cannot compare null llpols");
-    if (a->nvar != b->nvar) SAYNEXITWERROR("cannot compare. nvar diff");
+    if (a->n != b->n) SAYNEXITWERROR("cannot compare. nvar diff");
 
     lpol_t * pa = a->first;
     lpol_t * pb = b->first;
 
     while (pa && pb) {
-        int cmp = d_exp_cmp(pa->exp, pb->exp, a->nvar, mo);
+        int cmp = d_exp_cmp(pa->exp, pb->exp, a->n, mo);
         if (cmp != 0) return cmp;
         pa = pa->nxt;
         pb = pb->nxt;
@@ -978,7 +993,7 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b, enum MONOMIAL_ORDER mo) {
 int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
     if (a == NULL || b == NULL) SAYNEXITWERROR("cannot compare null llpol");
 
-    if (a->nvar != b->nvar) SAYNEXITWERROR("cannot compare. nvar diff");
+    if (a->n != b->n) SAYNEXITWERROR("cannot compare. nvar diff");
 
     if (a->sz != b->sz) return 1;
 
@@ -986,7 +1001,7 @@ int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
     lpol_t * pb = b->first;
 
     while (pa && pb) {
-        if (d_exp_lex_cmp(pa->exp, pb->exp, a->nvar) != 0) return 1;
+        if (d_exp_lex_cmp(pa->exp, pb->exp, a->n) != 0) return 1;
         if (pa->coef != pb->coef) return 1;
         pa = pa->nxt;
         pb = pb->nxt;
@@ -999,7 +1014,7 @@ int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
 llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src, enum MONOMIAL_ORDER mo) {
     if (src == NULL) return NULL;
 
-    dst->nvar = src->nvar;
+    dst->n = src->n;
     dst->sz   = src->sz;
 
     lpol_t * p = src->first;
@@ -1456,19 +1471,19 @@ void llpol_print(llpol_t * llpol) {
 
     while (p) {
         if (p->coef >= 0) printf("+ ");
-        if (d_exp_is_zero(p->exp, llpol->nvar) == 0) {
-            printf("%f", p->coef);
+        if (d_exp_is_zero(p->exp, llpol->n) == 0) {
+            printf("%0.1f", p->coef);
             p = p->nxt;
             continue;
         }
 
         printf("%0.1f*x^(", p->coef);
 
-        for (int i = 0; i < llpol->nvar - 1; i++) {
+        for (int i = 0; i < llpol->n - 1; i++) {
             printf("%ld, ", *(p->exp + i));
         }
 
-        printf("%ld) ", *(p->exp + llpol->nvar - 1));
+        printf("%ld) ", *(p->exp + llpol->n - 1));
         p = p->nxt;
     }
 
@@ -1507,7 +1522,7 @@ char * llpol_repr(llpol_t * llpol) {
             strncat(repr, "...", p);
             return repr;
         }
-        if (d_exp_is_zero(ptr->exp, llpol->nvar) == 0) {
+        if (d_exp_is_zero(ptr->exp, llpol->n) == 0) {
             ptr = ptr->nxt;
             continue;
         }
@@ -1519,7 +1534,7 @@ char * llpol_repr(llpol_t * llpol) {
             return repr;
         }
 
-        for (int j = 0; j < llpol->nvar - 1; j++) {
+        for (int j = 0; j < llpol->n - 1; j++) {
             c = snprintf(buff, 32, "%ld,", *(ptr->exp+j));
             p = p - c;
             if (p >= 3) strcat(repr, buff);
@@ -1529,7 +1544,7 @@ char * llpol_repr(llpol_t * llpol) {
             }
         }
 
-        c = snprintf(buff, 32, "%ld)", *(ptr->exp+llpol->nvar-1));
+        c = snprintf(buff, 32, "%ld)", *(ptr->exp+llpol->n-1));
         p = p - c;
         if (p >= 3) strcat(repr, buff);
         else {
@@ -1867,7 +1882,7 @@ int d_exp_glex_cmp(u64 * a, u64 * b, u8 nvar) {
         }
     }
 
-    if (sum_a == sum_b) return cmp < 0 ? -1 : 1;
+    if (sum_a == sum_b) return cmp == 0 ? 0 : cmp < 0 ? -1 : 1;
 
     if (sum_a < sum_b) return -1;
     if (sum_a > sum_b) return 1;
@@ -1875,7 +1890,7 @@ int d_exp_glex_cmp(u64 * a, u64 * b, u8 nvar) {
 int d_exp_revlex_cmp(u64 * a, u64 * b, u8 nvar) {
     int cmp = 0;
 
-    for (int i = 0; i < nvar; i++) {
+    for (int i = nvar - 1; i >= 0; i--) {
         if (cmp == 0) {
             cmp = *(a + i) - *(b + i);
         } else break;
@@ -1891,7 +1906,7 @@ int d_exp_grevlex_cmp(u64 * a, u64 * b, u8 nvar) {
     u64 sum_b = 0;
     int cmp   = 0;
 
-    for (int i = 0; i < nvar; i++) {
+    for (int i = nvar - 1; i >= 0; i--) {
         sum_a += *(a + i);
         sum_b += *(b + i);
         
@@ -1899,11 +1914,11 @@ int d_exp_grevlex_cmp(u64 * a, u64 * b, u8 nvar) {
             cmp = *(a + i) - *(b + i);
         }
     }
-
-    if (sum_a == sum_b) return cmp < 0 ? 1 : -1;
+    // printf("sum_a: %ld, sum_b: %ld, cmp: %d\n", sum_a, sum_b, cmp);
 
     if (sum_a < sum_b) return -1;
     if (sum_a > sum_b) return 1;
+    if (sum_a == sum_b) return cmp == 0 ? 0 : cmp < 0 ? 1 : -1;
 }
 
 

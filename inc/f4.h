@@ -15,6 +15,8 @@ struct paire_critique_t {
     u64     * t[2]; // t_0 y t_1
 };
 
+int paire_critique_cmp(pc_t * a, pc_t * b, void * param);
+
 void pc_print(pc_t *);
 void pc_free(pc_t *);
 

@@ -395,14 +395,14 @@ void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
     llpol_t * pol1;
     llpol_t * pol2;
 
-    for (pol1 = rbtree_trav_first(&trav1, in); pol1 != NULL; pol1 = rbtree_trav_next(&trav1)) {
+    for (pol1 = rbtree_trav_last(&trav1, in); pol1 != NULL; pol1 = rbtree_trav_prev(&trav1)) {
         llpol_t * newpol = llpol_add(pol1, 1, pol1, 1, ctx->order);
         rbtree_probe(out, newpol);
         rbtree_trav_cpy(&trav2, &trav1);
         llpol_print(pol1);
         printf(":::\n");
 
-        for (pol2 = rbtree_trav_next(&trav2); pol2 != NULL; pol2 = rbtree_trav_next(&trav2)) {
+        for (pol2 = rbtree_trav_prev(&trav2); pol2 != NULL; pol2 = rbtree_trav_prev(&trav2)) {
             pc_t * pc = llpol2pairecritique(pol1, pol2);
             pc_print(pc);
             printf("\n");
@@ -421,5 +421,6 @@ void set_print(rbtree_t * rbt) {
 
     for (pol = rbtree_trav_first(&trav, rbt); pol != NULL; pol = rbtree_trav_next(&trav)) {
         llpol_print(pol);
+        printf("\n");
     }
 }

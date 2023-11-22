@@ -75,7 +75,7 @@ assignment: VAR '=' expression
 expression_list
     : expression { 
         //$$ = create_set_for_expr_l(); set_insert($$, $1, nvars); ee_print($1); FREE($1->t); FREE($1);
-        if (strcmp($1->t, "llpol") == 0) rbtree_probe(_pol_acc_in, $1->v); 
+        if (strcmp($1->t, "llpol") == 0) { rbtree_probe(_pol_acc_in, $1->v); }
         if (strcmp($1->t, "number") == 0) {
             llpol_t * pol = llpol_create(ctx->nvars);
             llpol_addterm(pol, *(float*)$1->v, 0, ctx->order);
@@ -86,11 +86,12 @@ expression_list
     }
     | expression_list ',' expression { 
         //$$ = $1; set_insert($$, $3, nvars); printf("expr_list! and "); ee_print($3); FREE($3->t); FREE($3);
-        if (strcmp($3->t, "llpol") == 0) rbtree_probe(_pol_acc_in, $3->v);
+        if (strcmp($3->t, "llpol") == 0) { rbtree_probe(_pol_acc_in, $3->v); }
         if (strcmp($3->t, "number") == 0) {
             llpol_t * pol = llpol_create(ctx->nvars);
             llpol_addterm(pol, *(float*)$3->v, 0, ctx->order);
             rbtree_probe(_pol_acc_in, pol);
+            printf(".\n");
             free($3->v);
         }
         free($3->t); free($3);
@@ -166,7 +167,7 @@ directive: SYMTABTOK { print_sym_table(st); }
     | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); }
     | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
     | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
-    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, ctx); set_print(_pol_acc_out); printf("\n")}
+    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, ctx); set_print(_pol_acc_out); printf("\n");}
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

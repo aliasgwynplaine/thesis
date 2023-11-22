@@ -266,6 +266,7 @@ void ** rbtree_probe(rbtree_t * rbt, void * data) {
 
     stack[k] = (rbnode_t *)&rbt->root; // look up
     dir[k++] = 0;
+    //printf("order: %d\n", *((int *)rbt->param));
 
     for (p = rbt->root; p != NULL; /* empty */) {
         int cmp = rbt->cmp(data, p->d, rbt->param);

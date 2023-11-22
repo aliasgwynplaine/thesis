@@ -47,7 +47,7 @@ struct lpol_t {
 };
 
 struct llpol_t {
-    u8         nvar;
+    u8            n;
     u16          sz;
     lpol_t  * first;
 };

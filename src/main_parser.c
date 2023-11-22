@@ -16,7 +16,7 @@ extern rbt_cmpfux_t pol_monomial_cmp_wrap;
 
 int main(int argc, char * argv[]) {
     ctx = malloc(sizeof(*ctx));
-    ctx->order = lex;
+    ctx->order = grevlex;
     ctx->nvars = 4;
     ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
     
