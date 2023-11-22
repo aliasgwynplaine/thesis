@@ -11,6 +11,7 @@ typedef struct paire_critique_t pc_t;
 /* paire critique */
 struct paire_critique_t {
     u64     * lcm;
+    u64       deg;
     llpol_t * f[2]; // f_0 y f_1
     u64     * t[2]; // t_0 y t_1
 };

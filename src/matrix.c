@@ -1,18 +1,7 @@
 #include "matrix.h"
 
 
-typedef struct colsmat_t  colsmat_t;
-/**
- * @brief stores information of a 
- * column for the list of pols to 
- * CC sparse matrix transformation
-*/
-struct colsmat_t {
-    u64      exp;   /* exponent */
-    int        p;   /* numnber of entries in col */
-    int      * i;   /* row index for each entry  */
-    COEFTYPE * x;   /* entry   */
-};
+
 
 
 mm_t * mmatrix_malloc(int m, int n, int nnzmax) {

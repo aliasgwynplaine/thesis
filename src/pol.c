@@ -990,6 +990,27 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b, enum MONOMIAL_ORDER mo) {
 }
 
 
+int pol_monomial_cmp_wrap(const void *a, const void *b, void *param) {
+    int cmp = llpol_monomial_cmp(((llpol_t *)a), (llpol_t *)b, *(enum MONOMIAL_ORDER*)param);
+    
+    if (cmp == 0) {
+        lpol_t * pa = ((llpol_t *)a)->first;
+        lpol_t * pb = ((llpol_t *)b)->first;
+
+        while (pa && pb) {
+            if (pa->coef < pb->coef) return -1;
+            if (pa->coef > pb->coef) return  1;
+            pa = pa->nxt;
+            pb = pb->nxt;
+        }
+
+        return 0;
+    }
+
+    return cmp;
+}
+
+
 int llpol_hard_cmp(llpol_t * a, llpol_t * b) {
     if (a == NULL || b == NULL) SAYNEXITWERROR("cannot compare null llpol");
 

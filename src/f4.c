@@ -53,10 +53,14 @@ pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2) {
     pc->lcm  = d_exp_lcm(f1->first->exp, f2->first->exp, n);
     pc->f[0] = f1;
     pc->f[1] = f2;
+    pc->deg  = 0;
+    for (int i = 0; i < pc->f[0]->n; i++ ) pc->deg += pc->lcm[i];
 
     for (int i = 0; i < 2; i++) {
         pc->t[i] = malloc(n * sizeof(*pc->t[i]));
-        memcpy(pc->t[i], pc->f[i]->first->exp, n * sizeof(*pc->t[i]));
+        
+        for (int j = 0; j < n; j++) 
+            pc->t[i][j] = pc->lcm[j] - pc->f[i]->first->exp[j];
     }
 
     return pc;
@@ -70,19 +74,104 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     rbtree_t * P = rbtree_create(paire_critique_cmp, NULL, NULL);
     rbt_trav_t t1, t2;
     llpol_t * f1, * f2;
+    u64 min_d = 0;
 
     for (f1 = rbtree_trav_first(&t1, G); f1 != NULL; f1 = rbtree_trav_next(&t1)) {
         rbtree_trav_cpy(&t2, &t1);
         
         for (f2 = rbtree_trav_next(&t2); f2 != NULL; f2 = rbtree_trav_next(&t2)) {
             pc_t * pc = llpol2pairecritique(f1, f2);
+            if (min_d == 0) min_d = pc->deg;
+            min_d = __min(min_d, pc->deg);
             rbtree_probe(P, pc);
         }
     }
+    // while (P->sz != 0) {
+    /* Selection */
+    rbt_trav_t t;
+    pc_t * p;
+    int sz = P->sz >> 2;
+    pc_t ** Pd = malloc((sz) * sizeof(*Pd));
+    int h = 0;
+
+    for (p = rbtree_trav_first(&t, P); p != NULL; p = rbtree_trav_next(&t)) {
+        pc_print(p);
+        printf("\n");
+        if (min_d == p->deg) {
+            sz = sz << 1;
+            if (sz == h) Pd = realloc(Pd, sz * sizeof(*Pd));
+            Pd[h++] = p; 
+        }
+    }
+
+    rbtree_t * M = rbtree_create(pol_monomial_cmp_wrap, F->param, NULL);
+    rbtree_t * T = rbtree_create(d_exp_cmp, M->param, NULL);
+    rbtree_t * D = rbtree_create(d_exp_cmp, M->param, NULL);
+    printf("SElectec: \n");
+    
+    for (int i = 0; i < h; i++) {
+        pc_print(Pd[i]);
+        printf("\n");
+
+        for (int j = 0; j < 2; j++) {
+            llpol_t * pol    = Pd[i]->f[j];
+            llpol_t * newpol = llpol_create(pol->n);
+            lpol_t  * it;
+            
+            for (it = pol->first; it != NULL; it = it->nxt){
+                u64 * exp = d_exp_add(it->exp, Pd[i]->t[j], pol->n);
+                llpol_addterm(newpol, it->coef, exp, *(enum MONOMIAL_ORDER *)M->param);
+                rbtree_probe(T, exp);
+                //free(exp);
+            }
+            
+            rbtree_probe(M, newpol);
+            u64 * ht = malloc(newpol->n * sizeof(*ht));
+            memcpy(ht, newpol->first->exp, newpol->n * sizeof(*ht));
+            rbtree_probe(D, ht);
+        }
+    }
+
+    llpol_t * i;
+
+    printf("Pols for matrix:\n");
+    for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
+        llpol_print(i);
+        printf("\n");
+    }
+
+    u64 * e;
+
+    printf("T: ");
+
+    for (e = rbtree_trav_first(&t, T); e != NULL; e = rbtree_trav_next(&t)) {
+        printf("[ ");
+    
+        for (int k = 0; k < Pd[0]->f[0]->n; k++) printf("%ld ", e[k]);
+
+        printf("], ");
+    }
+    printf("\n");
+
+    printf("HT: ");
+    for (e = rbtree_trav_first(&t, D); e != NULL; e = rbtree_trav_next(&t)) {
+        printf("[ ");
+    
+        for (int k = 0; k < Pd[0]->f[0]->n; k++) printf("%ld ", e[k]);
+
+        printf("], ");
+    }
+    printf("\n");
 
 
+    // }
 
-
+    rbtree_destroy(G, NULL);
+    rbtree_destroy(P, pc_free);
+    rbtree_destroy(M, llpol_free);
+    rbtree_destroy(T, free);
+    rbtree_destroy(D, free);
+    free(Pd);
 
     return NULL;
 }

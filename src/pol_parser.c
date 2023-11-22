@@ -328,26 +328,6 @@ void ee_print(ee_t * ee) {
     if (strcmp("aapol", ee->t) == 0) aapol_print(ee->v);
 }
 
-int pol_monomial_cmp_wrap(const void *a, const void *b, void *param) {
-    int cmp = llpol_monomial_cmp(((llpol_t *)a), (llpol_t *)b, *(enum MONOMIAL_ORDER*)param);
-    
-    if (cmp == 0) {
-        lpol_t * pa = ((llpol_t *)a)->first;
-        lpol_t * pb = ((llpol_t *)b)->first;
-
-        while (pa && pb) {
-            if (pa->coef < pb->coef) return -1;
-            if (pa->coef > pb->coef) return  1;
-            pa = pa->nxt;
-            pb = pb->nxt;
-        }
-
-        return 0;
-    }
-
-    return cmp;
-
-}
 
 int aapol_monomial_cmp_wrap(const void * a, const void * b, void * param) {
     int cmp = aapol_monomial_cmp((aapol_t *)a, (aapol_t *)b, *(enum MONOMIAL_ORDER*)param);
@@ -395,23 +375,8 @@ void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
     llpol_t * pol1;
     llpol_t * pol2;
 
-    for (pol1 = rbtree_trav_last(&trav1, in); pol1 != NULL; pol1 = rbtree_trav_prev(&trav1)) {
-        llpol_t * newpol = llpol_add(pol1, 1, pol1, 1, ctx->order);
-        rbtree_probe(out, newpol);
-        rbtree_trav_cpy(&trav2, &trav1);
-        llpol_print(pol1);
-        printf(":::\n");
+    f4(in, ctx->order);
 
-        for (pol2 = rbtree_trav_prev(&trav2); pol2 != NULL; pol2 = rbtree_trav_prev(&trav2)) {
-            pc_t * pc = llpol2pairecritique(pol1, pol2);
-            pc_print(pc);
-            printf("\n");
-            pc_free(pc);
-        }
-
-        printf("\n\n");
-        
-    }
     printf("Done!\n");
 }
 

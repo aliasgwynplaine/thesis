@@ -3,7 +3,20 @@
 
 #include <memory.h>
 #include "outils.h"
-#include "tree.h"
+
+typedef struct new_sparse_matrix_t nsm_t;
+/**
+ * x[i][j] is the element a[i, c[i][j]]
+*/
+struct new_sparse_matrix_t {
+    u64       nnz;
+    COEFTYPE ** x; // x[i] is row i
+    u64      ** c; // column index of x[i]
+    u64       * w; // w[i] is nnz entries in x[i]
+    float       d; // density
+};
+
+
 
 typedef struct sparse_block_t                      sb_t;
 typedef struct sparse_matrix_t                    csr_t; 
