@@ -94,7 +94,7 @@ struct rbnode_t {
 
 struct rbtree_t {
     rbnode_t         *  root;
-    rbt_cmpfux_t      *   cmp; // todo change to make everything else compatible
+    rbt_cmpfux_t     *   cmp; 
     tree_allocator_t * alloc; // alloc for the nodes
     void             * param;
     size_t                sz;
