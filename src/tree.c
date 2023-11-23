@@ -383,7 +383,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
 
     p = (rbnode_t *)&rbt->root;
     
-    for (cmp = -1; cmp != 0; cmp = rbt->cmp(p->d, data, rbt->param)) {
+    for (cmp = -1; cmp != 0; cmp = rbt->cmp(data, p->d, rbt->param)) {
         int d  = cmp > 0;
         stack[k] = p;
         dir[k++] = d;
@@ -391,7 +391,7 @@ void * rbtree_delete(rbtree_t * rbt, void * data) {
         if (d == 0) p = p->l;
         else p = p->r;
 
-        if (p == NULL) return NULL;
+        if (p == NULL)  return NULL;
     }
 
     data = p->d;
