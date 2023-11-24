@@ -1994,11 +1994,18 @@ u64 * d_exp_gcd(u64 * a, u64 * b, u8 n) {
     return c;
 }
 
+/**
+ * computes c = a / b if posible.
+ * @return true in success. false when 
+ * division is not posible.
+*/
+bool d_exp_div(u64 * a, u64 * b, u64 * c, u8 n) {
+    for (int i = 0; i < n; i++) {
+        c[i] = a[i] - b[i];
 
-bool d_exp_div(u64 * a, u64 * b, u8 n) {
-    for (int i = 0; i < n; i++) 
-        if ((a[i] - b[i]) < 0) return false;
-    
+        if ((int)c[i] < 0) return false;
+    }
+
     return true;
 }
 

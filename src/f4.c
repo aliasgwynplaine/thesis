@@ -28,6 +28,15 @@ int paire_critique_cmp_wrap(const void * a, const void * b, void * param) {
 }
 
 
+void llpol_free_wrap(void * pol, void * param) {
+    llpol_free(pol);
+}
+
+void pc_free_wrap(void * pc, void * param) {
+    pc_free(pc);
+}
+
+
 int d_exp_cmp_wrap(const void * a, const void *b, void * param) {
     struct n_mo_t * nmo = param;
     int cmp = d_exp_cmp((u64*)a, (u64*) b, nmo->n, nmo->mo);
@@ -65,6 +74,10 @@ void pc_free(pc_t * pc) {
     free(pc);
 }
 
+void free_wrap(void * ptr, void * param) {
+    free(ptr);
+}
+
 pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2) {
     u8 n = f1->n;
     struct paire_critique_t * pc = malloc(sizeof(*pc));
@@ -89,12 +102,13 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     if (F->sz == 0) return NULL;
     
     struct n_mo_t param = {((llpol_t *)(F->root->d))->n, mo};
-    rbtree_t * G = rbtree_cpy(F, NULL, NULL, NULL);
+    rbtree_t * G = rbtree_cpy(F, NULL, NULL, NULL); // soft copy
     rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, &mo, NULL);
     rbt_trav_t t, u;
     llpol_t * f1, * f2;
     u64 min_d = 0;
 
+    /* compute paires critiques */
     for (f1 = rbtree_trav_first(&t, G); f1 != NULL; f1 = rbtree_trav_next(&t)) {
         rbtree_trav_cpy(&u, &t);
         
@@ -116,8 +130,11 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         pc_print(p);
         printf("\n");
         if (min_d == p->deg) {
-            sz = sz << 1;
-            if (sz == h) Pd = realloc(Pd, sz * sizeof(*Pd));
+            if (sz == h) {
+                sz = sz << 1;
+                Pd = realloc(Pd, sz * sizeof(*Pd));
+                CHECKPTR(Pd);
+            }
             Pd[h++] = p; 
         }
     }
@@ -125,7 +142,6 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     rbtree_t * M = rbtree_create(pol_monomial_cmp_wrap, F->param, NULL);
     rbtree_t * T = rbtree_create(d_exp_cmp_wrap, &param, NULL);
     rbtree_t * D = rbtree_create(d_exp_cmp_wrap, &param, NULL);
-    rbtree_t * diff = rbtree_create(d_exp_cmp_wrap, &param, NULL);
     printf("SElectec: \n");
     
     for (int i = 0; i < h; i++) {
@@ -152,10 +168,64 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         }
     }
 
-
-    /* here! */
-
     llpol_t * i;
+    u64 * e;
+
+    /* Reduction */
+    //rbtree_t * diff; // T - D
+    //diff = rbtree_cpy(T, NULL, NULL, NULL); // soft copy .... better use a 
+    u64 ** diff = malloc(T->sz * sizeof(*diff));
+    int hh = 0;
+    int ssz = T->sz;
+    
+    for (e = rbtree_trav_first(&t, T); e != NULL; e = rbtree_trav_next(&t)) {
+        if (rbtree_find(D, e) == NULL) diff[hh++] = e; 
+    }
+
+    while (hh > 0) {
+        llpol_t * mf;
+        u64 * m = diff[--hh];
+        u64 * mt = malloc(param.n * sizeof(*mt));
+        memcpy(mt, m, param.n * sizeof(*mt));
+        
+        if (mt != * rbtree_probe(D, mt)) free(mt);
+
+        for (i = rbtree_trav_first(&u, G); i != NULL; i = rbtree_trav_next(&u)) {
+            u64 * c = malloc(param.n * sizeof(*c));
+            if (d_exp_div(m, i->first->exp, c, i->n)) {
+                mf = llpol_create(i->n);
+
+                for (lpol_t * it = i->first; it != NULL; it = it->nxt) {
+                    u64 * exp = d_exp_add(it->exp, c, i->n);
+                    llpol_addterm(mf, it->coef, exp, param.mo);
+
+                    if (exp != * rbtree_probe(T, exp)) free(exp);
+                    else {
+                        if (hh == ssz) {
+                            ssz = ssz << 1;
+                            diff = realloc(diff, ssz * sizeof(*diff));
+                            CHECKPTR(diff);
+                        }
+                        diff[hh++] = exp;
+                    }
+                }
+
+                rbtree_probe(M, mf);
+            } else free(c);
+        }
+
+        printf("diff: ");
+        for (int k = 0; k < hh; k++) {
+            printf("[ ");
+            for (int z = 0; z < param.n; z++) 
+                printf("%ld ", diff[k][z]);
+            printf("], ");
+        }
+        printf("\n");
+    }
+
+    /* debug */
+
 
     printf("Pols for matrix:\n");
     for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
@@ -163,7 +233,6 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         printf("\n");
     }
 
-    u64 * e;
 
     printf("T: ");
 
@@ -185,16 +254,16 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         printf("], ");
     }
     printf("\n");
-
+    printf("T - HT: \n");
 
     // }
 
     rbtree_destroy(G, NULL);
-    rbtree_destroy(P, pc_free);
-    rbtree_destroy(M, llpol_free);
-    rbtree_destroy(T, free);
-    rbtree_destroy(D, free);
-    rbtree_destroy(diff, free);
+    rbtree_destroy(P, pc_free_wrap);
+    rbtree_destroy(M, llpol_free_wrap);
+    rbtree_destroy(T, free_wrap);
+    rbtree_destroy(D, free_wrap);
+    free(diff);
     free(Pd);
 
     return NULL;

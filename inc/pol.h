@@ -183,7 +183,7 @@ u64  * d_exp_add(u64 *, u64 *, u8);
 void   d_exp_inline_add(u64 *, u64*, u8);
 u64  * d_exp_lcm(u64 *, u64 *, u8);
 u64  * d_exp_gcd(u64 *, u64 *, u8);
-bool   d_exp_div(u64 *, u64 *, u8);
+bool   d_exp_div(u64 * a, u64 * b, u64* c, u8 n);
 
 /* bit masks and bit extraction*/
 u64 *  s_exp_unpack(u64, u8);
