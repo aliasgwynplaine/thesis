@@ -344,6 +344,41 @@ void csr_swap_col(csr_t * csr, idx_t i, idx_t j) {
     endl;
 }
 
+
+void nsm_print(nsm_t * nsm) {
+    printf("m: %ld\n", nsm->m);
+    printf("nnz: %ld\n", nsm->nnz);
+    printf("density: %f\n", nsm->d);
+
+    for (int i = 0; i < nsm->m; i++) {
+        printf("x: ");
+        for (int j = 0; j < nsm->w[i]; j++) {
+            printf("%f ", nsm->x[i][j]);
+        }
+
+        printf("\nc: ");
+        for (int j = 0; j < nsm->w[i]; j++) {
+            printf("%ld ", nsm->c[i][j]);
+        }
+        printf("\n");
+    }
+}
+
+
+void nsm_free(nsm_t * nsm) {
+    for (int i = 0; i < nsm->m; i++) {
+        free(nsm->x[i]);
+        free(nsm->c[i]);
+    }
+
+    free(nsm->x);
+    free(nsm->c);
+    free(nsm->w);
+
+    free(nsm);
+}
+
+
 int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
     if (i < 0 || j < 0) return 0;
     if (smat->nnz >= smat->nnzmax) {

@@ -9,11 +9,12 @@ typedef struct new_sparse_matrix_t nsm_t;
  * x[i][j] is the element a[i, c[i][j]]
 */
 struct new_sparse_matrix_t {
-    u64       nnz;
     COEFTYPE ** x; // x[i] is row i
     u64      ** c; // column index of x[i]
     u64       * w; // w[i] is nnz entries in x[i]
     float       d; // density
+    u64       nnz;
+    u64         m; // number of rows
 };
 
 
@@ -213,6 +214,11 @@ void   csr_dense_print(csr_t *);
 void   multiply_csr_dense(csr_t *, dcm_t *, dcm_t *);
 tmat_t * csr_decompose(csr_t *);
 dctx_t * csr_analyse(csr_t *);
+
+/* nsm */
+
+void nsm_print(nsm_t * );
+void nsm_free(nsm_t * );
 
 /*
     insert & delete

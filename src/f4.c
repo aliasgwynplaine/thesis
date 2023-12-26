@@ -259,24 +259,63 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     }
     printf("\n");
 
-    printf("T->sz: %d\n", T->sz);
+    printf("T->sz: %ld\n", T->sz);
     
+    // (2.2) information in M
+    nsm_t * nsm = malloc(sizeof(*nsm)); // don't forget to free
+
+    CHECKPTR(nsm);
+    nsm->nnz = 0;
+    nsm->d   = .0;
+    nsm->x = malloc(sizeof(*nsm->x) * M->sz);
+    CHECKPTR(nsm->x);
+    nsm->c = malloc(sizeof(*nsm->c) * M->sz);
+    CHECKPTR(nsm->c);
+    nsm->w = malloc(sizeof(*nsm->w) * M->sz);
+    CHECKPTR(nsm->w);
+
+    COEFTYPE * buffx = malloc(sizeof(*buffx) * T->sz);
+    CHECKPTR(buffx);
+    u64 * buffc = malloc(sizeof(*buffc) * T->sz);
+    CHECKPTR(buffc);
+
+    int j = 0;
+
     for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
         //llpol_print(i);printf("\n");
+        //nsm->x[j] = malloc(sizeof(*nsm->x[j]) * . )
+        nsm->w[j] = 0;
+        u64 c = 0;
+
         for (e = rbtree_trav_last(&u, T); e != NULL; e = rbtree_trav_prev(&u)) {
             for (lpol_t * p = i->first; p != NULL; p = p->nxt) {
                 if (d_exp_cmp(e, p->exp, param.n, param.mo) == 0) {
                     printf("%0.0f ", p->coef);
+                    buffc[nsm->w[j]]   = c;
+                    buffx[nsm->w[j]++] = p->coef;
+                    nsm->nnz++;
+
                     goto label;
                 }
             }
             printf("0 ");
             label:
+            c++;
         }
         printf("\n");
+
+        nsm->x[j] = malloc(sizeof(*nsm->x[j]) * nsm->w[j]);
+        CHECKPTR(nsm->x[j]);
+        nsm->c[j] = malloc(sizeof(*nsm->c[j]) * nsm->w[j]);
+        CHECKPTR(nsm->c[j]);
+        memcpy(nsm->x[j], buffx, sizeof(*buffx)*nsm->w[j]);
+        memcpy(nsm->c[j], buffc, sizeof(*buffc)*nsm->w[j]);
+        nsm->d = (float) nsm->nnz / (M->sz * T->sz);
+        j++;
     }
 
-    // (2.2)
+    nsm->m = M->sz;
+    nsm_print(nsm);
 
     // }
 
@@ -287,6 +326,9 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     rbtree_destroy(D, free_wrap);
     free(diff);
     free(Pd);
+    nsm_free(nsm);
+    free(buffx);
+    free(buffc);
 
     return NULL;
 }
