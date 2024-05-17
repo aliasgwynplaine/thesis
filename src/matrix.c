@@ -347,6 +347,7 @@ void csr_swap_col(csr_t * csr, idx_t i, idx_t j) {
 
 void nsm_print(nsm_t * nsm) {
     printf("m: %ld\n", nsm->m);
+    printf("n: %ld\n", nsm->n);
     printf("nnz: %ld\n", nsm->nnz);
     printf("density: %f\n", nsm->d);
 
@@ -376,6 +377,26 @@ void nsm_free(nsm_t * nsm) {
     free(nsm->w);
 
     free(nsm);
+}
+
+
+void nsm_rref(nsm_t * nsm) {
+    assert(nsm != NULL);
+
+    u64 * p = malloc(nsm->m * sizeof(*p));
+
+    for (int i = 0; i < nsm->m; i++) *(p+i) = i;
+    int r = 0;
+    int c = 0;
+    
+    while (r < nsm->m) {
+        for (int k = 0; k < nsm->n; k++) {
+            if (nsm->c[r][k] != c)
+        }
+    }
+
+
+    free(p);
 }
 
 

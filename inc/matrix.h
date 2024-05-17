@@ -15,6 +15,7 @@ struct new_sparse_matrix_t {
     float       d; // density
     u64       nnz;
     u64         m; // number of rows
+    u64         n; // number of cols
 };
 
 
@@ -219,6 +220,7 @@ dctx_t * csr_analyse(csr_t *);
 
 void nsm_print(nsm_t * );
 void nsm_free(nsm_t * );
+void nsm_rref(nsm_t * );
 
 /*
     insert & delete
