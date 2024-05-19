@@ -221,6 +221,7 @@ dctx_t * csr_analyse(csr_t *);
 void nsm_print(nsm_t * );
 void nsm_free(nsm_t * );
 void nsm_rref(nsm_t * );
+int  redDenseAxpSparseY(COEFTYPE * , COEFTYPE * , u64 * , int );
 
 /*
     insert & delete
@@ -232,7 +233,8 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
     dense-sparse transformations
 */
 
-COEFTYPE * sparse2dense(COEFTYPE *, idx_t *, idx_t, idx_t);
+COEFTYPE * sparse2dense(COEFTYPE *, u64 *, u64, u64);
+bool       dense2sparse(COEFTYPE * , u64 , nsm_t * , idx_t);
 
 
 /*

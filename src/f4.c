@@ -338,6 +338,8 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     nsm->m = M->sz;
     nsm->n = T->sz;
     nsm_print(nsm);
+    nsm_rref(nsm);
+    nsm_print(nsm);
 
     // }
 
