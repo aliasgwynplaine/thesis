@@ -8,13 +8,13 @@ int paire_critique_cmp(pc_t * a, pc_t * b, enum MONOMIAL_ORDER mo) {
 
     cmp = llpol_hard_cmp(a->f[0], b->f[0]);
 
-    if (cmp != 0) return cmp;
+    if (cmp != 0) return -1;
 
     cmp = llpol_hard_cmp(a->f[1], b->f[1]);
 
-    if (cmp != 0) return cmp;
+    if (cmp != 0) return 1;
 
-    return cmp;
+    return cmp; // same paire
 }
 
 
@@ -27,6 +27,13 @@ int paire_critique_cmp_wrap(const void * a, const void * b, void * param) {
     return cmp;
 }
 
+void * llpol_cpy_wrapp(void * llpol, void * param) {
+    enum MONOMIAL_ORDER mo = *((enum MONOMIAL_ORDER*)param);
+    llpol_t * cpy = llpol_create(0);
+    llpol_cpy(cpy, llpol, mo);
+
+    return cpy;
+}
 
 void llpol_free_wrap(void * pol, void * param) {
     llpol_free(pol);
@@ -82,8 +89,8 @@ pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2) {
     u8 n = f1->n;
     struct paire_critique_t * pc = malloc(sizeof(*pc));
     pc->lcm  = d_exp_lcm(f1->first->exp, f2->first->exp, n);
-    pc->f[0] = f1;
-    pc->f[1] = f2;
+    pc->f[0] = f1; // only a reference
+    pc->f[1] = f2; // only a reference
     pc->deg  = 0;
     for (int i = 0; i < pc->f[0]->n; i++ ) pc->deg += pc->lcm[i];
 
@@ -98,19 +105,19 @@ pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2) {
 }
 
 
-rbtree_t * compute_pair_critiques(rbtree_t * G, enum MONOMIAL_ORDER mo) {
-    rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, &mo, NULL);
+rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 * min_d) {
+    rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, mo, NULL);
     rbt_trav_t t, u;
     llpol_t * f1, * f2;
-    u64 min_d = 0;
+    *min_d = 0;
 
     for (f1 = rbtree_trav_first(&t, G); f1 != NULL; f1 = rbtree_trav_next(&t)) {
         rbtree_trav_cpy(&u, &t);
         
         for (f2 = rbtree_trav_next(&u); f2 != NULL; f2 = rbtree_trav_next(&u)) {
             pc_t * pc = llpol2pairecritique(f1, f2);
-            if (min_d == 0) min_d = pc->deg;
-            min_d = __min(min_d, pc->deg);
+            if (*min_d == 0) *min_d = pc->deg;
+            *min_d = __min(*min_d, pc->deg);
             rbtree_probe(P, pc);
         }
     }
@@ -124,24 +131,16 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     if (F->sz == 0) return NULL;
     
     struct n_mo_t param = {((llpol_t *)(F->root->d))->n, mo};
-    rbtree_t * G = rbtree_cpy(F, NULL, NULL, NULL); // soft copy
-    rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, &mo, NULL);
+    rbtree_t * G = rbtree_cpy(F, llpol_cpy_wrapp, NULL, NULL); // hard copy
+    //rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, &mo, NULL);
     rbt_trav_t t, u;
     llpol_t * f1, * f2;
     u64 min_d = 0;
 
     /* compute paires critiques (1.2) */
-    for (f1 = rbtree_trav_first(&t, G); f1 != NULL; f1 = rbtree_trav_next(&t)) {
-        rbtree_trav_cpy(&u, &t);
-        
-        for (f2 = rbtree_trav_next(&u); f2 != NULL; f2 = rbtree_trav_next(&u)) {
-            pc_t * pc = llpol2pairecritique(f1, f2);
-            if (min_d == 0) min_d = pc->deg;
-            min_d = __min(min_d, pc->deg);
-            rbtree_probe(P, pc);
-        }
-    }
-    // while (P->sz != 0) {
+    rbtree_t * P = compute_paires_critiques(G, &param.mo, &min_d);
+    
+    while (P->sz != 0) {
     /* Selection (1.5) */
     pc_t * p;
     int sz = 2;
@@ -158,7 +157,8 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
                 Pd = realloc(Pd, sz * sizeof(*Pd));
                 CHECKPTR(Pd);
             }
-            Pd[h++] = p; 
+
+            Pd[h++] = p;
         }
     }
 
@@ -186,10 +186,14 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
             }
             
             rbtree_probe(M, newpol);
+            llpol_print(newpol);printf("!!!!\n");
             u64 * ht = malloc(newpol->n * sizeof(*ht));
             memcpy(ht, newpol->first->exp, newpol->n * sizeof(*ht));
             if(ht != * rbtree_probe(D, ht)) free(ht);
         }
+
+        p = rbtree_delete(P, Pd[i]);
+        
     }
 
     llpol_t * i;
@@ -389,17 +393,44 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
             llpol_addterm(llpol, nsm->x[j][k], loT[nsm->c[j][k]], param.mo);
         }
 
-        rbtree_probe(F, llpol);
         printf("new pol found! ");
         llpol_print(llpol); printf("\n");
+
+        if (rbtree_find(G, llpol) != NULL) {
+            printf("pol found in G!\n");
+            free(llpol);
+            goto lbl_break;
+        }
+
+        for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
+            pc_t * pc = llpol2pairecritique(llpol, i);
+            rbtree_probe(P, pc);
+        }
+
+        rbtree_probe(G, llpol);
         
         lbl_break:
     }
 
-    // }
+    p = rbtree_trav_first(&t, P);
+    if (p != NULL){
+    min_d = p->deg;
+    pc_print(p);printf("\n");
+    p = rbtree_trav_next(&t);
 
-    rbtree_destroy(G, NULL);
-    rbtree_destroy(P, pc_free_wrap);
+    for (/* empty */; p!= NULL; p = rbtree_trav_next(&t)) {
+        min_d = __min(min_d, p->deg);
+        pc_print(p);printf("\n");
+    }}
+
+    printf("Pols in G: \n");
+
+    for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
+        llpol_print(i);
+        printf("\n");
+    }
+
+
     rbtree_destroy(M, llpol_free_wrap);
     rbtree_destroy(T, free_wrap);
     rbtree_destroy(D, free_wrap);
@@ -410,6 +441,10 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     free(buffx);
     free(buffc);
     free(loT);
+    
+    }
+    rbtree_destroy(P, pc_free_wrap);
+    rbtree_destroy(G, llpol_free_wrap);
 
     return NULL;
 }

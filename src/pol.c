@@ -986,6 +986,9 @@ int llpol_monomial_cmp(llpol_t * a, llpol_t * b, enum MONOMIAL_ORDER mo) {
         pb = pb->nxt;
     }
 
+    if (pa) return 1;
+    if (pb) return -1;
+
     return 0;
 }
 
@@ -1003,6 +1006,9 @@ int pol_monomial_cmp_wrap(const void *a, const void *b, void *param) {
             pa = pa->nxt;
             pb = pb->nxt;
         }
+
+        if (pa) return 1;
+        if (pb) return -1;
 
         return 0;
     }
@@ -1972,9 +1978,11 @@ u64 * d_exp_lcm(u64 * a, u64 * b, u8 n) {
     u64 b_g, a_g;
 
     for (int i = 0; i < n; i++) {
-        b_g  = (a[i] <= b[i]);
-        a_g  = (a[i] > b[i]);
-        c[i] = (a[i] & a_g) | (b[i] & b_g);
+        //b_g  = (a[i] <= b[i]);
+        //a_g  = (a[i] > b[i]);
+        //c[i] = (a[i] & a_g) | (b[i] & b_g);
+        if (a[i] <= b[i]) c[i] = b[i];
+        else c[i] = a[i];
     }
 
     return c;
