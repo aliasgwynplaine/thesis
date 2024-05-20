@@ -400,7 +400,7 @@ void nsm_rref(nsm_t * nsm) {
         if (r) {
             piv[++npiv] = i;
             printf("piv: ");
-            for (int k = 0; k <= npiv; k++) printf("%d ", piv[k]);
+            for (int k = 0; k <= npiv; k++) printf("%ld ", piv[k]);
             printf("\n");
         }
 
