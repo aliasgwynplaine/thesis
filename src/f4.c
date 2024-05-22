@@ -141,308 +141,308 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
     rbtree_t * P = compute_paires_critiques(G, &param.mo, &min_d);
     
     while (P->sz != 0) {
-    /* Selection (1.5) */
-    pc_t * p;
-    int sz = 2;
-    pc_t ** Pd = malloc((sz) * sizeof(*Pd));
-    int h = 0;
+        /* Selection (1.5) */
+        pc_t * p;
+        int sz = P->sz;
+        pc_t ** Pd = malloc((sz) * sizeof(*Pd));
+        int h = 0;
 
-    for (p = rbtree_trav_first(&t, P); p != NULL; p = rbtree_trav_next(&t)) {
-        pc_print(p);    
-        printf("\n");
-        if (min_d == p->deg) { // criterion
-            if (sz == h) {
-                sz = sz << 1;
-                printf("sz: %d\n", sz);
-                Pd = realloc(Pd, sz * sizeof(*Pd));
-                CHECKPTR(Pd);
-            }
-
-            Pd[h++] = p;
-        }
-    }
-
-    // symbolic preprocessing
-    rbtree_t * M = rbtree_create(pol_monomial_cmp_wrap, F->param, NULL); // F
-    rbtree_t * T = rbtree_create(d_exp_cmp_wrap, &param, NULL);  // T(M)
-    rbtree_t * D = rbtree_create(d_exp_cmp_wrap, &param, NULL); // Terms done
-
-    printf("SElectec: \n");
-
-    for (int i = 0; i < h; i++) { // (3.1)
-        pc_print(Pd[i]);
-        printf("\n");
-
-        for (int j = 0; j < 2; j++) {
-            llpol_t * pol    = Pd[i]->f[j];
-            llpol_t * newpol = llpol_create(pol->n);
-            lpol_t  * it;
-            
-            for (it = pol->first; it != NULL; it = it->nxt) {
-                u64 * exp = d_exp_add(it->exp, Pd[i]->t[j], pol->n);
-                llpol_addterm(newpol, it->coef, exp, *(enum MONOMIAL_ORDER *)M->param);
-                if (exp != * rbtree_probe(T, exp)) free(exp);
-                //free(exp);
-            }
-            
-            rbtree_probe(M, newpol);
-            llpol_print(newpol);printf("!!!!\n");
-            u64 * ht = malloc(newpol->n * sizeof(*ht));
-            memcpy(ht, newpol->first->exp, newpol->n * sizeof(*ht));
-            if(ht != * rbtree_probe(D, ht)) free(ht);
-        }
-
-        p = rbtree_delete(P, Pd[i]);
-        
-    }
-
-    llpol_t * i;
-    u64 * e;
-
-    //rbtree_t * diff; // T - D
-    //diff = rbtree_cpy(T, NULL, NULL, NULL); // soft copy .... better use a 
-    u64 ** diff = malloc(T->sz * sizeof(*diff)); // T - D
-    int hh = 0;
-    int ssz = T->sz;
-    
-    for (e = rbtree_trav_first(&t, T); e != NULL; e = rbtree_trav_next(&t)) {
-        if (rbtree_find(D, e) == NULL) diff[hh++] = e; 
-    }
-
-    while (hh > 0) { // (3.3)
-        llpol_t * mf;
-        u64 * m = diff[--hh];
-        u64 * mt = malloc(param.n * sizeof(*mt));
-        memcpy(mt, m, param.n * sizeof(*mt));
-        
-        if (mt != * rbtree_probe(D, mt)) free(mt); // (3.5)
-
-        for (i = rbtree_trav_first(&u, G); i != NULL; i = rbtree_trav_next(&u)) {
-            u64 * c = malloc(param.n * sizeof(*c));
-
-            if (d_exp_div(m, i->first->exp, c, i->n)) {
-                mf = llpol_create(i->n);
-
-                for (lpol_t * it = i->first; it != NULL; it = it->nxt) {
-                    u64 * exp = d_exp_add(it->exp, c, i->n);
-                    llpol_addterm(mf, it->coef, exp, param.mo);
-
-                    if (exp != * rbtree_probe(T, exp)) free(exp);
-                    else {
-                        if (hh == ssz) {
-                            ssz = ssz << 1;
-                            diff = realloc(diff, ssz * sizeof(*diff));
-                            CHECKPTR(diff);
-                        }
-                        diff[hh++] = exp;
-                    }
+        for (p = rbtree_trav_first(&t, P); p != NULL; p = rbtree_trav_next(&t)) {
+            pc_print(p);    
+            printf("\n");
+            if (min_d == p->deg) { // criterion
+                if (sz == h) {
+                    sz = sz << 1;
+                    printf("sz: %d\n", sz);
+                    Pd = realloc(Pd, sz * sizeof(*Pd));
+                    CHECKPTR(Pd);
                 }
 
-                rbtree_probe(M, mf); // (3.8)
+                Pd[h++] = p;
             }
-            
-            free(c);
         }
 
-        // debug
-        printf("diff: ");
-        for (int k = 0; k < hh; k++) {
+        // symbolic preprocessing
+        rbtree_t * M = rbtree_create(pol_monomial_cmp_wrap, F->param, NULL); // F
+        rbtree_t * T = rbtree_create(d_exp_cmp_wrap, &param, NULL);  // T(M)
+        rbtree_t * D = rbtree_create(d_exp_cmp_wrap, &param, NULL); // Terms done
+
+        printf("SElectec: \n");
+
+        for (int i = 0; i < h; i++) { // (3.1)
+            pc_print(Pd[i]);
+            printf("\n");
+
+            for (int j = 0; j < 2; j++) {
+                llpol_t * pol    = Pd[i]->f[j];
+                llpol_t * newpol = llpol_create(pol->n);
+                lpol_t  * it;
+                
+                for (it = pol->first; it != NULL; it = it->nxt) {
+                    u64 * exp = d_exp_add(it->exp, Pd[i]->t[j], pol->n);
+                    llpol_addterm(newpol, it->coef, exp, *(enum MONOMIAL_ORDER *)M->param);
+                    if (exp != * rbtree_probe(T, exp)) free(exp);
+                }
+                
+                llpol_print(newpol);printf("!!!!\n");
+                u64 * ht = malloc(newpol->n * sizeof(*ht));
+                memcpy(ht, newpol->first->exp, newpol->n * sizeof(*ht));
+                if(ht != * rbtree_probe(D, ht)) free(ht);
+                if (newpol != *rbtree_probe(M, newpol)) llpol_free(newpol);
+            }
+
+            p = rbtree_delete(P, Pd[i]);
+            
+            if (p != NULL) pc_free(p);
+        }
+
+        llpol_t * i;
+        u64 * e;
+
+        //rbtree_t * diff; // T - D
+        //diff = rbtree_cpy(T, NULL, NULL, NULL); // soft copy .... better use a 
+        u64 ** diff = malloc(T->sz * sizeof(*diff)); // T - D
+        int hh = 0;
+        int ssz = T->sz;
+        
+        for (e = rbtree_trav_first(&t, T); e != NULL; e = rbtree_trav_next(&t)) {
+            if (rbtree_find(D, e) == NULL) diff[hh++] = e; 
+        }
+
+        while (hh > 0) { // (3.3)
+            llpol_t * mf;
+            u64 * m = diff[--hh];
+            u64 * mt = malloc(param.n * sizeof(*mt));
+            memcpy(mt, m, param.n * sizeof(*mt));
+            
+            if (mt != * rbtree_probe(D, mt)) free(mt); // (3.5)
+
+            for (i = rbtree_trav_first(&u, G); i != NULL; i = rbtree_trav_next(&u)) {
+                u64 * c = malloc(param.n * sizeof(*c));
+
+                if (d_exp_div(m, i->first->exp, c, i->n)) {
+                    mf = llpol_create(i->n);
+
+                    for (lpol_t * it = i->first; it != NULL; it = it->nxt) {
+                        u64 * exp = d_exp_add(it->exp, c, i->n);
+                        llpol_addterm(mf, it->coef, exp, param.mo);
+
+                        if (exp != * rbtree_probe(T, exp)) free(exp);
+                        else {
+                            if (hh == ssz) {
+                                ssz = ssz << 1;
+                                diff = realloc(diff, ssz * sizeof(*diff));
+                                CHECKPTR(diff);
+                            }
+                            diff[hh++] = exp;
+                        }
+                    }
+
+                    rbtree_probe(M, mf); // (3.8)
+                }
+                
+                free(c);
+            }
+
+            // debug
+            printf("diff: ");
+            for (int k = 0; k < hh; k++) {
+                printf("[ ");
+                for (int z = 0; z < param.n; z++) 
+                    printf("%ld ", diff[k][z]);
+                printf("], ");
+            }
+            printf("\n");
+        }
+
+        rbtree_t * HT = rbtree_create(d_exp_cmp_wrap, &param, NULL);
+
+        for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
+            u64 * hte = malloc(param.n * sizeof(*hte));
+            memcpy(hte, i->first->exp, param.n * sizeof(*hte));
+            
+            if (hte != * rbtree_probe(HT, hte)) free(hte); // hard
+        }
+
+        /* debug */
+
+
+        printf("Pols for matrix:\n");
+        for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
+            llpol_print(i);
+            printf("\n");
+        }
+
+
+        u64 ** loT = malloc(T->sz * sizeof(*loT));
+        idx_t h_loT = T->sz - 1;
+        printf("T: ");
+
+        for (e = rbtree_trav_first(&t, T); e != NULL; e = rbtree_trav_next(&t)) {
+            loT[h_loT--] = e;
             printf("[ ");
-            for (int z = 0; z < param.n; z++) 
-                printf("%ld ", diff[k][z]);
+        
+            for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
+
             printf("], ");
         }
         printf("\n");
-    }
 
-    rbtree_t * HT = rbtree_create(d_exp_cmp_wrap, &param, NULL);
-
-    for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
-        u64 * hte = malloc(param.n * sizeof(*hte));
-        memcpy(hte, i->first->exp, param.n * sizeof(*hte));
+        printf("D: ");
+        for (e = rbtree_trav_first(&t, D); e != NULL; e = rbtree_trav_next(&t)) {
+            printf("[ ");
         
-        if (hte != * rbtree_probe(HT, hte)) free(hte); // hard
-    }
+            for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
 
-    /* debug */
-
-
-    printf("Pols for matrix:\n");
-    for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
-        llpol_print(i);
-        printf("\n");
-    }
-
-
-    u64 ** loT = malloc(T->sz * sizeof(*loT));
-    idx_t h_loT = T->sz - 1;
-    printf("T: ");
-
-    for (e = rbtree_trav_first(&t, T); e != NULL; e = rbtree_trav_next(&t)) {
-        loT[h_loT--] = e;
-        printf("[ ");
-    
-        for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
-
-        printf("], ");
-    }
-    printf("\n");
-
-    printf("D: ");
-    for (e = rbtree_trav_first(&t, D); e != NULL; e = rbtree_trav_next(&t)) {
-        printf("[ ");
-    
-        for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
-
-        printf("], ");
-    }
-    printf("\n");
-
-    printf("HT: ");
-    for (e = rbtree_trav_first(&t, HT); e != NULL; e = rbtree_trav_next(&t)) {
-        printf("[ ");
-    
-        for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
-
-        printf("], ");
-    }
-    printf("\n");
-
-    printf("T->sz: %ld\n", T->sz);
-    
-    // (2.2) information in M
-    nsm_t * nsm = malloc(sizeof(*nsm)); // don't forget to free
-
-    CHECKPTR(nsm);
-    nsm->nnz = 0;
-    nsm->d   = .0;
-    nsm->x = malloc(sizeof(*nsm->x) * M->sz);
-    CHECKPTR(nsm->x);
-    nsm->c = malloc(sizeof(*nsm->c) * M->sz);
-    CHECKPTR(nsm->c);
-    nsm->w = malloc(sizeof(*nsm->w) * M->sz);
-    CHECKPTR(nsm->w);
-
-    COEFTYPE * buffx = malloc(sizeof(*buffx) * T->sz);
-    CHECKPTR(buffx);
-    u64 * buffc = malloc(sizeof(*buffc) * T->sz);
-    CHECKPTR(buffc);
-
-    int j = 0;
-
-    // Set of polynomials to matrix transformation
-    for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
-        //llpol_print(i);printf("\n");
-        //nsm->x[j] = malloc(sizeof(*nsm->x[j]) * . )
-        nsm->w[j] = 0;
-        u64 c = 0;
-
-        for (e = rbtree_trav_last(&u, T); e != NULL; e = rbtree_trav_prev(&u)) {
-            for (lpol_t * p = i->first; p != NULL; p = p->nxt) {
-                if (d_exp_cmp(e, p->exp, param.n, param.mo) == 0) {
-                    printf("%0.0f ", p->coef);
-                    buffc[nsm->w[j]]   = c;
-                    buffx[nsm->w[j]++] = p->coef;
-                    nsm->nnz++;
-
-                    goto label;
-                }
-            }
-            printf("0 ");
-            label:
-            c++;
+            printf("], ");
         }
         printf("\n");
 
-        nsm->x[j] = malloc(sizeof(*nsm->x[j]) * nsm->w[j]);
-        CHECKPTR(nsm->x[j]);
-        nsm->c[j] = malloc(sizeof(*nsm->c[j]) * nsm->w[j]);
-        CHECKPTR(nsm->c[j]);
-        memcpy(nsm->x[j], buffx, sizeof(*buffx)*nsm->w[j]);
-        memcpy(nsm->c[j], buffc, sizeof(*buffc)*nsm->w[j]);
-        nsm->d = (float) nsm->nnz / (M->sz * T->sz);
-        j++;
-    }
-
-    nsm->m = M->sz;
-    nsm->n = T->sz;
-    nsm_print(nsm);
-    nsm_rref(nsm);
-    nsm_print(nsm);
-    // extract the polynomials
-    for (j = 0; j < nsm->m; j++) {
+        printf("HT: ");
         for (e = rbtree_trav_first(&t, HT); e != NULL; e = rbtree_trav_next(&t)) {
             printf("[ ");
-    
-            for (int k = 0; k < param.n; k++) printf("%ld ", loT[nsm->c[j][0]][k]);
-
-            printf("] ? [ ");
-
+        
             for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
-            
-            printf("]\n");
-            
-            if (d_exp_cmp(e, loT[nsm->c[j][0]], param.n, param.mo) == 0) {
+
+            printf("], ");
+        }
+        printf("\n");
+
+        printf("T->sz: %ld\n", T->sz);
+        
+        // (2.2) information in M
+        nsm_t * nsm = malloc(sizeof(*nsm)); // don't forget to free
+
+        CHECKPTR(nsm);
+        nsm->nnz = 0;
+        nsm->d   = .0;
+        nsm->x = malloc(sizeof(*nsm->x) * M->sz);
+        CHECKPTR(nsm->x);
+        nsm->c = malloc(sizeof(*nsm->c) * M->sz);
+        CHECKPTR(nsm->c);
+        nsm->w = malloc(sizeof(*nsm->w) * M->sz);
+        CHECKPTR(nsm->w);
+
+        COEFTYPE * buffx = malloc(sizeof(*buffx) * T->sz);
+        CHECKPTR(buffx);
+        u64 * buffc = malloc(sizeof(*buffc) * T->sz);
+        CHECKPTR(buffc);
+
+        int j = 0;
+
+        // Set of polynomials to matrix transformation
+        for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
+            //llpol_print(i);printf("\n");
+            //nsm->x[j] = malloc(sizeof(*nsm->x[j]) * . )
+            nsm->w[j] = 0;
+            u64 c = 0;
+
+            for (e = rbtree_trav_last(&u, T); e != NULL; e = rbtree_trav_prev(&u)) {
+                for (lpol_t * p = i->first; p != NULL; p = p->nxt) {
+                    if (d_exp_cmp(e, p->exp, param.n, param.mo) == 0) {
+                        printf("%0.0f ", p->coef);
+                        buffc[nsm->w[j]]   = c;
+                        buffx[nsm->w[j]++] = p->coef;
+                        nsm->nnz++;
+
+                        goto label;
+                    }
+                }
+                printf("0 ");
+                label:
+                c++;
+            }
+            printf("\n");
+
+            nsm->x[j] = malloc(sizeof(*nsm->x[j]) * nsm->w[j]);
+            CHECKPTR(nsm->x[j]);
+            nsm->c[j] = malloc(sizeof(*nsm->c[j]) * nsm->w[j]);
+            CHECKPTR(nsm->c[j]);
+            memcpy(nsm->x[j], buffx, sizeof(*buffx)*nsm->w[j]);
+            memcpy(nsm->c[j], buffc, sizeof(*buffc)*nsm->w[j]);
+            nsm->d = (float) nsm->nnz / (M->sz * T->sz);
+            j++;
+        }
+
+        nsm->m = M->sz;
+        nsm->n = T->sz;
+        nsm_print(nsm);
+        nsm_rref(nsm);
+        nsm_print(nsm);
+        // extract the polynomials
+        for (j = 0; j < nsm->m; j++) {
+            for (e = rbtree_trav_first(&t, HT); e != NULL; e = rbtree_trav_next(&t)) {
+                printf("[ ");
+        
+                for (int k = 0; k < param.n; k++) printf("%ld ", loT[nsm->c[j][0]][k]);
+
+                printf("] ? [ ");
+
+                for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
+                
+                printf("]\n");
+                
+                if (d_exp_cmp(e, loT[nsm->c[j][0]], param.n, param.mo) == 0) {
+                    goto lbl_break;
+                }
+            }
+
+            llpol_t * llpol = llpol_create(param.n);
+
+            for (idx_t k = 0; k < nsm->w[j]; k++) {
+                llpol_addterm(llpol, nsm->x[j][k], loT[nsm->c[j][k]], param.mo);
+            }
+
+            printf("new pol found! ");
+            llpol_print(llpol); printf("\n");
+
+            if (rbtree_find(G, llpol) != NULL) {
+                printf("pol found in G!\n");
+                free(llpol);
                 goto lbl_break;
+            }
+
+            for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
+                pc_t * pc = llpol2pairecritique(llpol, i);
+                if (pc != *rbtree_probe(P, pc)) pc_free(pc);
+            }
+
+            rbtree_probe(G, llpol);
+            
+            lbl_break:
+        }
+
+        p = rbtree_trav_first(&t, P);
+        if (p != NULL){
+            min_d = p->deg;
+            pc_print(p);printf("\n");
+            p = rbtree_trav_next(&t);
+
+            for (/* empty */; p!= NULL; p = rbtree_trav_next(&t)) {
+                min_d = __min(min_d, p->deg);
+                pc_print(p);printf("\n");
             }
         }
 
-        llpol_t * llpol = llpol_create(param.n);
-
-        for (idx_t k = 0; k < nsm->w[j]; k++) {
-            llpol_addterm(llpol, nsm->x[j][k], loT[nsm->c[j][k]], param.mo);
-        }
-
-        printf("new pol found! ");
-        llpol_print(llpol); printf("\n");
-
-        if (rbtree_find(G, llpol) != NULL) {
-            printf("pol found in G!\n");
-            free(llpol);
-            goto lbl_break;
-        }
+        printf("Pols in G: \n");
 
         for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
-            pc_t * pc = llpol2pairecritique(llpol, i);
-            rbtree_probe(P, pc);
+            llpol_print(i);
+            printf("\n");
         }
 
-        rbtree_probe(G, llpol);
-        
-        lbl_break:
+        rbtree_destroy(M, llpol_free_wrap);
+        rbtree_destroy(T, free_wrap);
+        rbtree_destroy(D, free_wrap);
+        rbtree_destroy(HT, free_wrap);
+        free(diff);
+        free(Pd);
+        nsm_free(nsm);
+        free(buffx);
+        free(buffc);
+        free(loT);
     }
 
-    p = rbtree_trav_first(&t, P);
-    if (p != NULL){
-    min_d = p->deg;
-    pc_print(p);printf("\n");
-    p = rbtree_trav_next(&t);
-
-    for (/* empty */; p!= NULL; p = rbtree_trav_next(&t)) {
-        min_d = __min(min_d, p->deg);
-        pc_print(p);printf("\n");
-    }}
-
-    printf("Pols in G: \n");
-
-    for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
-        llpol_print(i);
-        printf("\n");
-    }
-
-
-    rbtree_destroy(M, llpol_free_wrap);
-    rbtree_destroy(T, free_wrap);
-    rbtree_destroy(D, free_wrap);
-    rbtree_destroy(HT, free_wrap);
-    free(diff);
-    free(Pd);
-    nsm_free(nsm);
-    free(buffx);
-    free(buffc);
-    free(loT);
-    
-    }
     rbtree_destroy(P, pc_free_wrap);
     rbtree_destroy(G, llpol_free_wrap);
 

@@ -428,14 +428,12 @@ int redDenseAxpSparseY(COEFTYPE * a, COEFTYPE * x, u64 * c, int w) {
     if (a[c[0]] == 0) return 0;
     
     COEFTYPE alpha = a[c[0]] / x[0];
-    int nne = 0;
 
     for (int i = 0; i < w; i++) {
-        if (a[c[i]] == 0) nne++;
         *(a+c[i]) -= alpha * x[i];
     }
 
-    return nne;
+    return 0;
 }
 
 int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
@@ -500,7 +498,6 @@ bool dense2sparse(COEFTYPE * v, u64 dim, nsm_t * nsm, idx_t idx) {
     }
 
     if (h == 0) {
-        printf("here!");
         retval = false;
         free(xbuff);
         free(cbuff);
