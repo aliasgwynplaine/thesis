@@ -313,15 +313,6 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
 }
 
 
-void change_mon_order(pp_ctx_t * ctx, char * order) {
-    if (strcmp("lex", order) == 0) ctx->order = lex;
-    else if (strcmp("glex", order) == 0) ctx->order = glex;
-    else if (strcmp("revlex", order) == 0) ctx->order = revlex;
-    else if (strcmp("grevlex", order) == 0) ctx->order = grevlex;
-    else printf("not implemented: %s order\n", order);
-}
-
-
 void ee_print(ee_t * ee) {
     if (strcmp("number", ee->t) == 0) printf("%f", *(float *)ee->v);
     if (strcmp("llpol", ee->t) == 0) llpol_print(ee->v);
@@ -388,4 +379,21 @@ void set_print(rbtree_t * rbt) {
         llpol_print(pol);
         printf("\n");
     }
+}
+
+
+void change_mon_order(pp_ctx_t * ctx, char * order) {
+    if (strcmp("lex", order) == 0) ctx->order = lex;
+    else if (strcmp("glex", order) == 0) ctx->order = glex;
+    else if (strcmp("revlex", order) == 0) ctx->order = revlex;
+    else if (strcmp("grevlex", order) == 0) ctx->order = grevlex;
+    else printf("not implemented: %s order\n", order);
+}
+
+
+char * get_mon_order_str(pp_ctx_t* pctx) {
+    if (pctx->order == lex) return strdup("lex");
+    if (pctx->order == glex) return strdup("glex");
+    if (pctx->order == grevlex) return strdup("grevlex");
+    if (pctx->order == revlex) return strdup("revlex");
 }

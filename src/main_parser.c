@@ -11,12 +11,14 @@ aapol_t * aux_aapol;
 llpol_t * aux_llpol;
 set_t * _pol_acc_in;
 set_t * _pol_acc_out;
+char  * mon_ord_str;
 extern rbt_cmpfux_t aapol_monomial_cmp_wrap;
 extern rbt_cmpfux_t pol_monomial_cmp_wrap;
 
 int main(int argc, char * argv[]) {
     ctx = malloc(sizeof(*ctx));
     ctx->order = grevlex;
+    mon_ord_str = strdup("grevlex");
     ctx->nvars = 4;
     ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
     
@@ -38,7 +40,7 @@ int main(int argc, char * argv[]) {
     printf("aux_aapol before: %p\n", aux_aapol);
     printf("aux_llpol before: %p\n", aux_llpol);
     printf("setvars = {a, b, c, d}\n");
-    printf("prelude> ");
+    printf("%s> ", mon_ord_str);
     yyparse();
     printf("aux_aapol after: %p\n", aux_aapol);
     printf("aux_llpol after: %p\n", aux_llpol);
@@ -47,6 +49,7 @@ int main(int argc, char * argv[]) {
     st_destroy(st);
     aapol_free(aux_aapol);
     llpol_free(aux_llpol);
+    free(mon_ord_str);
     free(ctx->var_cntr);
     free(ctx->var_lst);
     free(ctx);

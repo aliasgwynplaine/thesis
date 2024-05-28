@@ -15,6 +15,7 @@ extern aapol_t * aux_aapol;
 extern llpol_t * aux_llpol;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
+extern mon_ord_str;
 // %token <str_val>   STRING
 
 %}
@@ -56,10 +57,10 @@ extern set_t * _pol_acc_out;
 
 %%
 
-stmts: stmts stmt NEWLINE { printf("prelude> "); }
-    | stmts NEWLINE { printf("prelude> "); }
+stmts: stmts stmt NEWLINE { printf("%s> ", mon_ord_str); }
+    | stmts NEWLINE { printf("%s> ", mon_ord_str); }
     | /* empty */
-    | error NEWLINE { yyerror("Error!"); printf("prelude> "); yyerrok; }
+    | error NEWLINE { yyerror("Error!"); printf("%s> ", mon_ord_str); yyerrok; }
     ;
 
 stmt: VAR { print_var(st, $1); printf("\n"); FREE($1); }
@@ -164,7 +165,7 @@ sign: '+' { $$ =  1; }
 directive: SYMTABTOK { print_sym_table(st); }
     | MONORDTOK { printf("%d\n", ctx->order); }
     | GETVARSTOK { printf("vars: "); print_lstr(ctx->var_lst); }
-    | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); }
+    | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); FREE(mon_ord_str); mon_ord_str = get_mon_order_str(ctx);}
     | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
     | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
     | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, ctx); set_print(_pol_acc_out); printf("\n");}
