@@ -1,9 +1,6 @@
 #include "matrix.h"
 
 
-
-
-
 mm_t * mmatrix_malloc(int m, int n, int nnzmax) {
     mm_t * mmat = malloc(sizeof(mm_t));
     mmat->exps = calloc(n, sizeof(u64));
@@ -390,25 +387,26 @@ void nsm_rref(nsm_t * nsm) {
 
     for (int i = 1; i < nsm->m; i++) {
         if (nsm->w[i] == 0) continue;
-        COEFTYPE * temp = sparse2dense(nsm->x[i], nsm->c[i], nsm->w[i], nsm->n);
+        dv_t * temp = sparse2dense(nsm->x[i], nsm->c[i], nsm->w[i], nsm->n);
 
         for (int j = 0; j <= npiv; j++) {
             redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]]);
         }
 
-        bool r = dense2sparse(temp, nsm->n, nsm, i);
-        if (r) {
+        if (temp->fe != temp->dim) {
             piv[++npiv] = i;
             printf("piv: ");
             for (int k = 0; k <= npiv; k++) printf("%ld ", piv[k]);
             printf("\n");
         }
 
-        FREE(temp);
+        dense2sparse(temp, nsm, i);
+        free(temp->v);
+        free(temp);
     }
 
     for (idx_t i = 0; i <= npiv; i++) {
-        COEFTYPE * temp = sparse2dense(nsm->x[piv[i]], nsm->c[piv[i]], nsm->w[piv[i]], nsm->n);
+        dv_t * temp = sparse2dense(nsm->x[piv[i]], nsm->c[piv[i]], nsm->w[piv[i]], nsm->n);
 
         for (idx_t j = i+1; j <= npiv; j++) {
             if (nsm->c[piv[j]][0] > nsm->c[piv[i]][0]) {
@@ -416,21 +414,31 @@ void nsm_rref(nsm_t * nsm) {
             }
         }
 
-        dense2sparse(temp, nsm->n, nsm, piv[i]);
-        FREE(temp);
+        dense2sparse(temp, nsm, piv[i]);
+        free(temp->v);
+        free(temp);
     }
 
     free(piv);
 }
 
 
-int redDenseAxpSparseY(COEFTYPE * a, COEFTYPE * x, u64 * c, int w) {
-    if (a[c[0]] == 0) return 0;
+int redDenseAxpSparseY(dv_t * dv, COEFTYPE * x, u64 * c, int w) {
+    if (dv->v[c[0]] == 0) return 0;
+
+    dv->np = true;
+    dv->fe = dv->dim;
     
-    COEFTYPE alpha = a[c[0]] / x[0];
+    COEFTYPE alpha = dv->v[c[0]] / x[0];
+    bool flag = false;
 
     for (int i = 0; i < w; i++) {
-        *(a+c[i]) -= alpha * x[i];
+        *(dv->v+c[i]) -= alpha * x[i];
+
+        if (flag && *(dv->v + c[i]) != 0) {
+            dv->fe = c[i];
+            flag = true;
+        }
     }
 
     return 0;
@@ -463,30 +471,35 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
  * @return dv dense vector
  * @note don't forget to free dv
  */
-COEFTYPE * sparse2dense(COEFTYPE * v, u64 * i, u64 n, u64 dim) {
-    COEFTYPE * dv = calloc(dim, sizeof(COEFTYPE));
+dv_t * sparse2dense(COEFTYPE * v, u64 * i, u64 n, u64 dim) {
+    dv_t * dv = calloc(1, sizeof(*dv));
     CHECKPTR(dv);
+    dv->v = calloc(dim, sizeof(*dv->v));
+    CHECKPTR(dv->v);
+    dv->dim = dim;
+    dv->fe  = i[0];
+    dv->np  = false;
 
     for (idx_t j = 0; j < n; j++) {
-        dv[i[j]] = v[j];
+        dv->v[i[j]] = v[j];
     }
 
     return dv;
 }
 
-bool dense2sparse(COEFTYPE * v, u64 dim, nsm_t * nsm, idx_t idx) {
+void dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
     idx_t h = 0;
-    bool retval; // tells me if there's a new entry and is not null
+    bool retval; // tells me if there's a new entry and if the row is not null
 
     COEFTYPE * xbuff = malloc(2 * nsm->w[idx] * sizeof(*xbuff));
     CHECKPTR(xbuff);
     u64 * cbuff = malloc(2 * nsm->w[idx] * sizeof(*cbuff));
     CHECKPTR(cbuff);
 
-    for (idx_t i = 0; i < dim; i++) {
-        if (v[i] != 0) {
+    for (idx_t i = 0; i < dv->dim; i++) {
+        if (dv->v[i] != 0) {
             cbuff[h] = i;
-            xbuff[h++] = v[i];
+            xbuff[h++] = dv->v[i];
 
             if (h > 2 * nsm->w[idx]) {
                 cbuff = realloc(cbuff, 2 * h * sizeof(*cbuff));
@@ -498,7 +511,7 @@ bool dense2sparse(COEFTYPE * v, u64 dim, nsm_t * nsm, idx_t idx) {
     }
 
     if (h == 0) {
-        retval = false;
+        retval = false; // null row
         free(xbuff);
         free(cbuff);
         free(nsm->x[idx]);
@@ -542,10 +555,8 @@ bool dense2sparse(COEFTYPE * v, u64 dim, nsm_t * nsm, idx_t idx) {
     CHECKPTR(nsm->c[idx]);
     memcpy(nsm->x[idx], xbuff, h * sizeof(*nsm->x[idx]));
     memcpy(nsm->c[idx], cbuff, h * sizeof(*nsm->c[idx]));
-    FREE(xbuff);
-    FREE(cbuff);
-
-    return retval;
+    free(xbuff);
+    free(cbuff);
 }
 
 

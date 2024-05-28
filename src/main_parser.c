@@ -19,7 +19,7 @@ int main(int argc, char * argv[]) {
     ctx = malloc(sizeof(*ctx));
     ctx->order = grevlex;
     mon_ord_str = strdup("grevlex");
-    ctx->nvars = 4;
+    ctx->nvars = 3;
     ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
     
     printf("Creating symbol table...");
@@ -28,18 +28,18 @@ int main(int argc, char * argv[]) {
     st = st_create(SYM_TABLE_SZ);
     printf("done!\n");
     ctx->var_lst = malloc((ctx->nvars + 1) * sizeof(*(ctx->var_lst)));
-    ctx->var_lst[0] = "a"; //var_lst[0] = strdup("x");
-    ctx->var_lst[1] = "b";
-    ctx->var_lst[2] = "c";
-    ctx->var_lst[3] = "d";
-    ctx->var_lst[4] = NULL;
+    ctx->var_lst[0] = "x"; //var_lst[0] = strdup("x");
+    ctx->var_lst[1] = "y";
+    ctx->var_lst[2] = "z";
+    //ctx->var_lst[3] = "d";
+    ctx->var_lst[3] = NULL;
     aux_aapol = aapol_create(ctx->nvars);
     aux_llpol = llpol_create(ctx->nvars);
     st_insert(st, strdup("_pol_acc_in"), _pol_acc_in, strdup("acc"));
     st_insert(st, strdup("_pol_acc_out"), _pol_acc_out, strdup("acc"));
     printf("aux_aapol before: %p\n", aux_aapol);
     printf("aux_llpol before: %p\n", aux_llpol);
-    printf("setvars = {a, b, c, d}\n");
+    printf("setvars = {x, y, z}\n");
     printf("%s> ", mon_ord_str);
     yyparse();
     printf("aux_aapol after: %p\n", aux_aapol);

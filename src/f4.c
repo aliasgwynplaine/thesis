@@ -274,7 +274,7 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         }
 
 
-        u64 ** loT = malloc(T->sz * sizeof(*loT));
+        u64 ** loT = malloc(T->sz * sizeof(*loT)); // list of T
         idx_t h_loT = T->sz - 1;
         printf("T: ");
 

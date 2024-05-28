@@ -19,6 +19,13 @@ struct new_sparse_matrix_t {
 };
 
 
+typedef struct dense_vector_t dv_t;
+struct dense_vector_t {
+    COEFTYPE * v; // values
+    u32       fe; // pos of first non-null entry
+    u32      dim; // dimention
+    bool      np; // new_piv
+};
 
 typedef struct sparse_block_t                      sb_t;
 typedef struct sparse_matrix_t                    csr_t; 
@@ -221,7 +228,7 @@ dctx_t * csr_analyse(csr_t *);
 void nsm_print(nsm_t * );
 void nsm_free(nsm_t * );
 void nsm_rref(nsm_t * );
-int  redDenseAxpSparseY(COEFTYPE * , COEFTYPE * , u64 * , int );
+int  redDenseAxpSparseY(dv_t * , COEFTYPE * , u64 * , int );
 
 /*
     insert & delete
@@ -233,8 +240,8 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
     dense-sparse transformations
 */
 
-COEFTYPE * sparse2dense(COEFTYPE *, u64 *, u64, u64);
-bool       dense2sparse(COEFTYPE * , u64 , nsm_t * , idx_t);
+dv_t * sparse2dense(COEFTYPE *, u64 *, u64, u64);
+void   dense2sparse(dv_t *, nsm_t * , idx_t);
 
 
 /*
