@@ -389,18 +389,27 @@ void nsm_rref(nsm_t * nsm) {
         if (nsm->w[i] == 0) continue;
         dv_t * temp = sparse2dense(nsm->x[i], nsm->c[i], nsm->w[i], nsm->n);
 
+        printf("Temp: ");
+        for (int ti = 0; ti < temp->dim; ti++) printf("%1.1f ", temp->v[ti]);
+        printf("\n");
+
         for (int j = 0; j <= npiv; j++) {
             redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]]);
         }
 
-        if (temp->fe != temp->dim) {
+        printf("TempReduced: ");
+        for (int ti = 0; ti < temp->dim; ti++) printf("%1.1f ", temp->v[ti]);
+        printf("\n");
+
+        bool newe_and_nonnull = dense2sparse(temp, nsm, i);
+
+        if (newe_and_nonnull) { // test if it's not null
             piv[++npiv] = i;
             printf("piv: ");
             for (int k = 0; k <= npiv; k++) printf("%ld ", piv[k]);
             printf("\n");
         }
 
-        dense2sparse(temp, nsm, i);
         free(temp->v);
         free(temp);
     }
@@ -424,20 +433,19 @@ void nsm_rref(nsm_t * nsm) {
 
 
 int redDenseAxpSparseY(dv_t * dv, COEFTYPE * x, u64 * c, int w) {
-    if (dv->v[c[0]] == 0) return 0;
+    if (dv->v[c[0]] == 0) return 1;
 
-    dv->np = true;
     dv->fe = dv->dim;
     
     COEFTYPE alpha = dv->v[c[0]] / x[0];
-    bool flag = false;
+    bool flag = true;
 
     for (int i = 0; i < w; i++) {
         *(dv->v+c[i]) -= alpha * x[i];
 
         if (flag && *(dv->v + c[i]) != 0) {
             dv->fe = c[i];
-            flag = true;
+            flag = false;
         }
     }
 
@@ -487,9 +495,10 @@ dv_t * sparse2dense(COEFTYPE * v, u64 * i, u64 n, u64 dim) {
     return dv;
 }
 
-void dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
+bool dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
     idx_t h = 0;
-    bool retval; // tells me if there's a new entry and if the row is not null
+    bool nonull;
+    bool newentry = dv->fe != nsm->c[idx][0];
 
     COEFTYPE * xbuff = malloc(2 * nsm->w[idx] * sizeof(*xbuff));
     CHECKPTR(xbuff);
@@ -511,7 +520,7 @@ void dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
     }
 
     if (h == 0) {
-        retval = false; // null row
+        nonull = false; // null row
         free(xbuff);
         free(cbuff);
         free(nsm->x[idx]);
@@ -522,28 +531,10 @@ void dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
         nsm->d = nsm->nnz / (nsm->m * nsm->n);
         nsm->w[idx] = 0;
 
-        return retval;
-    } else {
-        idx_t diff = h - nsm->w[idx];
-        
-        if (diff > 0) {
-            retval = true;
-            goto lbl_nxt;
-        } 
-
-        /* diff <= 0 */
-
-        for (idx_t i = 0; i < h; i++) {
-            if (cbuff[i] != nsm->c[idx][i]) {
-                retval = true;
-                goto lbl_nxt;
-            }
-        }
-
-        retval = false;
+        return newentry && nonull;
     }
 
-    lbl_nxt:
+    nonull = true;
     FREE(nsm->x[idx]);
     FREE(nsm->c[idx]);
     nsm->nnz = nsm->nnz + h - nsm->w[idx];
@@ -557,6 +548,8 @@ void dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
     memcpy(nsm->c[idx], cbuff, h * sizeof(*nsm->c[idx]));
     free(xbuff);
     free(cbuff);
+
+    return nonull ;//&& newentry;
 }
 
 

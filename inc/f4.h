@@ -29,7 +29,7 @@ void pc_print(pc_t *);
 void pc_free(pc_t *);
 
 
-pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2);
+pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER);
 
 
 rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo);

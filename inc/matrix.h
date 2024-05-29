@@ -241,7 +241,7 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
 */
 
 dv_t * sparse2dense(COEFTYPE *, u64 *, u64, u64);
-void   dense2sparse(dv_t *, nsm_t * , idx_t);
+bool   dense2sparse(dv_t *, nsm_t * , idx_t);
 
 
 /*

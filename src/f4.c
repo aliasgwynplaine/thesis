@@ -85,13 +85,21 @@ void free_wrap(void * ptr, void * param) {
     free(ptr);
 }
 
-pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2) {
+pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER mo) {
     u8 n = f1->n;
     struct paire_critique_t * pc = malloc(sizeof(*pc));
     pc->lcm  = d_exp_lcm(f1->first->exp, f2->first->exp, n);
-    pc->f[0] = f1; // only a reference
-    pc->f[1] = f2; // only a reference
+
+    if (llpol_monomial_cmp(f1, f2, mo) < 0) {
+        pc->f[0] = f2; // only a reference
+        pc->f[1] = f1; // only a reference
+    } else {
+        pc->f[0] = f1; // only a reference
+        pc->f[1] = f2; // only a reference
+    }
+
     pc->deg  = 0;
+
     for (int i = 0; i < pc->f[0]->n; i++ ) pc->deg += pc->lcm[i];
 
     for (int i = 0; i < 2; i++) {
@@ -115,7 +123,7 @@ rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 
         rbtree_trav_cpy(&u, &t);
         
         for (f2 = rbtree_trav_next(&u); f2 != NULL; f2 = rbtree_trav_next(&u)) {
-            pc_t * pc = llpol2pairecritique(f1, f2);
+            pc_t * pc = llpol2pairecritique(f1, f2, *mo);
             if (*min_d == 0) *min_d = pc->deg;
             *min_d = __min(*min_d, pc->deg);
             rbtree_probe(P, pc);
@@ -368,6 +376,7 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         nsm->n = T->sz;
         nsm_print(nsm);
         nsm_rref(nsm);
+        printf("REDUCED MATRIX: \n");
         nsm_print(nsm);
         // extract the polynomials
         for (j = 0; j < nsm->m; j++) {
@@ -403,7 +412,7 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
             }
 
             for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
-                pc_t * pc = llpol2pairecritique(llpol, i);
+                pc_t * pc = llpol2pairecritique(llpol, i, param.mo);
                 if (pc != *rbtree_probe(P, pc)) pc_free(pc);
             }
 
