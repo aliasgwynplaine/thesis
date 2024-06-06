@@ -134,9 +134,9 @@ rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 
 }
 
 
-rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
-    if (F == NULL) return NULL;
-    if (F->sz == 0) return NULL;
+void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
+    if (F == NULL) return;
+    if (F->sz == 0) return;
     
     struct n_mo_t param = {((llpol_t *)(F->root->d))->n, mo};
     rbtree_t * G = rbtree_cpy(F, llpol_cpy_wrapp, NULL, NULL); // hard copy
@@ -452,10 +452,16 @@ rbtree_t * f4(rbtree_t * F, enum MONOMIAL_ORDER mo) {
         free(loT);
     }
 
+    llpol_t * i;
+
+    for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
+        llpol_t * newpol = llpol_create(i->n);
+        llpol_cpy(newpol, i, mo);
+        rbtree_probe(out, newpol);
+    }
+
     rbtree_destroy(P, pc_free_wrap);
     rbtree_destroy(G, llpol_free_wrap);
-
-    return NULL;
 }
 
 

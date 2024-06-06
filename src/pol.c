@@ -1497,7 +1497,9 @@ void llpol_print(llpol_t * llpol) {
     lpol_t * p = llpol->first;
 
     while (p) {
-        if (p->coef >= 0) printf("+ ");
+        if (p->coef >= 0) printf(" +");
+        else printf(" ");
+        
         if (d_exp_is_zero(p->exp, llpol->n) == 0) {
             printf("%0.1f", p->coef);
             p = p->nxt;
@@ -1510,7 +1512,7 @@ void llpol_print(llpol_t * llpol) {
             printf("%ld, ", *(p->exp + i));
         }
 
-        printf("%ld) ", *(p->exp + llpol->n - 1));
+        printf("%ld)", *(p->exp + llpol->n - 1));
         p = p->nxt;
     }
 

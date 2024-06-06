@@ -366,17 +366,56 @@ void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
     llpol_t * pol1;
     llpol_t * pol2;
 
-    f4(in, ctx->order);
+    f4(in, out, ctx->order);
 
     printf("Done!\n");
 }
 
-void set_print(rbtree_t * rbt) {
+
+void llpol_pretty_print(llpol_t * llpol, char ** vars) {
+    //printf("vars: '%s' n: %d", vars, llpol->n);
+    //if (strlen(vars) - 1 != llpol->n) SAYNEXITWERROR("Check your vars");
+
+     if (llpol == NULL) SAYNEXITWERROR("llpol is null");
+    lpol_t * p = llpol->first;
+
+    while (p) {
+        if (p->coef >= 0) printf("+");
+        
+        if (d_exp_is_zero(p->exp, llpol->n) == 0) {
+            printf("%0.0f", p->coef);
+            p = p->nxt;
+            continue;
+        }
+
+        int i = 0;
+
+        if (p->coef != 1) printf("%0.0f", p->coef);
+        else {
+            i = 0;
+            while (*(p->exp + i) == 0) {i++;}
+            if (*(p->exp + i) == 1) printf("%s", vars[i++]);
+            else printf("%s^%ld", vars[i++],*(p->exp + i));
+
+        }
+
+        for (/* empty */; i < llpol->n; i++) {
+            if (*(p->exp + i) != 0)
+                if (*(p->exp + i) == 1) printf("*%s", vars[i]);
+                else printf("*%s^%ld", vars[i],*(p->exp + i));
+        }
+        p = p->nxt;
+    }
+
+}
+
+
+void set_print(rbtree_t * rbt, pp_ctx_t * ctx) {
     rbt_trav_t trav;
     llpol_t * pol;
 
     for (pol = rbtree_trav_first(&trav, rbt); pol != NULL; pol = rbtree_trav_next(&trav)) {
-        llpol_print(pol);
+        llpol_pretty_print(pol, ctx->var_lst);
         printf("\n");
     }
 }
