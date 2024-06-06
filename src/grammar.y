@@ -15,7 +15,7 @@ extern aapol_t * aux_aapol;
 extern llpol_t * aux_llpol;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
-extern mon_ord_str;
+extern char * mon_ord_str;
 // %token <str_val>   STRING
 
 %}
