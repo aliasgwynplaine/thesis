@@ -223,7 +223,7 @@ void aapol_list_sort(aapol_t ** loaapol, int sz) {
 }
 
 
-term_t * term_add(term_t * p, COEFTYPE a, term_t * q, COEFTYPE b) {
+term_t * term_add(term_t * p, coef_t a, term_t * q, coef_t b) {
     term_t * r = term_malloc(sizeof(term_t));
     r->coef = a * p->coef + b * q->coef;
     s_exp_add(&p->exp, &q->exp, &r->exp);
@@ -251,7 +251,7 @@ term_t * aapol_head(aapol_t * aapol) {
  * @return aapol_t* pointer to the aapol with
  * the new term
  */
-aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
+aapol_t * aapol_addterm(aapol_t * aapol, coef_t coef, u64 exp) {
     if (aapol == NULL) SAYNEXITWERROR("aapol is null");
 
     if (coef == 0) {
@@ -302,7 +302,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp) {
 }
 
 
-aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
+aapol_t * aapol_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot sum aapols of different vars.");
     aapol_t * r = NULL;
 
@@ -366,7 +366,7 @@ aapol_t * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha) {
 }
 
 
-aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
+aapol_t * aapol_coef_multiply(aapol_t * a, coef_t alpha) {
     if (a == NULL) SAYNEXITWERROR("aapol is null");
     
     aapol_t * res = aapol_create(a->nvar);
@@ -383,7 +383,7 @@ aapol_t * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha) {
 }
 
 
-aapol_t * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha) {
+aapol_t * aapol_inplace_coef_multiply(aapol_t * a, coef_t alpha) {
     for (int i = 0; i < a->sz; i++) {
         a->terms[i].coef *= alpha;
     }
@@ -626,7 +626,7 @@ int btpol_hard_cmp(btpol_t * a, btpol_t * b) {
 }
 
 
-COEFTYPE extractcoef(aapol_t * aapol, u64 exp) {
+coef_t extractcoef(aapol_t * aapol, u64 exp) {
     return 0;
 }
 
@@ -662,6 +662,13 @@ lpol_t * lpol_malloc(u8 nvar) {
     return lpol;
 }
 
+lpol_t *lpol_cpy(lpol_t *lpol, u8 n) {
+    lpol_t * newterm = lpol_malloc(n);
+    newterm->coef = lpol->coef;
+    memcpy(newterm->exp, lpol->exp, n * sizeof(*(newterm->exp)));
+
+    return newterm;
+}
 
 void lpol_free(lpol_t * lpol) {
     if (lpol->nxt != NULL) lpol_free(lpol->nxt);
@@ -732,7 +739,7 @@ void llpol_free(llpol_t * llpol) {
 }
 
 
-llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL_ORDER mo) {
+llpol_t * llpol_addterm(llpol_t * llpol, coef_t coef, u64 * exp, i32 p, enum MONOMIAL_ORDER mo) {
     if (llpol == NULL) SAYNEXITWERROR("llpol is null");
 
     if (coef == 0) return llpol;
@@ -767,7 +774,8 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
         } else if (cmp > 0) {
             indirect = &(*indirect)->nxt;
         } else {
-            (*indirect)->coef += coef;
+            //(*indirect)->coef += coef;
+            (*indirect)->coef = modp_add(p, (*indirect)->coef, coef);
 
             return llpol;
         }
@@ -785,16 +793,16 @@ llpol_t * llpol_addterm(llpol_t * llpol, COEFTYPE coef, u64 * exp, enum MONOMIAL
 
 
 
-llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, enum MONOMIAL_ORDER mo) {
+llpol_t * llpol_add(llpol_t * a, coef_t alpha, llpol_t * b, coef_t betha, i32 p, enum MONOMIAL_ORDER mo) {
     if (a->n != b->n) SAYNEXITWERROR("pols with diferent nvars");
 
     if (a == NULL || b == NULL) SAYNEXITWERROR("NULL pointer received!");
 
     if (a->sz == 0 || alpha == 0) 
-        return llpol_coef_multiply(b, betha);
+        return llpol_coef_multiply(b, betha, p);
 
     if (b->sz == 0 || betha == 0) 
-        return llpol_coef_multiply(a, alpha);
+        return llpol_coef_multiply(a, alpha, p);
 
     llpol_t * c = llpol_create(a->n);
     lpol_t * pa = a->first;
@@ -810,7 +818,8 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
         // printf("]");
         if (cmp < 0) {
             // printf(" < ");
-            (*indirect)->coef = betha * pb->coef;
+            //(*indirect)->coef = betha * pb->coef;
+            (*indirect)->coef = modp_multiply(p, betha, pb->coef);
             //(*indirect)->exp  = pb->exp;
             memcpy((*indirect)->exp, pb->exp, a->n * sizeof(*(pb->exp)));
             // printf("[ ");
@@ -819,7 +828,8 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
             pb = pb->nxt;
         } else if (cmp > 0) {
             // printf(" > ");
-            (*indirect)->coef = alpha * pa->coef;
+            //(*indirect)->coef = alpha * pa->coef;
+            (*indirect)->coef = modp_multiply(p, alpha, pa->coef);
             //(*indirect)->exp  = pa->exp;
             memcpy((*indirect)->exp, pa->exp, a->n * sizeof(*(pb->exp)));
             // printf("[ ");
@@ -828,7 +838,9 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
             pa = pa->nxt;
         } else {
             // printf(" = ");
-            (*indirect)->coef = alpha * pa->coef + betha * pb->coef;
+            //(*indirect)->coef = alpha * pa->coef + betha * pb->coef;
+            i32 temp = modp_multiply(p, betha, pb->coef);
+            (*indirect)->coef = modp_axpy(p, alpha, pa->coef, temp);
             //(*indirect)->exp  = pa->exp;
             memcpy((*indirect)->exp, pa->exp, a->n * sizeof(*(pb->exp)));
             // printf("[ ");
@@ -866,14 +878,14 @@ llpol_t * llpol_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, en
 }
 
 
-void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha, enum MONOMIAL_ORDER mo) {
+void llpol_inplace_add(llpol_t * a, coef_t alpha, llpol_t * b, coef_t betha, i32 p, enum MONOMIAL_ORDER mo) {
     if (a->n != b->n) SAYNEXITWERROR("pols with diferent nvars");
 
     if (a == NULL || b == NULL) SAYNEXITWERROR("NULL pointer received!");
 
     if (a->sz == 0 || alpha == 0) {
         if (a->first != NULL) lpol_free(a->first);
-        llpol_t * aux = llpol_coef_multiply(b, betha);
+        llpol_t * aux = llpol_coef_multiply(b, betha, p);
         a->first = aux->first;
         a->sz = aux->sz;
         FREE(aux);
@@ -882,7 +894,7 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
     }
     
     if (b->sz == 0 || betha == 0) {
-        llpol_inplace_coef_multiply(a, alpha);
+        llpol_inplace_coef_multiply(a, alpha, p);
 
         return;
     }
@@ -896,7 +908,7 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
 
         if (cmp < 0) {
             newterm = lpol_malloc(b->n);
-            newterm->coef = betha * pb->coef;
+            newterm->coef = modp_multiply(p, betha, pb->coef);
             //newterm->exp  = pb->exp;
             memcpy(newterm->exp, pb->exp, b->n * sizeof(*(pb->exp)));
             newterm->nxt  = *indirect;
@@ -905,10 +917,13 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
             pb = pb->nxt;
             a->sz++;
         } else if (cmp > 0) {
-            (*indirect)->coef *= alpha;
+            //(*indirect)->coef *= alpha;
+            (*indirect)->coef = modp_multiply(p, alpha, (*indirect)->coef);
             indirect = &(*indirect)->nxt;
         } else {
-            (*indirect)->coef = alpha * (*indirect)->coef + betha * pb->coef;
+            //(*indirect)->coef = alpha * (*indirect)->coef + betha * pb->coef;
+            i32 tmp = modp_multiply(p, betha, pb->coef);
+            (*indirect)->coef = modp_axpy(p, (*indirect)->coef, alpha, tmp);
             indirect = &(*indirect)->nxt;
             pb = pb->nxt;
         }
@@ -930,7 +945,7 @@ void llpol_inplace_add(llpol_t * a, COEFTYPE alpha, llpol_t * b, COEFTYPE betha,
 }
 
 
-llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
+llpol_t * llpol_coef_multiply(llpol_t * a, coef_t alpha, i32 p) {
     if (a == NULL) SAYNEXITWERROR("null pol received");
 
     llpol_t * llpol = llpol_create(a->n);
@@ -941,7 +956,7 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
         
         while (ps != NULL) {
             *pd = lpol_malloc(a->n);
-            (*pd)->coef = alpha * ps->coef;
+            (*pd)->coef = modp_multiply(p, alpha, ps->coef);
             //(*pd)->exp  = ps->exp;
             memcpy((*pd)->exp, ps->exp, a->n * sizeof(*(ps->exp)));
             ps = ps->nxt;
@@ -954,14 +969,14 @@ llpol_t * llpol_coef_multiply(llpol_t * a, COEFTYPE alpha) {
 }
 
 
-void llpol_inplace_coef_multiply(llpol_t * a, COEFTYPE alpha) {
+void llpol_inplace_coef_multiply(llpol_t * a, coef_t alpha, i32 p) {
     if (a == NULL) SAYNEXITWERROR("null pol received");
 
     if (alpha != 0) {
         lpol_t *  ps = a->first;
         
         while (ps != NULL) {
-            ps->coef = alpha * ps->coef;
+            ps->coef = modp_multiply(p, alpha, ps->coef);
             ps = ps->nxt;
         }
     } else {
@@ -1045,9 +1060,13 @@ llpol_t * llpol_cpy(llpol_t * dst, llpol_t * src, enum MONOMIAL_ORDER mo) {
     dst->sz   = src->sz;
 
     lpol_t * p = src->first;
+    lpol_t ** d = &(dst->first);
 
     while ( p ) {
-        llpol_addterm(dst, p->coef, p->exp, mo);
+        //llpol_addterm(dst, p->coef, p->exp, prime, mo);
+        *d = lpol_cpy(p, src->n);
+        d  = &(*d)->nxt;
+
         p = p->nxt;
     }
 
@@ -1080,7 +1099,7 @@ term_t * btpol_head(btpol_t * btpol) {
  * term of polynomial
  */
 
-btpol_t * btpol_addterm(btpol_t * btpol, COEFTYPE coef, u64 exp) {
+btpol_t * btpol_addterm(btpol_t * btpol, coef_t coef, u64 exp) {
     if (!btpol) {
         dbgerr("pol is null");
         exit(EXIT_FAILURE);
@@ -1118,7 +1137,7 @@ btpol_t * btpol_addterm(btpol_t * btpol, COEFTYPE coef, u64 exp) {
 }
 
 
-btpol_t  * btpol_add(btpol_t * a, COEFTYPE alpha, btpol_t * b, COEFTYPE betha) {
+btpol_t  * btpol_add(btpol_t * a, coef_t alpha, btpol_t * b, coef_t betha) {
     if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot add polynomials of different nvar");
     
     
@@ -1146,7 +1165,7 @@ btpol_t  * btpol_add(btpol_t * a, COEFTYPE alpha, btpol_t * b, COEFTYPE betha) {
 }
 
 
-btpol_t * btpol_coef_multiply(btpol_t *a, COEFTYPE alpha) {
+btpol_t * btpol_coef_multiply(btpol_t *a, coef_t alpha) {
     btpol_t * res = btpol_create(a->nvar);
     bpol_t ** stack = malloc(sizeof(bpol_t) * a->sz);
     CHECKPTR(stack);
@@ -1172,7 +1191,7 @@ btpol_t * btpol_coef_multiply(btpol_t *a, COEFTYPE alpha) {
 }
 
 
-btpol_t * btpol_inplace_coef_multiply(btpol_t * a, COEFTYPE alpha) {
+btpol_t * btpol_inplace_coef_multiply(btpol_t * a, coef_t alpha) {
     bpol_t ** stack = malloc(sizeof(bpol_t) * a->sz);
     CHECKPTR(stack);
     bpol_t * node = a->root;
@@ -1231,9 +1250,9 @@ void printlpol(bpol_t * lpol, u8 nvar) {
     u64 * e = s_exp_unpack(lpol->exp, nvar);
     if (lpol->coef >= 0) printf("+ ");
     if (lpol->exp == 0) {
-        printf("%f", lpol->coef);
+        printf("%d", lpol->coef);
     } else {
-        printf("%f*x^(", lpol->coef);
+        printf("%d*x^(", lpol->coef);
 
         for (int i = 0; i < nvar - 1; i++) {
             printf("%ld, ", *(e + i));
@@ -1286,8 +1305,8 @@ static inline int char_varlist_lookup(char * c, char **var_lst, int n) {
 }
 
 
-static COEFTYPE accept_number(parser_ctx_t * ctx) {
-    COEFTYPE num;
+static coef_t accept_number(parser_ctx_t * ctx) {
+    coef_t num;
     char * end;
 
     if (*ctx->pol_str == '-' || *ctx->pol_str == '+' ) {
@@ -1301,7 +1320,7 @@ static COEFTYPE accept_number(parser_ctx_t * ctx) {
 
     if (ctx->pol_str == end) num = 1.0;
 
-    //printf("num: %f | ", num);
+    //printf("num: %d | ", num);
     //printf("end: '%c'\n", *end);
 
     ctx->pol_str = end;
@@ -1310,9 +1329,9 @@ static COEFTYPE accept_number(parser_ctx_t * ctx) {
 }
 
 
-static COEFTYPE accept_coef(parser_ctx_t * ctx) {
+static coef_t accept_coef(parser_ctx_t * ctx) {
     int sign      = accept_sign(ctx);
-    COEFTYPE coef = accept_number(ctx);
+    coef_t coef = accept_number(ctx);
 
     return sign * coef;
 }
@@ -1395,7 +1414,7 @@ static term_t * accept_term(parser_ctx_t * ctx) {
     CHECKPTR(term);
 
     term->coef = accept_coef(ctx);
-    //printf("readed: %f | nxt: %c\n", term->coef, *ctx->pol_str);
+    //printf("readed: %d | nxt: %c\n", term->coef, *ctx->pol_str);
     term->exp  = accept_exp(ctx);
     
     return term;
@@ -1488,7 +1507,7 @@ aapol_t  * str2aapol(const char * aapol_str, char ** var_lst, u8 nvar) {
  * @param pol term of pol
  */
 void term_print(term_t * pol) {
-    printf("coef: %f exp: %ld\n", pol->coef, pol->exp);
+    printf("coef: %d exp: %ld\n", pol->coef, pol->exp);
 }
 
 
@@ -1501,12 +1520,12 @@ void llpol_print(llpol_t * llpol) {
         else printf(" ");
         
         if (d_exp_is_zero(p->exp, llpol->n) == 0) {
-            printf("%0.1f", p->coef);
+            printf("%d", p->coef);
             p = p->nxt;
             continue;
         }
 
-        printf("%0.1f*x^(", p->coef);
+        printf("%d*x^(", p->coef);
 
         for (int i = 0; i < llpol->n - 1; i++) {
             printf("%ld, ", *(p->exp + i));
@@ -1544,7 +1563,7 @@ char * llpol_repr(llpol_t * llpol) {
             }
         }
 
-        c = snprintf(buff, 32, "%.2f", ptr->coef);
+        c = snprintf(buff, 32, "%d", ptr->coef);
         p = p - c;
         if (p >= 3) strcat(repr, buff);
         else {
@@ -1613,12 +1632,12 @@ void aapol_print(aapol_t * aapol) {
         if (terms[i].coef >= 0) printf("+ ");
         
         if (terms[i].exp == 0) {
-            printf("%f", terms[i].coef);
+            printf("%d", terms[i].coef);
             continue;
         }
         
         e = s_exp_unpack(terms[i].exp, aapol->nvar);
-        printf("%0.1f*x^(", terms[i].coef);
+        printf("%d*x^(", terms[i].coef);
 
         for (int i = 0; i < aapol->nvar - 1; i++) {
             printf("%ld, ", *(e + i));
@@ -1658,7 +1677,7 @@ char * aapol_repr(aapol_t * aapol) {
             }
         }
 
-        c = snprintf(buff, 32, "%.2f", aapol->terms[i].coef);
+        c = snprintf(buff, 32, "%d", aapol->terms[i].coef);
         p = p - c;
         if (p >= 3) strcat(repr, buff);
         else {

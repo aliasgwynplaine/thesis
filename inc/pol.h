@@ -2,6 +2,7 @@
 #define _POL_H
 
 #include "outils.h"
+#include "ffp.h"
 
 #define MAX_NUM_O_VARS 8
 #define MAX_LEN_O_MSG  32
@@ -36,12 +37,12 @@ enum MONOMIAL_ORDER {
 
 
 struct term_t {
-    COEFTYPE  coef; // could be an AP num
+    coef_t  coef; // could be an AP num
     u64       exp;  // packed exponent
 };
 
 struct lpol_t {
-    COEFTYPE coef;
+    coef_t coef;
     u64    * exp;
     lpol_t * nxt;
 };
@@ -53,7 +54,7 @@ struct llpol_t {
 };
 
 struct bpol_t {   // pol type as btree
-    COEFTYPE coef;
+    coef_t coef;
     u64      exp;
     bpol_t * l;
     bpol_t * r;
@@ -77,6 +78,7 @@ struct btpol_t {
 term_t  * term_malloc(size_t);
 
 lpol_t  * lpol_malloc(u8 nvar);
+lpol_t  * lpol_cpy(lpol_t * lpol, u8 n);
 void      lpol_free(lpol_t *);
 
 bpol_t  * bpol_malloc(size_t sz);
@@ -125,13 +127,13 @@ char * aapol_repr(aapol_t *);
 
 /* define polynomial operations here */
 
-llpol_t * llpol_addterm(llpol_t *, COEFTYPE, u64 *, enum MONOMIAL_ORDER); 
-llpol_t * llpol_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE, enum MONOMIAL_ORDER);
-void      llpol_inplace_add(llpol_t *, COEFTYPE, llpol_t *, COEFTYPE, enum MONOMIAL_ORDER);
-llpol_t * llpol_coef_multiply(llpol_t *, COEFTYPE);
-void      llpol_inplace_coef_multiply(llpol_t *, COEFTYPE);
-llpol_t * llpol_multiply(llpol_t * , llpol_t *); // todo
-void      llpol_inplace_multiply(llpol_t *, llpol_t *); // todo
+llpol_t * llpol_addterm(llpol_t *, coef_t, u64 *, i32 p, enum MONOMIAL_ORDER); 
+llpol_t * llpol_add(llpol_t *, coef_t, llpol_t *, coef_t, i32, enum MONOMIAL_ORDER);
+void      llpol_inplace_add(llpol_t *, coef_t, llpol_t *, coef_t, i32, enum MONOMIAL_ORDER);
+llpol_t * llpol_coef_multiply(llpol_t *, coef_t, i32);
+void      llpol_inplace_coef_multiply(llpol_t *, coef_t, i32);
+llpol_t * llpol_multiply(llpol_t * , llpol_t *, i32); // todo
+void      llpol_inplace_multiply(llpol_t *, llpol_t *, i32); // todo
 int       llpol_monomial_cmp(llpol_t *, llpol_t *, enum MONOMIAL_ORDER);
 int       pol_monomial_cmp_wrap(const void *a, const void *b, void *param);
 int       llpol_hard_cmp(llpol_t * a, llpol_t * b);
@@ -140,11 +142,11 @@ lpol_t  * llpol_head_lcm(llpol_t * l1, llpol_t * l2, enum MONOMIAL_ORDER mo); //
 
 
 term_t   * btpol_head(btpol_t *);
-btpol_t  * btpol_addterm(btpol_t * btpol, COEFTYPE coef, u64 exp);
-btpol_t  * btpol_add(btpol_t * a, COEFTYPE alpha, btpol_t * b, COEFTYPE betha); // todo
-void       btpol_inplace_add(btpol_t * a, COEFTYPE alpha, btpol_t * b, COEFTYPE betha);// todo
-btpol_t  * btpol_coef_multiply(btpol_t *a, COEFTYPE alpha);
-btpol_t  * btpol_inplace_coef_multiply(btpol_t * a, COEFTYPE alpha);
+btpol_t  * btpol_addterm(btpol_t * btpol, coef_t coef, u64 exp);
+btpol_t  * btpol_add(btpol_t * a, coef_t alpha, btpol_t * b, coef_t betha); // todo
+void       btpol_inplace_add(btpol_t * a, coef_t alpha, btpol_t * b, coef_t betha);// todo
+btpol_t  * btpol_coef_multiply(btpol_t *a, coef_t alpha);
+btpol_t  * btpol_inplace_coef_multiply(btpol_t * a, coef_t alpha);
 btpol_t  * btpol_multiply(btpol_t * a, btpol_t * b); // todo 
 int        btpol_monomial_cmp(btpol_t * a, btpol_t * b); 
 int        btpol_hard_cmp(btpol_t * a, btpol_t * b);
@@ -152,11 +154,11 @@ btpol_t  * btpol_cpy(btpol_t * dst, btpol_t * src);
 term_t   * btpol_head_lcm(btpol_t * l1, btpol_t * l2, enum MONOMIAL_ORDER mo); // todo
 
 term_t   * aapol_head(aapol_t *);
-aapol_t  * aapol_addterm(aapol_t * aapol, COEFTYPE coef, u64 exp);
-aapol_t  * aapol_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha); 
-void       aapol_inplace_add(aapol_t * a, COEFTYPE alpha, aapol_t * b, COEFTYPE betha); //todo
-aapol_t  * aapol_coef_multiply(aapol_t * a, COEFTYPE alpha);
-aapol_t  * aapol_inplace_coef_multiply(aapol_t * a, COEFTYPE alpha);
+aapol_t  * aapol_addterm(aapol_t * aapol, coef_t coef, u64 exp);
+aapol_t  * aapol_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha); 
+void       aapol_inplace_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha); //todo
+aapol_t  * aapol_coef_multiply(aapol_t * a, coef_t alpha);
+aapol_t  * aapol_inplace_coef_multiply(aapol_t * a, coef_t alpha);
 aapol_t  * aapol_multiply(aapol_t * a, aapol_t * b); 
 int        aapol_monomial_cmp(aapol_t * a, aapol_t * b, enum MONOMIAL_ORDER mo);
 int        aapol_hard_cmp(aapol_t * a, aapol_t * b); 

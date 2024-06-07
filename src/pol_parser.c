@@ -24,13 +24,13 @@ int str_varlist_lookup(char * str, char **var_lst, int n) {
 }
 
 
-void generate_term(void * aux_pol, COEFTYPE coef, pp_ctx_t * ctx) {
+void generate_term(void * aux_pol, coef_t coef, i32 p, pp_ctx_t * ctx) {
     //u64 exp = s_exp_pack(ctx->var_cntr, ctx->nvars);
     u64 * exp = calloc(sizeof(u64), ctx->nvars);
     
     for (int i = 0; i < ctx->nvars; i++) exp[i] = ctx->var_cntr[i];
 
-    llpol_addterm(aux_pol, coef, exp, ctx->order);
+    llpol_addterm(aux_pol, coef, exp, p, ctx->order);
 
     for (int i = 0; i < ctx->nvars; i++) ctx->var_cntr[i] = 0;
 
@@ -58,7 +58,7 @@ void print_status(enum parser_ctx_status status) {
 }
 
 
-ee_t * resolve_var_as_expression(sym_table_t * st, char * var, pp_ctx_t * ctx) {
+ee_t * resolve_var_as_expression(sym_table_t * st, char * var, i32 p, pp_ctx_t * ctx) {
     ee_t * ee = NULL;
     ste_t * entry = st_probe(st, var);
     if (!entry) {
@@ -115,7 +115,7 @@ ee_t * resolve_number_as_expression(sym_table_t * st, float f) {
     return ee;
 }
 
-ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, pp_ctx_t * ctx) {
+ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, i32 p, pp_ctx_t * ctx) {
     //printf("heeeeeee!\n");
     //printf("e1: %f - e2: %f\n", *(float *)e1->v, *(float *)e2->v);
     ee_t * ee = NULL;
@@ -125,20 +125,20 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
             if (strcmp(e2->t, "number") == 0) {
                 ee = malloc(sizeof(*ee)); CHECKPTR(ee);
                 ee->t = strdup("number");
-                ee->v = malloc(sizeof(float)); CHECKPTR(ee->v);
+                ee->v = malloc(sizeof(*ee->v)); CHECKPTR(ee->v);
                 //printf("e1 OP e2: %f\n", *(float *)e1->v + *(float *)e2->v);
                 
                 if (strcmp(op, "+") == 0)
-                    *(float *)ee->v = *(float *)e1->v + *(float *)e2->v;
+                    *(coef_t *)ee->v = *(coef_t *)e1->v + *(coef_t *)e2->v;
                 
                 if (strcmp(op, "-") == 0)
-                    *(float *)ee->v = *(float *)e1->v - *(float *)e2->v;
+                    *(coef_t *)ee->v = *(coef_t *)e1->v - *(coef_t *)e2->v;
                     
                 if (strcmp(op, "*") == 0)
-                    *(float *)ee->v = *(float *)e1->v * *(float *)e2->v;
+                    *(coef_t *)ee->v = *(coef_t *)e1->v * *(coef_t *)e2->v;
                 
                 if (strcmp(op, "/") == 0)
-                    *(float *)ee->v = *(float *)e1->v / *(float *)e2->v;
+                    *(coef_t *)ee->v = *(coef_t *)e1->v / *(coef_t *)e2->v;
             }
 
             if (strcmp(e2->t, "aapol") == 0) {
@@ -148,17 +148,17 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
                 if (strcmp(op, "+") == 0) {
                     ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e2->v);
-                    aapol_addterm(ee->v, *(float *)e1->v, 0);
+                    aapol_addterm(ee->v, *(coef_t *)e1->v, 0);
                 }
 
                 if (strcmp(op, "-") == 0) {
                     ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e2->v);
-                    aapol_addterm(ee->v, -1 * *(float *)e1->v, 0);
+                    aapol_addterm(ee->v, -1 * *(coef_t *)e1->v, 0);
                 }
                 
                 if (strcmp(op, "*") == 0)
-                    ee->v = aapol_coef_multiply(e2->v, *(float *)e1->v);
+                    ee->v = aapol_coef_multiply(e2->v, *(coef_t *)e1->v);
 
                 if (strcmp(op, "/") == 0) {
                     fprintf(stderr, "TypeError: cannot divide by pol object");
@@ -174,17 +174,17 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
                 if (strcmp(op, "+") == 0) {
                     ee->v = llpol_create(ctx->nvars);
                     llpol_cpy(ee->v, e2->v, ctx->order);
-                    llpol_addterm(ee->v, *(float *)e1->v, 0, ctx->order);
+                    llpol_addterm(ee->v, *(coef_t *)e1->v, 0, p, ctx->order);
                 }
 
                 if (strcmp(op, "-") == 0) {
                     ee->v = llpol_create(ctx->nvars);
                     llpol_cpy(ee->v, e2->v, ctx->order);
-                    llpol_addterm(ee->v, -1 * *(float *)e1->v, 0, ctx->order);
+                    llpol_addterm(ee->v, -1 * *(coef_t *)e1->v, 0, p, ctx->order);
                 }
                 
                 if (strcmp(op, "*") == 0)
-                    ee->v = llpol_coef_multiply(e2->v, *(float *)e1->v);
+                    ee->v = llpol_coef_multiply(e2->v, *(coef_t *)e1->v, p);
 
                 if (strcmp(op, "/") == 0) {
                     fprintf(stderr, "error: cannot divide by pol object");
@@ -203,20 +203,20 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
                     ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e1->v);
                     //printf("copy done!: "); aapol_print(ee->v);
-                    aapol_addterm(ee->v, *(float *)e2->v, 0);
+                    aapol_addterm(ee->v, *(coef_t *)e2->v, 0);
                 }
 
                 if (strcmp(op, "-") == 0) {
                     ee->v = aapol_create(ctx->nvars);
                     aapol_cpy(ee->v, e1->v);
-                    aapol_addterm(ee->v, -1 * *(float *)e2->v, 0);
+                    aapol_addterm(ee->v, -1 * *(coef_t *)e2->v, 0);
                 }
                 
                 if (strcmp(op, "*") == 0)
-                    ee->v = aapol_coef_multiply(e1->v, *(float *)e2->v);
+                    ee->v = aapol_coef_multiply(e1->v, *(coef_t *)e2->v);
 
                 if (strcmp(op, "/") == 0) {
-                    ee->v = aapol_coef_multiply(e1->v, 1 / *(float *)e2->v);
+                    ee->v = aapol_coef_multiply(e1->v, 1 / *(coef_t *)e2->v);
                 }
             }
 
@@ -258,30 +258,30 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
                     ee->v = llpol_create(ctx->nvars);
                     llpol_cpy(ee->v, e1->v, ctx->order);
                     //printf("copy done!: "); llpol_print(ee->v);
-                    llpol_addterm(ee->v, *(float *)e2->v, 0, ctx->order);
+                    llpol_addterm(ee->v, *(coef_t *)e2->v, 0, p, ctx->order);
                 }
 
                 if (strcmp(op, "-") == 0) {
                     ee->v = llpol_create(((aapol_t *)e1->v)->nvar);
                     llpol_cpy(ee->v, e1->v, ctx->order);
-                    llpol_addterm(ee->v, -1 * *(float *)e2->v, 0, ctx->order);
+                    llpol_addterm(ee->v, -1 * *(coef_t *)e2->v, 0, ctx->order, p);
                 }
                 
                 if (strcmp(op, "*") == 0)
-                    ee->v = llpol_coef_multiply(e1->v, *(float *)e2->v);
+                    ee->v = llpol_coef_multiply(e1->v, *(coef_t *)e2->v, p);
 
                 if (strcmp(op, "/") == 0) {
-                    ee->v = llpol_coef_multiply(e1->v, 1 / *(float *)e2->v);
+                    ee->v = llpol_coef_multiply(e1->v, 1 / *(coef_t *)e2->v, p);
                 }
             }
 
             if (strcmp(e2->t, "llpol") == 0) {
                 if (strcmp(op, "+") == 0) {
-                    ee->v = llpol_add(e1->v, 1, e2->v, 1, ctx->order);
+                    ee->v = llpol_add(e1->v, 1, e2->v, 1, p, ctx->order);
                 }
 
                 if (strcmp(op, "-") == 0) {
-                    ee->v = llpol_add(e1->v, 1, e2->v, -1, ctx->order);
+                    ee->v = llpol_add(e1->v, 1, e2->v, -1, p, ctx->order);
                 }
 
                 if (strcmp(op, "*") == 0) {
@@ -341,14 +341,14 @@ void destroy_set_for_expr_l(set_t * s) {
     rbtree_destroy(s, NULL);
 }
 
-void set_insert(rbtree_t * rbt, ee_t * d, pp_ctx_t * ctx) {
+void set_insert(rbtree_t * rbt, ee_t * d, i32 p, pp_ctx_t * ctx) {
     if(rbt == NULL) SAYNEXITWERROR("set is null");
     if(d == NULL) SAYNEXITWERROR("d is null");
     llpol_t * pol;
 
     if (strcmp(d->t, "number") == 0) {
         pol = llpol_create(ctx->nvars);
-        llpol_addterm(pol, *(float *)d->v, 0, ctx->order);
+        llpol_addterm(pol, *(float *)d->v, 0, p, ctx->order);
     }
 
     if (strcmp(d->t, "llpol") == 0) {
@@ -361,13 +361,13 @@ void set_insert(rbtree_t * rbt, ee_t * d, pp_ctx_t * ctx) {
 }
 
 
-void f4_wrapper(rbtree_t * in, rbtree_t * out, pp_ctx_t * ctx) {
+void f4_wrapper(rbtree_t * in, rbtree_t * out, i32 p, pp_ctx_t * ctx) {
     rbt_trav_t trav1;
     rbt_trav_t trav2;
     llpol_t * pol1;
     llpol_t * pol2;
 
-    f4(in, out, ctx->order);
+    f4(in, out, p, ctx->order);
 
     printf("Done!\n");
 }
@@ -384,14 +384,14 @@ void llpol_pretty_print(llpol_t * llpol, char ** vars) {
         if (p->coef >= 0) printf("+");
         
         if (d_exp_is_zero(p->exp, llpol->n) == 0) {
-            printf("%0.0f", p->coef);
+            printf("%d", p->coef);
             p = p->nxt;
             continue;
         }
 
         int i = 0;
 
-        if (p->coef != 1) printf("%0.0f", p->coef);
+        if (p->coef != 1) printf("%d", p->coef);
         else {
             i = 0;
             while (*(p->exp + i) == 0) {i++;}

@@ -1398,7 +1398,29 @@ static char * test_exp_grevlex_cmp() {
 }
 
 
+static char * test_gcd() {
+    
+}
 
+
+static char * test_modp_multiply() {
+    
+};
+
+
+static char * test_modp_add() {
+
+}
+
+
+static char * test_modp_axpy() {
+
+}
+
+
+static char * test_modp_inv() {
+
+}
 
 
 static void all_tests() {

@@ -1,17 +1,20 @@
 #include "ffp.h"
 
 i32 gcd(i32 a, i32 b, i32 * x, i32 * y) {
-    x = 1, y = 0;
+    *x = 1, *y = 0;
     i32 x1 = 0, y1 = 1, a1 = a, b1 = b;
 
     while (b1) {
         i32 q = a1 / b1;
-        x  = x1;
-        x1 = x - q * x1;
-        y  = y1;
-        y1 = y - q * y1;
-        a1 = b1;
+        i32 tmp = x1;
+        x1 = *x - q * x1;
+        *x = tmp;
+        tmp = y1;
+        y1 = *y - q * y1;
+        *y = tmp;
+        tmp = b1;
         b1 = a1 - q * b1;
+        a1 = tmp;
     }
 
     return a1;

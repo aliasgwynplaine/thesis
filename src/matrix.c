@@ -27,7 +27,7 @@ csr_t * csr_malloc(int m, int n, int nnzmax) {
     CHECKPTR(csr->p);
     csr->i = malloc(sizeof(int) * nnzmax);
     CHECKPTR(csr->i);
-    csr->x = malloc(sizeof(COEFTYPE) * nnzmax);
+    csr->x = malloc(sizeof(coef_t) * nnzmax);
     CHECKPTR(csr->x);
 
     return csr;
@@ -42,7 +42,7 @@ csr_t * csr_load(FILE * f) {
     if (f == NULL) return NULL;
     int i, j;
     int m, n, sz;
-    COEFTYPE x;
+    coef_t x;
     csr_t * csr;
 
     if (!f) return NULL;
@@ -57,12 +57,12 @@ csr_t * csr_load(FILE * f) {
     CHECKPTR(ci);
     int * cp = malloc(sizeof(int) * sz);
     CHECKPTR(cp);
-    COEFTYPE * cx = malloc(sizeof(COEFTYPE) * sz);
+    coef_t * cx = malloc(sizeof(coef_t) * sz);
     CHECKPTR(cx);
     int * w  = calloc(m, sizeof(int));
     CHECKPTR(w);
 
-    while (fscanf(f, "%d %d %f\n", &i, &j, &x) == 3) {
+    while (fscanf(f, "%d %d %d\n", &i, &j, &x) == 3) {
         cp[i_idx]   = i;
         ci[i_idx]   = j;
         cx[i_idx++] = x;
@@ -107,7 +107,7 @@ csc_t * csc_malloc(int m, int n, int nnzmax) {
     CHECKPTR(smat->p);
     smat->i = malloc(sizeof(int) * nnzmax);
     CHECKPTR(smat->i);
-    smat->x = malloc(sizeof(COEFTYPE) * nnzmax);
+    smat->x = malloc(sizeof(coef_t) * nnzmax);
     CHECKPTR(smat->x);
 
     return smat;
@@ -130,7 +130,7 @@ void flsm_print(flsm_t * flsm) {
         printf("%.2d  ", i);
 
         for (int j = 0; j < flsm->width[i]; j++) {
-            printf("%.0f ", flsm->rows[i][j]);
+            printf("%d ", flsm->rows[i][j]);
         }
 
         endl;
@@ -247,14 +247,14 @@ flsm_t *csr2flsm(csr_t *csr) {
     flsm->n = csr->n;
     flsm->nnz = csr->nnz;
     flsm->width = malloc(sizeof(int) * flsm->m);
-    flsm->rows  = malloc(sizeof(COEFTYPE *) * flsm->m);
+    flsm->rows  = malloc(sizeof(coef_t *) * flsm->m);
     flsm->pos   = malloc(sizeof(int *) * flsm->m);
 
     for (idx_t i = 0; i < csr->m; i++) {
         flsm->width[i] = csr_width(csr, i);
-        flsm->rows[i] = malloc(sizeof(COEFTYPE) * flsm->width[i]);
+        flsm->rows[i] = malloc(sizeof(coef_t) * flsm->width[i]);
         flsm->pos[i] = malloc(sizeof(int) * flsm->width[i]);
-        COEFTYPE * rows = flsm->rows[i];
+        coef_t * rows = flsm->rows[i];
         int      * pos  = flsm->pos[i];
         idx_t k = 0;
 
@@ -286,7 +286,7 @@ idx_t csr_width(csr_t * csr, idx_t rw_idx) {
 void csr_swap_col(csr_t * csr, idx_t i, idx_t j) {
     if (j == i) return;
     idx_t tmp;
-    COEFTYPE x_tmp;
+    coef_t x_tmp;
     if (i > j) SWAP(i, j, tmp);
     //printf("i: %d, j: %d\n", i, j);
 
@@ -351,7 +351,7 @@ void nsm_print(nsm_t * nsm) {
     for (int i = 0; i < nsm->m; i++) {
         printf("x: ");
         for (int j = 0; j < nsm->w[i]; j++) {
-            printf("%f ", nsm->x[i][j]);
+            printf("%d ", nsm->x[i][j]);
         }
 
         printf("\nc: ");
@@ -377,8 +377,9 @@ void nsm_free(nsm_t * nsm) {
 }
 
 
-void nsm_rref(nsm_t * nsm) {
+void nsm_rref(nsm_t * nsm, i32 p) {
     assert(nsm != NULL);
+    // printf("prime: %d!\n", p);
 
     u64 * piv = malloc(nsm->m * sizeof(*piv));
     CHECKPTR(piv);
@@ -389,17 +390,17 @@ void nsm_rref(nsm_t * nsm) {
         if (nsm->w[i] == 0) continue;
         dv_t * temp = sparse2dense(nsm->x[i], nsm->c[i], nsm->w[i], nsm->n);
 
-        /*printf("Temp: ");
-        for (int ti = 0; ti < temp->dim; ti++) printf("%1.1f ", temp->v[ti]);
-        printf("\n");*/
+        // printf("Temp: ");
+        // for (int ti = 0; ti < temp->dim; ti++) printf("%d ", temp->v[ti]);
+        // printf("\n");
 
         for (int j = 0; j <= npiv; j++) {
-            redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]]);
+            redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]], p);
         }
 
-        /*printf("TempReduced: ");
-        for (int ti = 0; ti < temp->dim; ti++) printf("%1.1f ", temp->v[ti]);
-        printf("\n");*/
+        // printf("TempReduced: ");
+        // for (int ti = 0; ti < temp->dim; ti++) printf("%d ", temp->v[ti]);
+        // printf("\n");
 
         bool newe_and_nonnull = dense2sparse(temp, nsm, i);
 
@@ -419,7 +420,7 @@ void nsm_rref(nsm_t * nsm) {
 
         for (idx_t j = i+1; j <= npiv; j++) {
             if (nsm->c[piv[j]][0] > nsm->c[piv[i]][0]) {
-                redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]]);
+                redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]], p);
             }
         }
 
@@ -432,16 +433,19 @@ void nsm_rref(nsm_t * nsm) {
 }
 
 
-int redDenseAxpSparseY(dv_t * dv, COEFTYPE * x, u64 * c, int w) {
+int redDenseAxpSparseY(dv_t * dv, coef_t * x, u64 * c, int w, i32 p) {
     if (dv->v[c[0]] == 0) return 1;
 
     dv->fe = dv->dim;
     
-    COEFTYPE alpha = dv->v[c[0]] / x[0];
+    //coef_t alpha = dv->v[c[0]] / x[0];
+    coef_t alpha = modp_multiply(p, dv->v[c[0]], modp_inv(p, x[0]));
+    // printf("dv->v[c[0]]: %d | x[0]: %d | x[0]^-1: %d | alpha: %d****\n", dv->v[c[0]], x[0], modp_inv(p, x[0]), alpha);
     bool flag = true;
 
     for (int i = 0; i < w; i++) {
-        *(dv->v+c[i]) -= alpha * x[i];
+        //*(dv->v+c[i]) -= alpha * x[i];
+        *(dv->v+c[i]) = modp_axpy(p, -alpha, x[i], *(dv->v+c[i]));
 
         if (flag && *(dv->v + c[i]) != 0) {
             dv->fe = c[i];
@@ -452,7 +456,7 @@ int redDenseAxpSparseY(dv_t * dv, COEFTYPE * x, u64 * c, int w) {
     return 0;
 }
 
-int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
+int smatrix_entry(sm_t * smat, int i, int j, coef_t x) {
     if (i < 0 || j < 0) return 0;
     if (smat->nnz >= smat->nnzmax) {
         // get more memory;
@@ -479,7 +483,7 @@ int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x) {
  * @return dv dense vector
  * @note don't forget to free dv
  */
-dv_t * sparse2dense(COEFTYPE * v, u64 * i, u64 n, u64 dim) {
+dv_t * sparse2dense(coef_t * v, u64 * i, u64 n, u64 dim) {
     dv_t * dv = calloc(1, sizeof(*dv));
     CHECKPTR(dv);
     dv->v = calloc(dim, sizeof(*dv->v));
@@ -500,7 +504,7 @@ bool dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
     bool nonull;
     bool newentry = dv->fe != nsm->c[idx][0];
 
-    COEFTYPE * xbuff = malloc(2 * nsm->w[idx] * sizeof(*xbuff));
+    coef_t * xbuff = malloc(2 * nsm->w[idx] * sizeof(*xbuff));
     CHECKPTR(xbuff);
     u64 * cbuff = malloc(2 * nsm->w[idx] * sizeof(*cbuff));
     CHECKPTR(cbuff);
@@ -514,7 +518,7 @@ bool dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
                 u64 * cptr = realloc(cbuff, 2 * h * sizeof(*cbuff));
                 CHECKPTR(cbuff);
                 cbuff = cptr;
-                u64* xptr = realloc(xbuff, 2 * h * sizeof(*xbuff));
+                coef_t * xptr = realloc(xbuff, 2 * h * sizeof(*xbuff));
                 CHECKPTR(xbuff);
                 xbuff = xptr;
             }
@@ -569,31 +573,31 @@ tmat_t * csr_decompose(csr_t * csr) {
     a->m = ctx->npiv;
     a->n = a->m;
     a->width = malloc(sizeof(int) * a->m);
-    a->rows  = malloc(sizeof(COEFTYPE *) * a->m);
+    a->rows  = malloc(sizeof(coef_t *) * a->m);
     a->pos   = malloc(sizeof(int *) * a->m);
 
     b->m = ctx->npiv;
     b->n = csr->n - ctx->npiv;
     b->width = malloc(sizeof(int) * b->m);
-    b->rows  = malloc(sizeof(COEFTYPE *) * b->m);
+    b->rows  = malloc(sizeof(coef_t *) * b->m);
     b->pos   = malloc(sizeof(int *) * b->m);
 
     c->m = csr->m - ctx->npiv;
     c->n = ctx->npiv;
     c->width = malloc(sizeof(int) * c->m);
-    c->rows  = malloc(sizeof(COEFTYPE *) * c->m);
+    c->rows  = malloc(sizeof(coef_t *) * c->m);
     c->pos   = malloc(sizeof(int *) * c->m);
 
     d->m = c->m;
     d->n = b->n;
     d->width = malloc(sizeof(int) * d->m);
-    d->rows  = malloc(sizeof(COEFTYPE *) * d->m);
+    d->rows  = malloc(sizeof(coef_t *) * d->m);
     d->pos   = malloc(sizeof(int *) * d->m);
 
-    COEFTYPE * pccoefbuff = malloc(sizeof(COEFTYPE) * ctx->npiv);
+    coef_t * pccoefbuff = malloc(sizeof(coef_t) * ctx->npiv);
     int      * pcposbuff  = malloc(sizeof(int) * ctx->npiv);
 
-    COEFTYPE * npccoefbuff = malloc(sizeof(COEFTYPE) * csr->n - ctx->npiv);
+    coef_t * npccoefbuff = malloc(sizeof(coef_t) * csr->n - ctx->npiv);
     int      * npcposbuff  = malloc(sizeof(int) * csr->n - ctx->npiv);
 
     idx_t idx = 0;
@@ -615,12 +619,12 @@ tmat_t * csr_decompose(csr_t * csr) {
             }
         }
 
-        a->rows[idx]  = malloc(sizeof(COEFTYPE) * pcsz);
+        a->rows[idx]  = malloc(sizeof(coef_t) * pcsz);
         a->pos[idx]   = malloc(sizeof(int) * pcsz);
         a->width[idx] = pcsz;
         a->nnz       += pcsz;
 
-        b->rows[idx]  = malloc(sizeof(COEFTYPE) * npcsz);
+        b->rows[idx]  = malloc(sizeof(coef_t) * npcsz);
         b->pos[idx]   = malloc(sizeof(int) * npcsz);
         b->width[idx] = npcsz;
         b->nnz       += npcsz;
@@ -657,12 +661,12 @@ tmat_t * csr_decompose(csr_t * csr) {
             }
         }
 
-        c->rows[idx]  = malloc(sizeof(COEFTYPE) * pcsz);
+        c->rows[idx]  = malloc(sizeof(coef_t) * pcsz);
         c->pos[idx]   = malloc(sizeof(int) * pcsz);
         c->width[idx] = pcsz;
         c->nnz       += pcsz;
 
-        d->rows[idx]  = malloc(sizeof(COEFTYPE) * npcsz);
+        d->rows[idx]  = malloc(sizeof(coef_t) * npcsz);
         d->pos[idx]   = malloc(sizeof(int) * npcsz);
         d->width[idx] = npcsz;
         d->nnz       += npcsz;
@@ -784,7 +788,7 @@ void csr_print(csr_t * csr) {
         printf("row %d : loc %d : to %d\n", i, csr->p[i], csr->p[i+1] - 1);
 
         for (idx_t p = csr->p[i]; p < csr->p[i+1]; p++) {
-            printf(" %d : %f\n", csr->i[p], csr->x[p]);
+            printf(" %d : %d\n", csr->i[p], csr->x[p]);
         }
     }
 }
@@ -797,7 +801,7 @@ void csr_dense_print(csr_t * csr) {
 
         for (idx_t j = 0; j < csr->n; j++) {
             if (p < csr->nnz && j == csr->i[p]) {
-                printf("%.0f ", csr->x[p++]);
+                printf("%d ", csr->x[p++]);
             } else {
                 printf("  ");
             }

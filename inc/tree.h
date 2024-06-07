@@ -3,7 +3,7 @@
 
 #include "outils.h"
 
-#define MAX_HEIGHT 2024
+#define MAX_HEIGHT 4096
 #define sz(t) (((size_t) (t)->sz))
 
 typedef struct bnode_t            bnode_t; // binary node

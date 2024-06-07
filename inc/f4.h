@@ -32,7 +32,7 @@ void pc_free(pc_t *);
 pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER);
 
 
-void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo);
+void f4(rbtree_t * F, rbtree_t * out, i32 p, enum MONOMIAL_ORDER mo);
 /*
 void       csr_rref(csr_t * , dctx_t *);
 csr_t   *  aapol_list2csr(aapol_t **, int sz);

@@ -134,7 +134,7 @@ rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 
 }
 
 
-void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
+void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
     if (F == NULL) return;
     if (F->sz == 0) return;
     
@@ -156,8 +156,8 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
         int h = 0;
 
         for (p = rbtree_trav_first(&t, P); p != NULL; p = rbtree_trav_next(&t)) {
-            //pc_print(p);    
-            //printf("\n");
+            // pc_print(p);    
+            // printf("\n");
             if (min_d == p->deg) { // criterion
                 if (sz == h) {
                     sz = sz << 1;
@@ -190,7 +190,7 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
                 
                 for (it = pol->first; it != NULL; it = it->nxt) {
                     u64 * exp = d_exp_add(it->exp, Pd[i]->t[j], pol->n);
-                    llpol_addterm(newpol, it->coef, exp, *(enum MONOMIAL_ORDER *)M->param);
+                    llpol_addterm(newpol, it->coef, exp, prime, *(enum MONOMIAL_ORDER *)M->param);
                     if (exp != * rbtree_probe(T, exp)) free(exp);
                 }
                 
@@ -235,7 +235,7 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
 
                     for (lpol_t * it = i->first; it != NULL; it = it->nxt) {
                         u64 * exp = d_exp_add(it->exp, c, i->n);
-                        llpol_addterm(mf, it->coef, exp, param.mo);
+                        llpol_addterm(mf, it->coef, exp, prime, param.mo);
 
                         if (exp != * rbtree_probe(T, exp)) free(exp);
                         else {
@@ -279,11 +279,11 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
         /* debug */
 
 
-        /*printf("Pols for matrix:\n");
-        for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
-            llpol_print(i);
-            printf("\n");
-        }*/
+        // printf("Pols for matrix:\n");
+        // for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
+        //     llpol_print(i);
+        //     printf("\n");
+        // }
 
 
         u64 ** loT = malloc(T->sz * sizeof(*loT)); // list of T
@@ -335,7 +335,7 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
         nsm->w = malloc(sizeof(*nsm->w) * M->sz);
         CHECKPTR(nsm->w);
 
-        COEFTYPE * buffx = malloc(sizeof(*buffx) * T->sz);
+        coef_t * buffx = malloc(sizeof(*buffx) * T->sz);
         CHECKPTR(buffx);
         u64 * buffc = malloc(sizeof(*buffc) * T->sz);
         CHECKPTR(buffc);
@@ -380,7 +380,7 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
         nsm->n = T->sz;
         printf("m: %ld, n: %ld\n", nsm->m, nsm->n);
         //nsm_print(nsm);
-        nsm_rref(nsm);
+        nsm_rref(nsm, prime);
         printf("REDUCED MATRIX: \n");
         //nsm_print(nsm);
         // extract the polynomials
@@ -404,11 +404,11 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
             llpol_t * llpol = llpol_create(param.n);
 
             for (idx_t k = 0; k < nsm->w[j]; k++) {
-                llpol_addterm(llpol, nsm->x[j][k], loT[nsm->c[j][k]], param.mo);
+                llpol_addterm(llpol, nsm->x[j][k], loT[nsm->c[j][k]], prime, param.mo);
             }
 
-            printf("new pol found! ");
-            llpol_print(llpol); printf("\n");
+            // printf("new pol found! ");
+            // llpol_print(llpol); printf("\n");
 
             if (rbtree_find(G, llpol) != NULL) {
                 printf("pol found in G!\n");
@@ -438,12 +438,12 @@ void f4(rbtree_t * F, rbtree_t * out, enum MONOMIAL_ORDER mo) {
             }
         }
 
-        /*printf("Pols in G: \n");
+        // printf("Pols in G: \n");
 
-        for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
-            llpol_print(i);
-            printf("\n");
-        }*/
+        // for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
+        //     llpol_print(i);
+        //     printf("\n");
+        // }
 
         rbtree_destroy(M, llpol_free_wrap);
         rbtree_destroy(T, free_wrap);

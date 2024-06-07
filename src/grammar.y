@@ -4,6 +4,7 @@
 #include "tree.h"
 #include "pol_parser.h"
 #include "pol.h"
+#include "ffp.h"
 
 #ifdef _DEBUG
 int yydebug = 1;
@@ -16,6 +17,7 @@ extern llpol_t * aux_llpol;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
 extern char * mon_ord_str;
+extern i32 p;
 // %token <str_val>   STRING
 
 %}
@@ -79,7 +81,7 @@ expression_list
         if (strcmp($1->t, "llpol") == 0) { rbtree_probe(_pol_acc_in, $1->v); }
         if (strcmp($1->t, "number") == 0) {
             llpol_t * pol = llpol_create(ctx->nvars);
-            llpol_addterm(pol, *(float*)$1->v, 0, ctx->order);
+            llpol_addterm(pol, *(float*)$1->v, 0, p, ctx->order);
             rbtree_probe(_pol_acc_in, pol);
             free($1->v);
         }
@@ -90,7 +92,7 @@ expression_list
         if (strcmp($3->t, "llpol") == 0) { rbtree_probe(_pol_acc_in, $3->v); }
         if (strcmp($3->t, "number") == 0) {
             llpol_t * pol = llpol_create(ctx->nvars);
-            llpol_addterm(pol, *(float*)$3->v, 0, ctx->order);
+            llpol_addterm(pol, *(float*)$3->v, 0, p, ctx->order);
             rbtree_probe(_pol_acc_in, pol);
             printf(".\n");
             free($3->v);
@@ -100,13 +102,13 @@ expression_list
     ;
 
 expression
-    : expression '+' expression { $$ = resolve_op_expression(st, $1, $3, "+", ctx); ee_free($1); ee_free($3); }
-    | expression '-' expression { $$ = resolve_op_expression(st, $1, $3, "-", ctx); ee_free($1); ee_free($3); }
-    | expression '*' expression { $$ = resolve_op_expression(st, $1, $3, "*", ctx); ee_free($1); ee_free($3); }
-    | expression '/' expression { $$ = resolve_op_expression(st, $1, $3, "/", ctx); ee_free($1); ee_free($3); }
+    : expression '+' expression { $$ = resolve_op_expression(st, $1, $3, "+", p, ctx); ee_free($1); ee_free($3); }
+    | expression '-' expression { $$ = resolve_op_expression(st, $1, $3, "-", p, ctx); ee_free($1); ee_free($3); }
+    | expression '*' expression { $$ = resolve_op_expression(st, $1, $3, "*", p, ctx); ee_free($1); ee_free($3); }
+    | expression '/' expression { $$ = resolve_op_expression(st, $1, $3, "/", p, ctx); ee_free($1); ee_free($3); }
     | pol_expr
     | number { $$ = resolve_number_as_expression(st, $1); }
-    | VAR { $$ = resolve_var_as_expression(st, $1, ctx); FREE($1); }
+    | VAR { $$ = resolve_var_as_expression(st, $1, p, ctx); FREE($1); }
     ;
 
 pol_expr: aapol_expr | llpol_expr;
@@ -134,11 +136,11 @@ pol: pol term
     | /* empty */
     ;
 
-term: number '*' mvar { generate_term(aux_llpol, $1, ctx); }
-    | mvar '*' number { generate_term(aux_llpol, $3, ctx); }
-    | sign mvar       { generate_term(aux_llpol, $1, ctx); }
-    | mvar            { generate_term(aux_llpol,  1, ctx); }
-    | number          { llpol_addterm(aux_llpol, $1, NULL, ctx->order);}
+term: number '*' mvar { generate_term(aux_llpol, $1, p, ctx); }
+    | mvar '*' number { generate_term(aux_llpol, $3, p, ctx); }
+    | sign mvar       { generate_term(aux_llpol, $1, p, ctx); }
+    | mvar            { generate_term(aux_llpol,  1, p, ctx); }
+    | number          { llpol_addterm(aux_llpol, $1, NULL, p, ctx->order);}
     ;
 
 number: sign INTEGER { $$ = (float) ($1 * $2); }
@@ -168,7 +170,7 @@ directive: SYMTABTOK { print_sym_table(st); }
     | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); FREE(mon_ord_str); mon_ord_str = get_mon_order_str(ctx);}
     | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
     | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
-    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, ctx); set_print(_pol_acc_out, ctx); printf("\n");}
+    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, p, ctx); set_print(_pol_acc_out, ctx); printf("\n");}
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

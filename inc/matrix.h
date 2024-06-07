@@ -3,13 +3,14 @@
 
 #include <memory.h>
 #include "outils.h"
+#include "ffp.h"
 
 typedef struct new_sparse_matrix_t nsm_t;
 /**
  * x[i][j] is the element a[i, c[i][j]]
 */
 struct new_sparse_matrix_t {
-    COEFTYPE ** x; // x[i] is row i
+    coef_t   ** x; // x[i] is row i
     u64      ** c; // column index of x[i]
     u64       * w; // w[i] is nnz entries in x[i]
     float       d; // density
@@ -21,7 +22,7 @@ struct new_sparse_matrix_t {
 
 typedef struct dense_vector_t dv_t;
 struct dense_vector_t {
-    COEFTYPE * v; // values
+    coef_t   * v; // values
     u32       fe; // pos of first non-null entry
     u32      dim; // dimention
     bool      np; // new_piv
@@ -47,13 +48,13 @@ typedef struct hybrid_rectangular_block_matrix_t hrbm_t;
 typedef struct decomposer_ctx_t  dctx_t; // pivot set struct
 
 struct dense_column_matrix_t {
-    COEFTYPE ** c;
+    coef_t   ** c;
     idx_t       m;
     idx_t       n;
 };
 
 struct dense_row_matrix_t {
-    COEFTYPE ** r;
+    coef_t   ** r;
     idx_t       m;
     idx_t       n;
 };
@@ -65,7 +66,7 @@ struct dense_row_matrix_t {
  * @note this is from gbla
 */
 struct sparse_block_t {
-    COEFTYPE ** x;
+    coef_t   ** x;
     idx_t    ** i;
     idx_t    * sz;
     int       nnz;
@@ -85,7 +86,7 @@ struct sparse_matrix_t {
     int        n;   /* col sz   */
     int      * i;   /* row/col idx */
     int      * p;   /* row/col pos */
-    COEFTYPE * x;   /* values   */
+    coef_t   * x;   /* values   */
     int      nnz;   /* num o entries in triplet. -1 if colcomp */
 };
 
@@ -99,7 +100,7 @@ struct macaulay_matrix_t {
 
 struct multiline_vector_t {
     int      * pos; /* position      */
-    COEFTYPE * val; /* values        */
+    coef_t   * val; /* values        */
     int         sz; /* size          */
     int        cap; /* capacity      */
     u8           n; /* n-line vector */
@@ -123,7 +124,7 @@ struct sparse_triangular_block_matrix_t {
 
 
 struct sparse_triangular_matrix_t {
-    COEFTYPE ** r;
+    coef_t ** r;
     int      *  i;
     float       d;
     int        sz;
@@ -131,7 +132,7 @@ struct sparse_triangular_matrix_t {
 
 
 struct sparse_rectangular_matrix_t {
-    COEFTYPE ** r;
+    coef_t ** r;
     int      *  i;
     float       d;
     int        sz;
@@ -139,7 +140,7 @@ struct sparse_rectangular_matrix_t {
 
 
 struct hybrid_rectangular_matrix_t {
-    COEFTYPE ** r;
+    coef_t ** r;
     int      *  i;
     float       d;
     int        sz;
@@ -149,7 +150,7 @@ struct hybrid_rectangular_matrix_t {
 struct faugere_lachartre_sparse_matrix_t {
     u32 n;
     u32 m;
-    COEFTYPE ** rows;
+    coef_t ** rows;
     u32 * width;
     u32 ** pos;
     float d;
@@ -227,20 +228,20 @@ dctx_t * csr_analyse(csr_t *);
 
 void nsm_print(nsm_t * );
 void nsm_free(nsm_t * );
-void nsm_rref(nsm_t * );
-int  redDenseAxpSparseY(dv_t * , COEFTYPE * , u64 * , int );
+void nsm_rref(nsm_t * , i32);
+int  redDenseAxpSparseY(dv_t * , coef_t * , u64 * , int, i32);
 
 /*
     insert & delete
 */
 
-int smatrix_entry(sm_t * smat, int i, int j, COEFTYPE x);
+int smatrix_entry(sm_t * smat, int i, int j, coef_t x);
 
 /*
     dense-sparse transformations
 */
 
-dv_t * sparse2dense(COEFTYPE *, u64 *, u64, u64);
+dv_t * sparse2dense(coef_t *, u64 *, u64, u64);
 bool   dense2sparse(dv_t *, nsm_t * , idx_t);
 
 

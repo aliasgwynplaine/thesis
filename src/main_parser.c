@@ -12,6 +12,7 @@ llpol_t * aux_llpol;
 set_t * _pol_acc_in;
 set_t * _pol_acc_out;
 char  * mon_ord_str;
+i32 p;
 extern rbt_cmpfux_t aapol_monomial_cmp_wrap;
 extern rbt_cmpfux_t pol_monomial_cmp_wrap;
 
@@ -19,6 +20,7 @@ int main(int argc, char * argv[]) {
     ctx = malloc(sizeof(*ctx));
     ctx->order = grevlex;
     mon_ord_str = strdup("grevlex");
+    p = 65521;
     ctx->nvars = 4;
     ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
     

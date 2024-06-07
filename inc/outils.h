@@ -74,6 +74,7 @@ typedef int32_t  i32;
 typedef int16_t  i16;
 typedef int8_t    i8;
 
+typedef i32    coef_t;
 typedef int32_t idx_t;
 
 typedef struct bdat_t bdat_t;
