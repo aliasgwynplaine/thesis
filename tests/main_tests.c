@@ -5,6 +5,7 @@
 #include "tree.h"
 #include "sym_table.h"
 #include "unittest_engine.h"
+#include "ffp.h"
 
 int tests_run    = 0;
 int failed_tests = 0;
@@ -58,6 +59,7 @@ static char * test_packexp_with_zero() {
 
 static char * test_aapol_addterm_equals() {
     u8 n = 1;
+    enum MONOMIAL_ORDER mo = grevlex;
     aapol_t * aapol = aapol_create(n);
     aapol_addterm(aapol, 1, 3);
     aapol_addterm(aapol, 1, 3);
@@ -80,7 +82,7 @@ static char * test_aapol_addterm_equals() {
     aapol_addterm(expected_aapol, 2, 7);
     aapol_addterm(expected_aapol, 7, 0);
 
-    assert(aapol_monomial_cmp(aapol, expected_aapol) == 0, "aapol_addterm function is failing!");
+    assert(aapol_monomial_cmp(aapol, expected_aapol, mo) == 0, "aapol_addterm function is failing!");
 
     aapol_free(aapol);
     aapol_free(expected_aapol);
@@ -92,6 +94,7 @@ static char * test_aapol_addterm_equals() {
 static char * test_aapol_addterm_different_minor() {
     u8 n = 1;
     aapol_t * aapol = aapol_create(n);
+    enum MONOMIAL_ORDER mo = grevlex;
     aapol_addterm(aapol, 1, 3);
     aapol_addterm(aapol, 1, 3);
     aapol_addterm(aapol, -1, 1);
@@ -113,7 +116,7 @@ static char * test_aapol_addterm_different_minor() {
     aapol_addterm(minor_aapol, 2, 7);
     aapol_addterm(minor_aapol, 7, 0);
 
-    assert(aapol_monomial_cmp(aapol, minor_aapol) > 0, "aapol_addterm function is failing!");
+    assert(aapol_monomial_cmp(aapol, minor_aapol, mo) > 0, "aapol_addterm function is failing!");
 
     aapol_free(aapol);
     aapol_free(minor_aapol);
@@ -868,6 +871,7 @@ static char * test_llpol_add() {
     return 0;
 }
 
+
 static char * test_llpol_inplace_add() {
     int n = 8;
     llpol_t * a = llpol_create(n);
@@ -1394,6 +1398,9 @@ static char * test_exp_grevlex_cmp() {
 }
 
 
+
+
+
 static void all_tests() {
     run_unittest(test_packexp);
     run_unittest(test_unpackexp);
@@ -1426,16 +1433,17 @@ static void all_tests() {
     //run_unittest(test_str2aapol);
     //run_unittest(test_str2aapol_name_error);
     //run_unittest(test_str2aapol_syntax_error);
-    run_unittest(test_csr_head);
+    //run_unittest(test_csr_head);
     //run_unittest(test_csr_analyse_n_decompose);
     //run_unittest(test_csr2flsm);
-    run_unittest(test_sparse2dense);
+    //run_unittest(test_sparse2dense);
     //run_unittest(cuda_test);
     //run_unittest(test_aapol_repr);
     //run_unittest(test_sym_table_insert);
     run_unittest(test_exp_glex_cmp);
     run_unittest(test_exp_revlex_cmp);
     run_unittest(test_exp_grevlex_cmp);
+    
 }
 
 

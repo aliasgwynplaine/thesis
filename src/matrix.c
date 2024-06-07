@@ -125,7 +125,7 @@ void smatrix_free(sm_t * smat) {
 
 void flsm_print(flsm_t * flsm) {
 
-    printf("nnz: %d\n", flsm->nnz);
+    printf("nnz: %ld\n", flsm->nnz);
     for (int i = 0; i < flsm->m; i++) {
         printf("%.2d  ", i);
 
@@ -389,25 +389,25 @@ void nsm_rref(nsm_t * nsm) {
         if (nsm->w[i] == 0) continue;
         dv_t * temp = sparse2dense(nsm->x[i], nsm->c[i], nsm->w[i], nsm->n);
 
-        printf("Temp: ");
+        /*printf("Temp: ");
         for (int ti = 0; ti < temp->dim; ti++) printf("%1.1f ", temp->v[ti]);
-        printf("\n");
+        printf("\n");*/
 
         for (int j = 0; j <= npiv; j++) {
             redDenseAxpSparseY(temp, nsm->x[piv[j]], nsm->c[piv[j]], nsm->w[piv[j]]);
         }
 
-        printf("TempReduced: ");
+        /*printf("TempReduced: ");
         for (int ti = 0; ti < temp->dim; ti++) printf("%1.1f ", temp->v[ti]);
-        printf("\n");
+        printf("\n");*/
 
         bool newe_and_nonnull = dense2sparse(temp, nsm, i);
 
         if (newe_and_nonnull) { // test if it's not null
             piv[++npiv] = i;
-            printf("piv: ");
+            /*printf("piv: ");
             for (int k = 0; k <= npiv; k++) printf("%ld ", piv[k]);
-            printf("\n");
+            printf("\n");*/
         }
 
         free(temp->v);
@@ -510,11 +510,13 @@ bool dense2sparse(dv_t * dv, nsm_t * nsm, idx_t idx) {
             cbuff[h] = i;
             xbuff[h++] = dv->v[i];
 
-            if (h > 2 * nsm->w[idx]) {
-                cbuff = realloc(cbuff, 2 * h * sizeof(*cbuff));
+            if (h >= 2 * nsm->w[idx]) {
+                u64 * cptr = realloc(cbuff, 2 * h * sizeof(*cbuff));
                 CHECKPTR(cbuff);
-                xbuff = realloc(xbuff, 2 * h * sizeof(*xbuff));
+                cbuff = cptr;
+                u64* xptr = realloc(xbuff, 2 * h * sizeof(*xbuff));
                 CHECKPTR(xbuff);
+                xbuff = xptr;
             }
         }
     }
