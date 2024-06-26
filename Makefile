@@ -20,11 +20,14 @@ TESTSRC   = $(addprefix $(SRC_DIR)/, $(TESTFILES))
 
 PROGRAM = main
 
-tests.exe: outils.o tree.o matrix.o pol.o sym_table.o
+tests.exe: outils.o tree.o matrix.o pol.o sym_table.o ffp.o
 	$(CC) $(MAINTEST) outils.o tree.o matrix.o pol.o sym_table.o -o $@ $(INC_FLAGS) -g $(LDFLAGS)
 
-parser.exe: grammar.o lexer.o main_parser.o pol_parser.o sym_table.o pol.o outils.o tree.o matrix.o f4.o
-	$(CC) -g -Wall grammar.o lexer.o main_parser.o pol_parser.o sym_table.o pol.o outils.o tree.o matrix.o f4.o -lm -lfl -o parser.exe $(INC_FLAGS)
+parser.exe: grammar.o lexer.o main_parser.o pol_parser.o sym_table.o pol.o outils.o tree.o matrix.o f4.o ffp.o
+	$(CC) -g -Wall grammar.o lexer.o main_parser.o pol_parser.o sym_table.o pol.o outils.o tree.o matrix.o f4.o ffp.o -lm -lfl -o parser.exe $(INC_FLAGS)
+
+ffp.o: $(SRC_DIR)/$(@:.o=.c)
+	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g
 
 pol_parser.o: $(SRC_DIR)/$(@:.o=.c)
 	$(CC) -c $(SRC_DIR)/$(@:.o=.c) -o $@ $(INC_FLAGS) -g

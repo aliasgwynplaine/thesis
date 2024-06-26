@@ -362,13 +362,16 @@ void set_insert(rbtree_t * rbt, ee_t * d, i32 p, pp_ctx_t * ctx) {
 
 
 void f4_wrapper(rbtree_t * in, rbtree_t * out, i32 p, pp_ctx_t * ctx) {
-    rbt_trav_t trav1;
-    rbt_trav_t trav2;
-    llpol_t * pol1;
-    llpol_t * pol2;
-
-    f4(in, out, p, ctx->order);
-
+    tictac_t tictac;
+    struct timespec ts0, ts1;
+    settictac2zero(&tictac);
+    print_tictac(&tictac);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
+    f4_v1(in, out, p, ctx->order, &tictac);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+    TIMESPEC_DIFF(ts0, ts1, ts0);
+    TIMESPEC_ADD(tictac.total, tictac.total,ts0);
+    print_tictac(&tictac);
     printf("Done!\n");
 }
 

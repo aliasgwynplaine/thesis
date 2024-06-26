@@ -429,6 +429,8 @@ void nsm_rref(nsm_t * nsm, i32 p) {
         free(temp);
     }
 
+    
+
     free(piv);
 }
 
@@ -442,8 +444,9 @@ int redDenseAxpSparseY(dv_t * dv, coef_t * x, u64 * c, int w, i32 p) {
     coef_t alpha = modp_multiply(p, dv->v[c[0]], modp_inv(p, x[0]));
     // printf("dv->v[c[0]]: %d | x[0]: %d | x[0]^-1: %d | alpha: %d****\n", dv->v[c[0]], x[0], modp_inv(p, x[0]), alpha);
     bool flag = true;
+    *(dv->v+c[0]) = 0;
 
-    for (int i = 0; i < w; i++) {
+    for (int i = 1; i < w; i++) {
         //*(dv->v+c[i]) -= alpha * x[i];
         *(dv->v+c[i]) = modp_axpy(p, -alpha, x[i], *(dv->v+c[i]));
 

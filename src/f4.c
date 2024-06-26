@@ -85,10 +85,18 @@ void free_wrap(void * ptr, void * param) {
     free(ptr);
 }
 
-pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER mo) {
-    u8 n = f1->n;
+pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER mo, tictac_t * tictac) {
     struct paire_critique_t * pc = malloc(sizeof(*pc));
+    struct timespec ts0, ts1;
+    u8 n = f1->n;
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
     pc->lcm  = d_exp_lcm(f1->first->exp, f2->first->exp, n);
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+    TIMESPEC_DIFF(ts0, ts1, ts0);
+    TIMESPEC_ADD(tictac->ops_exp, tictac->ops_exp, ts0);
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
 
     if (llpol_monomial_cmp(f1, f2, mo) < 0) {
         pc->f[0] = f2; // only a reference
@@ -98,7 +106,14 @@ pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER mo) {
         pc->f[1] = f2; // only a reference
     }
 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+    TIMESPEC_DIFF(ts0, ts1, ts0);
+    TIMESPEC_ADD(tictac->cmp_exp, tictac->cmp_exp, ts0);
+
     pc->deg  = 0;
+
+
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
 
     for (int i = 0; i < pc->f[0]->n; i++ ) pc->deg += pc->lcm[i];
 
@@ -109,11 +124,15 @@ pc_t * llpol2pairecritique(llpol_t * f1, llpol_t * f2, enum MONOMIAL_ORDER mo) {
             pc->t[i][j] = pc->lcm[j] - pc->f[i]->first->exp[j];
     }
 
+    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+    TIMESPEC_DIFF(ts0, ts1, ts0);
+    TIMESPEC_ADD(tictac->ops_exp, tictac->ops_exp, ts0);
+
     return pc;
 }
 
 
-rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 * min_d) {
+rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 * min_d, tictac_t * tictac) {
     rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, mo, NULL);
     rbt_trav_t t, u;
     llpol_t * f1, * f2;
@@ -123,7 +142,7 @@ rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 
         rbtree_trav_cpy(&u, &t);
         
         for (f2 = rbtree_trav_next(&u); f2 != NULL; f2 = rbtree_trav_next(&u)) {
-            pc_t * pc = llpol2pairecritique(f1, f2, *mo);
+            pc_t * pc = llpol2pairecritique(f1, f2, *mo, tictac);
             if (*min_d == 0) *min_d = pc->deg;
             *min_d = __min(*min_d, pc->deg);
             rbtree_probe(P, pc);
@@ -134,10 +153,11 @@ rbtree_t * compute_paires_critiques(rbtree_t * G, enum MONOMIAL_ORDER * mo, u64 
 }
 
 
-void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
+void f4_v1(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo, tictac_t * tictac) {
     if (F == NULL) return;
     if (F->sz == 0) return;
     
+    struct timespec ts0, ts1;
     struct n_mo_t param = {((llpol_t *)(F->root->d))->n, mo};
     rbtree_t * G = rbtree_cpy(F, llpol_cpy_wrapp, NULL, NULL); // hard copy
     //rbtree_t * P = rbtree_create(paire_critique_cmp_wrap, &mo, NULL);
@@ -146,7 +166,7 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
     u64 min_d = 0;
 
     /* compute paires critiques (1.2) */
-    rbtree_t * P = compute_paires_critiques(G, &param.mo, &min_d);
+    rbtree_t * P = compute_paires_critiques(G, &param.mo, &min_d, tictac);
     
     while (P->sz != 0) {
         /* Selection (1.5) */
@@ -189,14 +209,22 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
                 lpol_t  * it;
                 
                 for (it = pol->first; it != NULL; it = it->nxt) {
+                    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
                     u64 * exp = d_exp_add(it->exp, Pd[i]->t[j], pol->n);
+                    clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+                    TIMESPEC_DIFF(ts0, ts1, ts0);
+                    TIMESPEC_ADD(tictac->ops_exp, tictac->ops_exp, ts0);
                     llpol_addterm(newpol, it->coef, exp, prime, *(enum MONOMIAL_ORDER *)M->param);
                     if (exp != * rbtree_probe(T, exp)) free(exp);
                 }
                 
                 //llpol_print(newpol);printf("!!!!\n");
                 u64 * ht = malloc(newpol->n * sizeof(*ht));
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
                 memcpy(ht, newpol->first->exp, newpol->n * sizeof(*ht));
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+                TIMESPEC_DIFF(ts0, ts1, ts0);
+                TIMESPEC_ADD(tictac->cpy_exp, tictac->cpy_exp, ts0);
                 if(ht != * rbtree_probe(D, ht)) free(ht);
                 if (newpol != *rbtree_probe(M, newpol)) llpol_free(newpol);
             }
@@ -234,7 +262,13 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
                     mf = llpol_create(i->n);
 
                     for (lpol_t * it = i->first; it != NULL; it = it->nxt) {
+
+                        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
                         u64 * exp = d_exp_add(it->exp, c, i->n);
+                        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+                        TIMESPEC_DIFF(ts0, ts1, ts0);
+                        TIMESPEC_ADD(tictac->ops_exp, tictac->ops_exp, ts0);
+
                         llpol_addterm(mf, it->coef, exp, prime, param.mo);
 
                         if (exp != * rbtree_probe(T, exp)) free(exp);
@@ -271,8 +305,12 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
 
         for (i = rbtree_trav_first(&t, M); i != NULL; i = rbtree_trav_next(&t)) {
             u64 * hte = malloc(param.n * sizeof(*hte));
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
             memcpy(hte, i->first->exp, param.n * sizeof(*hte));
-            
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+            TIMESPEC_DIFF(ts0, ts1, ts0);
+            TIMESPEC_ADD(tictac->cpy_exp, tictac->cpy_exp, ts0);
+
             if (hte != * rbtree_probe(HT, hte)) free(hte); // hard
         }
 
@@ -380,7 +418,11 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
         nsm->n = T->sz;
         printf("m: %ld, n: %ld\n", nsm->m, nsm->n);
         //nsm_print(nsm);
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
         nsm_rref(nsm, prime);
+        clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+        TIMESPEC_DIFF(ts0, ts1, ts0);
+        TIMESPEC_ADD(tictac->rref, tictac->rref, ts0);
         printf("REDUCED MATRIX: \n");
         //nsm_print(nsm);
         // extract the polynomials
@@ -395,8 +437,13 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
                 for (int k = 0; k < param.n; k++) printf("%ld ", e[k]);
                 
                 printf("]\n");*/
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
+                int cmp = d_exp_cmp(e, loT[nsm->c[j][0]], param.n, param.mo);
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+                TIMESPEC_DIFF(ts0, ts1, ts0);
+                TIMESPEC_ADD(tictac->cmp_exp, tictac->cmp_exp, ts0);
                 
-                if (d_exp_cmp(e, loT[nsm->c[j][0]], param.n, param.mo) == 0) {
+                if (cmp == 0) {
                     goto lbl_break;
                 }
             }
@@ -409,19 +456,36 @@ void f4(rbtree_t * F, rbtree_t * out, i32 prime, enum MONOMIAL_ORDER mo) {
 
             // printf("new pol found! ");
             // llpol_print(llpol); printf("\n");
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
+            void * aux = rbtree_find(G, llpol);
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+            TIMESPEC_DIFF(ts0, ts1, ts0);
+            TIMESPEC_ADD(tictac->ops_set, tictac->ops_set, ts0);
 
-            if (rbtree_find(G, llpol) != NULL) {
+            if (aux != NULL) {
                 printf("pol found in G!\n");
                 free(llpol);
                 goto lbl_break;
             }
 
             for (i = rbtree_trav_first(&t, G); i != NULL; i = rbtree_trav_next(&t)) {
-                pc_t * pc = llpol2pairecritique(llpol, i, param.mo);
-                if (pc != *rbtree_probe(P, pc)) pc_free(pc);
+                pc_t * pc = llpol2pairecritique(llpol, i, param.mo, tictac);
+                
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
+                void * aux_pc = *rbtree_probe(P, pc);
+                clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+                TIMESPEC_DIFF(ts0, ts1, ts0);
+                TIMESPEC_ADD(tictac->ops_set, tictac->ops_set, ts0);
+
+                if (pc != aux_pc) pc_free(pc);
             }
 
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts0);
             rbtree_probe(G, llpol);
+            clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts1);
+            TIMESPEC_DIFF(ts0, ts1, ts0);
+            TIMESPEC_ADD(tictac->ops_set, tictac->ops_set, ts0);
+            
             
             lbl_break:
         }

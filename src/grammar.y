@@ -17,6 +17,7 @@ extern llpol_t * aux_llpol;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
 extern char * mon_ord_str;
+extern tictac_t * tictac;
 extern i32 p;
 // %token <str_val>   STRING
 

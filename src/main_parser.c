@@ -7,6 +7,7 @@ int yyparse();
 
 sym_table_t * st;
 pp_ctx_t * ctx;
+tictac_t * tictac;
 aapol_t * aux_aapol;
 llpol_t * aux_llpol;
 set_t * _pol_acc_in;
@@ -21,7 +22,7 @@ int main(int argc, char * argv[]) {
     ctx->order = grevlex;
     mon_ord_str = strdup("grevlex");
     p = 65521;
-    ctx->nvars = 4;
+    ctx->nvars = 7;
     ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
     
     printf("Creating symbol table...");
@@ -34,7 +35,10 @@ int main(int argc, char * argv[]) {
     ctx->var_lst[1] = "b";
     ctx->var_lst[2] = "c";
     ctx->var_lst[3] = "d";
-    ctx->var_lst[4] = NULL;
+    ctx->var_lst[4] = "e";
+    ctx->var_lst[5] = "f";
+    ctx->var_lst[6] = "g";
+    ctx->var_lst[7] = NULL;
     aux_aapol = aapol_create(ctx->nvars);
     aux_llpol = llpol_create(ctx->nvars);
     st_insert(st, strdup("_pol_acc_in"), _pol_acc_in, strdup("acc"));

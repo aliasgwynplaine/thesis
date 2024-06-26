@@ -1,5 +1,29 @@
 #include "outils.h"
 
+void settimespec2zero(struct timespec * t) {
+    t->tv_nsec = 0;
+    t->tv_sec  = 0;
+}
+
+void settictac2zero(tictac_t * t) {
+    settimespec2zero(&t->cmp_exp);
+    settimespec2zero(&t->cpy_exp);
+    settimespec2zero(&t->ops_exp);
+    settimespec2zero(&t->ops_set);
+    settimespec2zero(&t->total);
+    settimespec2zero(&t->rref);
+
+}
+
+void print_tictac(tictac_t * t) {
+    printf("cmp exp: %10jd.%09ld\n",t->cmp_exp.tv_sec, t->cmp_exp.tv_nsec);
+    printf("cpy exp: %10jd.%09ld\n",t->cpy_exp.tv_sec, t->cpy_exp.tv_nsec);
+    printf("ops exp: %10jd.%09ld\n",t->ops_exp.tv_sec, t->ops_exp.tv_nsec);
+    printf("ops set: %10jd.%09ld\n",t->ops_set.tv_sec, t->ops_set.tv_nsec);
+    printf("rref:    %10jd.%09ld\n",t->rref.tv_sec, t->rref.tv_nsec);
+    printf("total:   %10jd.%09ld\n",t->total.tv_sec, t->total.tv_nsec);
+}
+
 int  is_str_in_lstr(char * str, char ** lstr) {
     char ** ptr = lstr;
 

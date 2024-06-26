@@ -9,6 +9,7 @@
 #include <ctype.h>
 #include <stddef.h>
 #include <assert.h>
+#include <time.h>
 #include "debug.h"
 
 #ifndef COEFTYPE
@@ -77,6 +78,29 @@ typedef int8_t    i8;
 typedef i32    coef_t;
 typedef int32_t idx_t;
 
+typedef struct tictac_t tictac_t;
+
+struct tictac_t {
+    struct timespec ops_set;
+    struct timespec cpy_exp;
+    struct timespec cmp_exp;
+    struct timespec ops_exp;
+    struct timespec rref;
+    struct timespec total;
+};
+
+#define TIMESPEC_DIFF(diff_ts, ts0, ts1)                   \
+    do {                                                   \
+        (diff_ts).tv_sec = (ts0).tv_sec - (ts1).tv_sec;    \
+        (diff_ts).tv_nsec = (ts0).tv_nsec - (ts1).tv_nsec; \
+    } while (0);
+
+#define TIMESPEC_ADD(add_ts, ts0, ts1)                     \
+    do {                                                   \
+        (add_ts).tv_sec = (ts0).tv_sec + (ts1).tv_sec;     \
+        (add_ts).tv_nsec = (ts0).tv_nsec + (ts1).tv_nsec;  \
+    } while (0);
+
 typedef struct bdat_t bdat_t;
 
 typedef int    cmpfux_t(const void * a, const void * b);
@@ -91,6 +115,10 @@ struct bdat_t {
 
 bdat_t * bdat_create();
 void     bdat_free(void * bdat);
+
+void settimespec2zero(struct timespec *);
+void settictac2zero(tictac_t *);
+void print_tictac(tictac_t *);
 
 int  is_str_in_lstr(char * str, char ** lstr);
 void print_lstr(char ** lstr);

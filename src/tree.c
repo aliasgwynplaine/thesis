@@ -678,7 +678,7 @@ void * rbtree_trav_cpy(rbt_trav_t * trav, rbt_trav_t * src) {
         trav->node = src->node;
         trav->gen  = src->gen;
         
-        if (trav->gen == trav->tree->gen) { // todo
+        if (trav->gen == trav->tree->gen) {
             trav->h = src->h;
             memcpy(
                 trav->stack, 
