@@ -425,6 +425,17 @@ void set_print(rbtree_t * rbt, pp_ctx_t * ctx) {
 }
 
 
+void varset_print(rbtree_t * rbt) {
+    rbt_trav_t trav;
+    char * pol;
+
+    for (pol = rbtree_trav_first(&trav, rbt); pol != NULL; pol = rbtree_trav_next(&trav)) {
+        printf("'%s' ", pol);
+    }
+    printf("\n");
+}
+
+
 void change_mon_order(pp_ctx_t * ctx, char * order) {
     if (strcmp("lex", order) == 0) ctx->order = lex;
     else if (strcmp("glex", order) == 0) ctx->order = glex;
@@ -433,6 +444,24 @@ void change_mon_order(pp_ctx_t * ctx, char * order) {
     else printf("not implemented: %s order\n", order);
 }
 
+
+void update_vars(pp_ctx_t * ctx, rbtree_t * _vars) {
+    rbt_trav_t t;
+    char * v;
+    int i;
+    for (i = 0; i < ctx->nvars; i++) free(ctx->var_lst[i]);
+    free(ctx->var_lst);
+    ctx->nvars = _vars->sz;
+    ctx->var_lst = malloc((ctx->nvars + 1) * sizeof(*ctx->var_lst));
+    i = 0;
+
+    for (v = rbtree_trav_first(&t, _vars); v != NULL; v = rbtree_trav_next(&t)) {
+        ctx->var_lst[i++] = v;
+    }
+    
+    ctx->var_lst[i] = NULL;
+    rbtree_empty(_vars, NULL);
+}
 
 char * get_mon_order_str(pp_ctx_t* pctx) {
     if (pctx->order == lex) return strdup("lex");

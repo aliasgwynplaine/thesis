@@ -110,20 +110,7 @@ struct rbt_traverser_t {
 };
 
 
-bnode_t   * bnode_create();
-void        bnode_free(bnode_t *, freefux_t *);
-
 rbnode_t  * rbnode_create(rbtree_t *, enum RB_COLOR);
-void        rbnode_free(rbnode_t *, freefux_t *);
-
-bstree_t  * bstree_create(cmpfux_t *, allocfux_t * , freefux_t *);
-void        bstree_free(bstree_t *);
-void      * bstree_search(bstree_t *, void *); // todo
-int         bstree_insert(bstree_t *, void *);
-void        bstree_walk(bnode_t *, ORDER);    // todo
-void        bstree_inorder_walk(bnode_t *);   // todo
-void        bstree_preorder_walk(bnode_t *);  // todo
-void        bstree_postorder_walk(bnode_t *); // todo
 
 avltree_t * avltree_create(cmpfux_t *, allocfux_t, freefux_t *);   // todo 
 void      * avltree_search(bnode_t *, void * data);                // todo 
@@ -137,6 +124,7 @@ void        avltree_postorderwalk(bnode_t *);                      // todo
 rbtree_t  * rbtree_create(rbt_cmpfux_t *, void *, tree_allocator_t *); 
 rbtree_t  * rbtree_cpy(const rbtree_t *, rbt_cpy_fux_t *, rbt_item_fux_t *, tree_allocator_t *); //todo: test
 void        rbtree_destroy(rbtree_t *, rbt_item_fux_t *);
+void        rbtree_empty(rbtree_t * , rbt_item_fux_t * );
 void        rbtree_free(rbtree_t *);
 void      * rbtree_find(const rbtree_t *, const void * data);
 void      * rbtree_insert(rbtree_t *, void *);

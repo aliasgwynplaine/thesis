@@ -14,6 +14,7 @@ extern sym_table_t * st;
 extern pp_ctx_t   * ctx;
 extern aapol_t * aux_aapol;
 extern llpol_t * aux_llpol;
+extern set_t * _vars;
 extern set_t * _pol_acc_in;
 extern set_t * _pol_acc_out;
 extern char * mon_ord_str;
@@ -30,6 +31,7 @@ extern i32 p;
     int           int_val;
     char        * str_val;
     ee_t        * expr_val;
+    char       ** lostr_val;
     rbtree_t    * expr_l_val;
 }
 
@@ -49,6 +51,7 @@ extern i32 p;
 %type <expr_val>   pol_expr
 %type <str_val>    termorder
 %type <float_val>  number
+%type <lostr_val>  vars
 %type <int_val>    sign
 %type <int_val>    exp
 
@@ -169,7 +172,15 @@ directive: SYMTABTOK { print_sym_table(st); }
     | MONORDTOK { printf("%d\n", ctx->order); }
     | GETVARSTOK { printf("vars: "); print_lstr(ctx->var_lst); }
     | SETORDTOK termorder { change_mon_order(ctx, $2); FREE($2); FREE(mon_ord_str); mon_ord_str = get_mon_order_str(ctx);}
-    | SETVARSTOK '{' vars '}' { /* update ctx->nvars and ctx->var_lst. export and delete accs */ }
+    | SETVARSTOK '{' vars '}' {
+        /* update ctx->nvars and ctx->var_lst. export and delete accs */ 
+        //print_lstr(ctx->var_lst);
+        //varset_print(_vars);
+        //printf("Updating vars...\n");
+        update_vars(ctx, _vars);
+        //varset_print(_vars);
+        //print_lstr(ctx->var_lst);
+        }
     | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
     | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, p, ctx); set_print(_pol_acc_out, ctx); printf("\n");}
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
@@ -181,8 +192,8 @@ termorder: LEX   { $$ = strdup("lex"); }
     | GRLEX { $$ = strdup("grevlex"); }
     ;
 
-vars: vars ',' VAR
-    | VAR
+vars: vars ',' VAR { if ($3 != *rbtree_probe(_vars, $3)) free($3); }
+    | VAR { if ($1 != *rbtree_probe(_vars, $1)) free($1);}
     ;
 
 %%

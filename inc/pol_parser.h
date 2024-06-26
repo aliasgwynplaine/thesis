@@ -53,7 +53,7 @@ ee_t * get_object_from_var(sym_table_t * st, char * var);
 ee_t * resolve_number_as_expression(sym_table_t * , float );
 ee_t * resolve_op_expression(sym_table_t *, ee_t *, ee_t *, char *, i32, pp_ctx_t *);
 void   change_mon_order(pp_ctx_t*, char *);
-void   update_vars(pp_ctx_t *, char *);
+void   update_vars(pp_ctx_t *, rbtree_t *);
 char * get_mon_order_str(pp_ctx_t*);
 
 #endif
