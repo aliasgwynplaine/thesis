@@ -61,7 +61,7 @@ struct bpol_t {   // pol type as btree
 };
 
 struct aapol_t { 
-    u8       nvar;
+    u8       n;
     u16      sz;
     u16      cap;     // current capacity
     term_t * terms;

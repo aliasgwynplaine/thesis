@@ -133,10 +133,6 @@ void      * rbtree_repl(rbtree_t *, void *);
 void      * rbtree_delete(rbtree_t *, void * data);
 void        rbtree_assert_insert(rbtree_t *, void *);
 void      * rbtree_assert_delete(rbtree_t *, void *);
-void        rbtree_walk(rbtree_t *, ORDER);                        // todo 
-void        rbtree_inorderwalk(rbtree_t *);                        // todo 
-void        rbtree_preorderwalk(rbtree_t *);                       // todo 
-void        rbtree_postorderwalk(rbtree_t *);                      // todo 
 void        rbtree_trav_refresh(rbt_trav_t * trav);
 void        rbtree_trav_init(rbt_trav_t * trav, rbtree_t * tree);
 void      * rbtree_trav_first(rbt_trav_t * trav, rbtree_t * tree);

@@ -25,7 +25,6 @@ int main(int argc, char * argv[]) {
     p = 65521;
     ctx->nvars = 4;
     ctx->var_cntr = calloc(ctx->nvars, sizeof(*(ctx->var_cntr)));
-    
     printf("Creating symbol table...");
     _vars        = rbtree_create(strcmp, NULL, NULL);
     _pol_acc_in  = rbtree_create(pol_monomial_cmp_wrap, &(ctx->order), NULL);

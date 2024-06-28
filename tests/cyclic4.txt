@@ -1,5 +1,2 @@
-a,b,c,d
-a+b+c+d
-a*b*c*d - 1
-a*b + b*c + a*d + c*d
-a*b*c + a*b*d + a*c*d + b*c*d
+setvars {a,b,c,d}
+F4(pol(a+b+c+d), pol(a*b*c*d - 1), pol(a*b + b*c + a*d + c*d), pol(a*b*c + a*b*d + a*c*d + b*c*d))

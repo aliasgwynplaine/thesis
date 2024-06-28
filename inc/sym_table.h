@@ -42,7 +42,7 @@ struct st_allocator {
     freefux_t  * free;
 };
 
-void free_ste(ste_t *);
+void destroy_pol(void * pol, void * param);
 
 sym_table_t * st_create(u64 size);
 void          st_destroy(sym_table_t *);

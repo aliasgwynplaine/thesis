@@ -37,7 +37,8 @@ extern i32 p;
 
 
 %token AAPOLTOK LLPOLTOK 
-%token SYMTABTOK MONORDTOK GETVARSTOK SETORDTOK SETVARSTOK F4TOK SORTTOK
+%token SYMTABTOK MONORDTOK GETVARSTOK EXPORTTOK
+%token SETORDTOK SETVARSTOK F4TOK SORTTOK
 %token NEWLINE QUIT
 %token <str_val>   LEX GLEX GRLEX RLEX;
 %token <float_val> FLOATING
@@ -178,11 +179,17 @@ directive: SYMTABTOK { print_sym_table(st); }
         //varset_print(_vars);
         //printf("Updating vars...\n");
         update_vars(ctx, _vars);
+        aux_llpol->n = ctx->nvars;
+        aux_aapol->n = ctx->nvars;
         //varset_print(_vars);
         //print_lstr(ctx->var_lst);
         }
-    | SORTTOK VAR { ee_t * e = get_object_from_var(st, $2); aapol_sort(e->v); free(e->t); free(e); free($2); }
-    | F4TOK '(' expression_list ')' { f4_wrapper(_pol_acc_in, _pol_acc_out, p, ctx); set_print(_pol_acc_out, ctx); printf("\n");}
+    | SORTTOK VAR { printf("not implemented!\n"); };
+    | EXPORTTOK {}
+    | F4TOK '(' expression_list ')' { 
+        f4_wrapper(_pol_acc_in, _pol_acc_out, p, ctx); 
+        set_print(_pol_acc_out, ctx); printf("\n");
+        }
     | QUIT { printf("bye!\n"); yylex_destroy(); return 0; }
     ; /* OTHER DIRECTIVES MAY BE NEEDED*/
 

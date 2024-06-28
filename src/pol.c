@@ -31,7 +31,7 @@ aapol_t * aapol_create(u8 n) {
     if (n > MAX_NUM_O_VARS) SAYNEXITWERROR("Not implemented!");
     aapol_t * aapol = malloc(sizeof(aapol_t));
     CHECKPTR(aapol);
-    aapol->nvar  = n;
+    aapol->n  = n;
     aapol->sz    = 0;
     aapol->cap   = 0;
     aapol->terms = NULL;
@@ -104,7 +104,7 @@ void mergeaapol(aapol_t * a, int p, int q, int r) {
     while (k <= r) {
         if (i != n_1 || j != n_2) {
             //printf("%d %d\n", i, j);
-            c = s_exp_cmp(l_[i].exp, r_[j].exp, a->nvar, lex);
+            c = s_exp_cmp(l_[i].exp, r_[j].exp, a->n, lex);
 
             if (c > 0) a->terms[k] = l_[i++];
             else if (c < 0) a->terms[k] = r_[j++];
@@ -288,7 +288,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, coef_t coef, u64 exp) {
                 aapol->terms[i].exp   = 0;
                 i  = pi;
                 pi = PARENT(i);
-            } else if (s_exp_cmp(aapol->terms[pi].exp, aapol->terms[i].exp, aapol->nvar, lex)) {
+            } else if (s_exp_cmp(aapol->terms[pi].exp, aapol->terms[i].exp, aapol->n, lex)) {
                 term_t aux        = aapol->terms[i];
                 aapol->terms[i]  = aapol->terms[pi];
                 aapol->terms[pi] = aux;
@@ -303,7 +303,7 @@ aapol_t * aapol_addterm(aapol_t * aapol, coef_t coef, u64 exp) {
 
 
 aapol_t * aapol_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha) {
-    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot sum aapols of different vars.");
+    if (a->n != b->n) SAYNEXITWERROR("Cannot sum aapols of different vars.");
     aapol_t * r = NULL;
 
     if (alpha == 0 && betha != 0) {
@@ -316,7 +316,7 @@ aapol_t * aapol_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha) {
         return r;
     }
 
-    r = aapol_create(a->nvar);
+    r = aapol_create(a->n);
 
     if (alpha == 0 && betha == 0) {
         return r;
@@ -334,7 +334,7 @@ aapol_t * aapol_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha) {
 
 
     while (i < a->sz && j < b->sz) {
-        cmp = s_exp_cmp(aterms[i].exp, bterms[j].exp, a->nvar, lex);
+        cmp = s_exp_cmp(aterms[i].exp, bterms[j].exp, a->n, lex);
         if (cmp < 0) {
             rterms[k].coef = betha * bterms[j].coef;
             rterms[k].exp  = bterms[j++].exp;
@@ -369,7 +369,7 @@ aapol_t * aapol_add(aapol_t * a, coef_t alpha, aapol_t * b, coef_t betha) {
 aapol_t * aapol_coef_multiply(aapol_t * a, coef_t alpha) {
     if (a == NULL) SAYNEXITWERROR("aapol is null");
     
-    aapol_t * res = aapol_create(a->nvar);
+    aapol_t * res = aapol_create(a->n);
     res->sz = a->sz;
     res->cap = res->sz;
     res->terms = malloc(sizeof(term_t) * res->sz);
@@ -393,14 +393,14 @@ aapol_t * aapol_inplace_coef_multiply(aapol_t * a, coef_t alpha) {
 
 #define _DEBUG
 aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
-    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot multiply pols with different num o vars");
+    if (a->n != b->n) SAYNEXITWERROR("Cannot multiply pols with different num o vars");
 
     if (a->sz == 0 || b->sz == 0) return NULL;
 
     //aapol_sort(a);
     //aapol_sort(b);
 
-    aapol_t * r = aapol_create(a->nvar);
+    aapol_t * r = aapol_create(a->n);
     r->cap = a->sz * b->sz;
     r->terms = malloc(sizeof(term_t) * r->cap);
     term_t * rterms = r->terms;
@@ -423,7 +423,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
     
     while (i < a->sz) {
         s   = u64_max_idx(dp, i, a->sz - 1);
-        cmp = s_exp_cmp(rterms[k].exp, dp[s], a->nvar, lex);
+        cmp = s_exp_cmp(rterms[k].exp, dp[s], a->n, lex);
 
         if (cmp != 0) {
             if (rterms[k].coef != 0) rterms[++k].coef = 0;
@@ -447,7 +447,7 @@ aapol_t * aapol_multiply(aapol_t * a, aapol_t * b) {
 #undef _DEBUG
 
 int aapol_monomial_cmp(aapol_t * a, aapol_t * b, enum MONOMIAL_ORDER mo) {
-    if (a->nvar != b->nvar) SAYNEXITWERROR("Cannot compare polynomials of different number of variables.");
+    if (a->n != b->n) SAYNEXITWERROR("Cannot compare polynomials of different number of variables.");
 
     aapol_sort(a);
     aapol_sort(b);
@@ -458,7 +458,7 @@ int aapol_monomial_cmp(aapol_t * a, aapol_t * b, enum MONOMIAL_ORDER mo) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, mo);
+        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->n, mo);
 
         if (cmp != 0) return cmp;
         
@@ -473,7 +473,7 @@ int aapol_monomial_cmp(aapol_t * a, aapol_t * b, enum MONOMIAL_ORDER mo) {
 */
 int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
     if (a == NULL || b == NULL) return 1;
-    if (a->nvar != b->nvar) return 1;
+    if (a->n != b->n) return 1;
 
     aapol_sort(a);
     aapol_sort(b);
@@ -488,7 +488,7 @@ int aapol_hard_cmp(aapol_t * a, aapol_t * b) {
     int cmp;
 
     for (int i = 0; i < a->sz; i++) {
-        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->nvar, lex);
+        cmp = s_exp_cmp(a_term_p[i].exp, b_term_p[i].exp, a->n, lex);
 
         if (cmp != 0 || (a_term_p[i].coef != b_term_p[i].coef)) return 1;
         
@@ -509,7 +509,7 @@ aapol_t * aapol_cpy(aapol_t * dst, aapol_t * src) {
 }
 
 term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo) {
-    if (a1->nvar != a2->nvar) {
+    if (a1->n != a2->n) {
         dbgerr("Cannot get lcm from pols of diverent numovars.");
         return NULL;
     }
@@ -517,7 +517,7 @@ term_t   * aapol_head_lcm(aapol_t * a1, aapol_t * a2, enum MONOMIAL_ORDER mo) {
     term_t * h1 = aapol_head(a1);
     term_t * h2 = aapol_head(a2);
     
-    for (int i = 0; i < a1->nvar; i++) {
+    for (int i = 0; i < a1->n; i++) {
         /* choose the min */
         /* consider handle exponents in different way...*/
     }
@@ -727,7 +727,7 @@ llpol_t * llpol_create(u8 n) {
     llpol_t * llpol = malloc(sizeof(*llpol));
     CHECKPTR(llpol);
     llpol->first = NULL;
-    llpol->n  = n;
+    llpol->n     = n;
     llpol->sz    = 0;
 
     return llpol;
@@ -1636,13 +1636,13 @@ void aapol_print(aapol_t * aapol) {
             continue;
         }
         
-        e = s_exp_unpack(terms[i].exp, aapol->nvar);
+        e = s_exp_unpack(terms[i].exp, aapol->n);
         printf("%d*x^(", terms[i].coef);
 
-        for (int i = 0; i < aapol->nvar - 1; i++) {
+        for (int i = 0; i < aapol->n - 1; i++) {
             printf("%ld, ", *(e + i));
         }
-        printf("%ld) ", *(e + aapol->nvar - 1));
+        printf("%ld) ", *(e + aapol->n - 1));
         FREE(e);
     }
     printf("\n");
@@ -1694,9 +1694,9 @@ char * aapol_repr(aapol_t * aapol) {
             return repr;
         }
 
-        e = s_exp_unpack(aapol->terms[i].exp, aapol->nvar);
+        e = s_exp_unpack(aapol->terms[i].exp, aapol->n);
 
-        for (int j = 0; j < aapol->nvar - 1; j++) {
+        for (int j = 0; j < aapol->n - 1; j++) {
             c = snprintf(buff, 32, "%ld,", *(e+j));
             p = p - c;
             if (p >= 3) strcat(repr, buff);
@@ -1706,7 +1706,7 @@ char * aapol_repr(aapol_t * aapol) {
             }
         }
 
-        c = snprintf(buff, 32, "%ld)", *(e+aapol->nvar-1));
+        c = snprintf(buff, 32, "%ld)", *(e+aapol->n-1));
         p = p - c;
         if (p >= 3) strcat(repr, buff);
         else {

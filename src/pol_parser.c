@@ -72,7 +72,7 @@ ee_t * resolve_var_as_expression(sym_table_t * st, char * var, i32 p, pp_ctx_t *
             ee->v = llpol_create(ctx->nvars);
             llpol_cpy(ee->v, entry->v, ctx->order);
         } else if (strcmp(ee->t, "aapol") == 0) {
-            ee->v = aapol_create(((aapol_t *)entry->v)->nvar);
+            ee->v = aapol_create(((aapol_t *)entry->v)->n);
             aapol_cpy(ee->v, entry->v);
         } else {
             ee->v = malloc(sizeof(float));
@@ -262,7 +262,7 @@ ee_t * resolve_op_expression(sym_table_t * st, ee_t * e1, ee_t * e2, char * op, 
                 }
 
                 if (strcmp(op, "-") == 0) {
-                    ee->v = llpol_create(((aapol_t *)e1->v)->nvar);
+                    ee->v = llpol_create(((aapol_t *)e1->v)->n);
                     llpol_cpy(ee->v, e1->v, ctx->order);
                     llpol_addterm(ee->v, -1 * *(coef_t *)e2->v, 0, ctx->order, p);
                 }
@@ -452,7 +452,11 @@ void update_vars(pp_ctx_t * ctx, rbtree_t * _vars) {
     for (i = 0; i < ctx->nvars; i++) free(ctx->var_lst[i]);
     free(ctx->var_lst);
     ctx->nvars = _vars->sz;
+    printf("ctx->nvars: %d\n", ctx->nvars);
     ctx->var_lst = malloc((ctx->nvars + 1) * sizeof(*ctx->var_lst));
+    CHECKPTR(ctx->var_lst);
+    ctx->var_cntr = realloc(ctx->var_cntr, ctx->nvars * sizeof(*ctx->var_cntr));
+    CHECKPTR(ctx->var_cntr);
     i = 0;
 
     for (v = rbtree_trav_first(&t, _vars); v != NULL; v = rbtree_trav_next(&t)) {
@@ -462,6 +466,16 @@ void update_vars(pp_ctx_t * ctx, rbtree_t * _vars) {
     ctx->var_lst[i] = NULL;
     rbtree_empty(_vars, NULL);
 }
+
+
+void export(pp_ctx_t * ctx, rbtree_t * _in, rbtree_t * _out) {
+    struct tm *t = localtime(time(NULL));
+    char fn[64];
+    strftime(fn, sizeof(fn) - 1, "%d-%m-%Y-%H%M", t);
+    FILE * fd = fopen(fn, "w");
+    //fprintf(fd,)
+}
+
 
 char * get_mon_order_str(pp_ctx_t* pctx) {
     if (pctx->order == lex) return strdup("lex");

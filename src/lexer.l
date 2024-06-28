@@ -38,6 +38,7 @@ monord              return MONORDTOK;
 getvars             return GETVARSTOK;
 setvars             return SETVARSTOK;
 setord              return SETORDTOK;
+export              return EXPORTTOK;
 lex                 return LEX;
 revlex              return RLEX;
 glex                return GLEX;
